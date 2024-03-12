@@ -3,6 +3,7 @@ module github.com/dhth/punchout
 go 1.22.0
 
 require (
+	github.com/BurntSushi/toml v1.3.2
 	github.com/andygrunwald/go-jira/v2 v2.0.0-20240116150243-50d59fe116d6
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.25.0

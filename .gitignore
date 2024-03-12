@@ -5,3 +5,4 @@ punchout
 debug.log
 punchout.v*.db
 .quickrun
+justfile

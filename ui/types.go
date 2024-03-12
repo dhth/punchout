@@ -14,11 +14,11 @@ type Issue struct {
 }
 
 func (issue Issue) Title() string {
-	return fmt.Sprintf("%s", RightPadTrim(issue.Summary, listWidth-20))
+	return fmt.Sprintf("%s", RightPadTrim(issue.Summary, int(float64(listWidth)*0.6)))
 }
 func (issue Issue) Description() string {
-	issueType := getIssueTypeStyle(issue.IssueType).Render(Trim(issue.IssueType, 20))
-	return fmt.Sprintf("%s%s", RightPadTrim(issue.IssueKey, listWidth-40), issueType)
+	issueType := getIssueTypeStyle(issue.IssueType).Render(Trim(issue.IssueType, int(float64(listWidth)*0.2)))
+	return fmt.Sprintf("%s%s", RightPadTrim(issue.IssueKey, int(float64(listWidth)*0.6)), issueType)
 }
 func (issue Issue) FilterValue() string { return issue.IssueKey + " : " + issue.Summary }
 
@@ -53,9 +53,9 @@ func (entry WorklogEntry) Description() string {
 	minsSpent := int(entry.EndTS.Sub(entry.BeginTS).Minutes())
 	minsSpentStr := fmt.Sprintf("spent %d mins", minsSpent)
 	return fmt.Sprintf("%s%s%s%s",
-		RightPadTrim(entry.IssueKey, 40),
-		RightPadTrim("started: "+entry.BeginTS.Format("Mon, 3:04pm"), 40),
-		RightPadTrim(minsSpentStr, 40),
+		RightPadTrim(entry.IssueKey, int(listWidth/4)),
+		RightPadTrim("started: "+entry.BeginTS.Format("Mon, 3:04pm"), int(listWidth/4)),
+		RightPadTrim(minsSpentStr, int(listWidth/4)),
 		syncedStatus,
 	)
 }

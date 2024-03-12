@@ -22,8 +22,8 @@ General List Controls
     /           Start filtering
 
 Worklog List View
-    d           Delete worklog entry
+    <ctrl+d>    Delete worklog entry
     s           Sync all visible entries to JIRA
-    <ctrl-r>    Refresh list
+    <ctrl+r>    Refresh list
 `
 )
