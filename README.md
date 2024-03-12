@@ -3,7 +3,7 @@
 ✨ Overview
 ---
 
-`punchout` takes the suck out of tracking work on JIRA.
+`punchout` takes the suck out of logging time on JIRA.
 
 Install
 ---
