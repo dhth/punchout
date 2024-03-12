@@ -95,23 +95,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "s":
 			switch m.activeView {
 			case IssueListView:
-				if m.changesLocked {
-					message := "Changes locked momentarily"
-					m.message = message
-					m.messages = append(m.messages, message)
-					return m, tea.Batch(cmds...)
-				}
-				issue, ok := m.issueList.SelectedItem().(Issue)
-				if !ok {
-					message := "Something went horribly wrong"
-					m.message = message
-					m.messages = append(m.messages, message)
-				} else {
-					if m.lastChange == UpdateChange {
-						m.changesLocked = true
-						cmds = append(cmds, toggleTracking(m.db, issue.IssueKey, ""))
-					} else if m.lastChange == InsertChange {
-						m.activeView = AskForCommentView
+				if m.issueList.FilterState() != list.Filtering {
+					if m.changesLocked {
+						message := "Changes locked momentarily"
+						m.message = message
+						m.messages = append(m.messages, message)
+						return m, tea.Batch(cmds...)
+					}
+					issue, ok := m.issueList.SelectedItem().(Issue)
+					if !ok {
+						message := "Something went horribly wrong"
+						m.message = message
+						m.messages = append(m.messages, message)
+					} else {
+						if m.lastChange == UpdateChange {
+							m.changesLocked = true
+							cmds = append(cmds, toggleTracking(m.db, issue.IssueKey, ""))
+						} else if m.lastChange == InsertChange {
+							m.activeView = AskForCommentView
+						}
 					}
 				}
 			case WorklogView:
@@ -214,6 +216,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case WLAddedOnJIRA:
 		if msg.err != nil {
 			msg.entry.Error = msg.err
+            m.worklogList.SetItem(msg.index, msg.entry)
 			m.messages = append(m.messages, msg.err.Error())
 		} else {
 			msg.entry.Synced = true

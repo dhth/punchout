@@ -20,7 +20,7 @@ func (issue Issue) Description() string {
 	issueType := getIssueTypeStyle(issue.IssueType).Render(Trim(issue.IssueType, 20))
 	return fmt.Sprintf("%s%s", RightPadTrim(issue.IssueKey, listWidth-40), issueType)
 }
-func (issue Issue) FilterValue() string { return issue.IssueKey }
+func (issue Issue) FilterValue() string { return issue.IssueKey + " : " + issue.Summary }
 
 type WorklogEntry struct {
 	Id             int
