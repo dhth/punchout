@@ -39,6 +39,12 @@ var (
 	notSyncedStyle = statusStyle.Copy().
 			Background(lipgloss.Color("#fb4934"))
 
+	formContextStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#fe8019"))
+
+	formFieldNameStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#504945"))
+
 	activeIssueMsgStyle = baseStyle.Copy().
 				Bold(true).
 				Foreground(lipgloss.Color("#d3869b"))

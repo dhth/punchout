@@ -21,6 +21,12 @@ General List Controls
     l<Right>    Go to next page
     /           Start filtering
 
+Issue List View
+    s           Toggle recording time on the currently selected issue,
+                will open up a form to record a comment on the second
+                "s" keypress
+    <ctrl+s>    Add manual worklog entry
+
 Worklog List View
     <ctrl+d>    Delete worklog entry
     s           Sync all visible entries to JIRA

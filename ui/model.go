@@ -6,7 +6,7 @@ import (
 
 	jira "github.com/andygrunwald/go-jira/v2/onpremise"
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textarea"
+	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -33,31 +33,45 @@ const (
 	IssueListView StateView = iota
 	WorklogView
 	AskForCommentView
+	EntryTrackingView
 	HelpView
 )
 
+type trackingFocussedField uint
+
+const (
+	entryBeginTS trackingFocussedField = iota
+	entryEndTS
+	entryComment
+)
+
+const (
+	timeFormat = "2006/01/02 15:04"
+)
+
 type model struct {
-	activeView        StateView
-	lastView          StateView
-	db                *sql.DB
-	jiraClient        *jira.Client
-	jql               string
-	issueList         list.Model
-	worklogList       list.Model
-	helpVP            viewport.Model
-	helpVPReady       bool
-	commentInput      textarea.Model
-	lastChange        DBChange
-	changesLocked     bool
-	activeIssue       string
-	activeIssueIndex  int
-	issueDetails      map[string]string
-	message           string
-	errorMessage      string
-	messages          []string
-	jiraTimeDeltaMins int
-	showHelpIndicator bool
-	terminalHeight    int
+	activeView            StateView
+	lastView              StateView
+	db                    *sql.DB
+	jiraClient            *jira.Client
+	jql                   string
+	issueList             list.Model
+	worklogList           list.Model
+	trackingInputs        []textinput.Model
+	trackingFocussedField trackingFocussedField
+	helpVP                viewport.Model
+	helpVPReady           bool
+	lastChange            DBChange
+	changesLocked         bool
+	activeIssue           string
+	activeIssueIndex      int
+	issueDetails          map[string]string
+	message               string
+	errorMessage          string
+	messages              []string
+	jiraTimeDeltaMins     int
+	showHelpIndicator     bool
+	terminalHeight        int
 }
 
 func (m model) Init() tea.Cmd {

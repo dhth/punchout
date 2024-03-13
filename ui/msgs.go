@@ -27,6 +27,11 @@ type InsertEntryMsg struct {
 	err      error
 }
 
+type ManualEntryInserted struct {
+	issueKey string
+	err      error
+}
+
 type UpdateEntryMsg struct {
 	issueKey string
 	err      error

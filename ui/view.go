@@ -33,8 +33,53 @@ func (m model) View() string {
 	case WorklogView:
 		content = stackListStyle.Render(m.worklogList.View())
 	case AskForCommentView:
-		content = fmt.Sprintf("\nEnter comment for the log entry:\n\n%s\n\nPress ctrl+d to submit", m.commentInput.View())
-		for i := 0; i < m.terminalHeight-20+7; i++ {
+		content = fmt.Sprintf(
+			`
+    %s
+
+    %s
+
+
+    %s
+`,
+			formFieldNameStyle.Render(RightPadTrim("Comment:", 16)),
+			m.trackingInputs[entryComment].View(),
+			formContextStyle.Render("Press ctrl+d to submit"),
+		)
+		for i := 0; i < m.terminalHeight-20+10; i++ {
+			content += "\n"
+		}
+	case EntryTrackingView:
+
+		content = fmt.Sprintf(
+			`
+    %s
+
+    %s
+
+    %s
+
+    %s
+
+    %s
+
+    %s
+
+    %s
+
+
+    %s
+`,
+			formContextStyle.Render("Adding a manual entry. Entry the following details:"),
+			formFieldNameStyle.Render("Begin Time  (format: 2006/01/02 15:04)"),
+			m.trackingInputs[entryBeginTS].View(),
+			formFieldNameStyle.Render("End Time  (format: 2006/01/02 15:04)"),
+			m.trackingInputs[entryEndTS].View(),
+			formFieldNameStyle.Render(RightPadTrim("Comment:", 16)),
+			m.trackingInputs[entryComment].View(),
+			formContextStyle.Render("Press ctrl+d to submit"),
+		)
+		for i := 0; i < m.terminalHeight-20; i++ {
 			content += "\n"
 		}
 	case HelpView:
