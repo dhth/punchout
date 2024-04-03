@@ -11,8 +11,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const activeStatusTickInterval = time.Second * 3
-
 type TrackingStatus uint
 
 const (
@@ -64,8 +62,6 @@ type model struct {
 	lastChange            DBChange
 	changesLocked         bool
 	activeIssue           string
-	activeIssueIndex      int
-	issueDetails          map[string]string
 	message               string
 	errorMessage          string
 	messages              []string

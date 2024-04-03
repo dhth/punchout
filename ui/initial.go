@@ -6,14 +6,14 @@ import (
 	jira "github.com/andygrunwald/go-jira/v2/onpremise"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDeltaMins int) model {
 	var stackItems []list.Item
 	var worklogListItems []list.Item
 
-	var appDelegateKeys = newDelegateKeyMap()
-	itemDel := newItemDelegate(appDelegateKeys)
+	itemDel := newItemDelegate()
 
 	trackingInputs := make([]textinput.Model, 3)
 	trackingInputs[entryBeginTS] = textinput.New()
@@ -48,12 +48,18 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDelta
 	m.issueList.SetStatusBarItemName("issue", "issues")
 	m.issueList.DisableQuitKeybindings()
 	m.issueList.SetShowHelp(false)
+	m.issueList.Styles.Title.Foreground(lipgloss.Color("#282828"))
+	m.issueList.Styles.Title.Background(lipgloss.Color("#fe8019"))
+	m.issueList.Styles.Title.Bold(true)
 
 	m.worklogList.Title = "Worklog Entries"
 	m.worklogList.SetStatusBarItemName("entry", "entries")
 	m.worklogList.SetFilteringEnabled(false)
 	m.worklogList.DisableQuitKeybindings()
 	m.worklogList.SetShowHelp(false)
+	m.worklogList.Styles.Title.Foreground(lipgloss.Color("#282828"))
+	m.worklogList.Styles.Title.Background(lipgloss.Color("#fe8019"))
+	m.worklogList.Styles.Title.Bold(true)
 
 	return m
 }

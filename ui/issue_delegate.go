@@ -5,11 +5,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func newDelegateKeyMap() *issueListdelegateKeyMap {
-	return &issueListdelegateKeyMap{}
-}
-
-func newItemDelegate(keys *issueListdelegateKeyMap) list.DefaultDelegate {
+func newItemDelegate() list.DefaultDelegate {
 	d := list.NewDefaultDelegate()
 
 	d.Styles.SelectedTitle = d.Styles.

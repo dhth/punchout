@@ -3,8 +3,6 @@ package ui
 import (
 	"fmt"
 	"time"
-
-	"github.com/charmbracelet/bubbles/key"
 )
 
 type Issue struct {
@@ -14,11 +12,11 @@ type Issue struct {
 }
 
 func (issue Issue) Title() string {
-	return fmt.Sprintf("%s", RightPadTrim(issue.Summary, int(float64(listWidth)*0.6)))
+	return RightPadTrim(issue.Summary, int(float64(listWidth)*0.8))
 }
 func (issue Issue) Description() string {
 	issueType := getIssueTypeStyle(issue.IssueType).Render(Trim(issue.IssueType, int(float64(listWidth)*0.2)))
-	return fmt.Sprintf("%s%s", RightPadTrim(issue.IssueKey, int(float64(listWidth)*0.6)), issueType)
+	return fmt.Sprintf("%s%s", RightPadTrim(issue.IssueKey, int(float64(listWidth)*0.78)), issueType)
 }
 func (issue Issue) FilterValue() string { return issue.IssueKey + " : " + issue.Summary }
 
@@ -35,7 +33,7 @@ type WorklogEntry struct {
 }
 
 func (entry WorklogEntry) Title() string {
-	return fmt.Sprintf("%s", entry.Comment)
+	return entry.Comment
 }
 func (entry WorklogEntry) Description() string {
 	if entry.Error != nil {
@@ -60,7 +58,3 @@ func (entry WorklogEntry) Description() string {
 	)
 }
 func (entry WorklogEntry) FilterValue() string { return entry.IssueKey }
-
-type issueListdelegateKeyMap struct {
-	choose key.Binding
-}

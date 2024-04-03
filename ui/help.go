@@ -2,7 +2,7 @@ package ui
 
 var (
 	HelpText = `
-TUI Reference Manual
+punchout Reference Manual
 
 punchout has 2 sections:
 - Issues List View
@@ -11,8 +11,10 @@ punchout has 2 sections:
 Keyboard Shortcuts:
 
 General
-    1          Switch to Issues List View
-    2          Switch to Worklog List View
+    1           Switch to Issues List View
+    2           Switch to Worklog List View
+    <tab>       Go to next view
+    <shift+tab> Go to previous view
 
 General List Controls
     h/<Up>      Move cursor up

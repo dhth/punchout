@@ -1,20 +1,6 @@
 package ui
 
-import (
-	"database/sql"
-)
-
 type HideHelpMsg struct{}
-
-type IssueToggledMsg struct {
-	index int
-	issue Issue
-}
-
-type SetupDBMsg struct {
-	db  *sql.DB
-	err error
-}
 
 type TrackingToggledMsg struct {
 	activeIssue string
@@ -33,8 +19,7 @@ type ManualEntryInserted struct {
 }
 
 type UpdateEntryMsg struct {
-	issueKey string
-	err      error
+	err error
 }
 
 type FetchActiveMsg struct {

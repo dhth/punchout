@@ -77,6 +77,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "tab":
 			switch m.activeView {
+			case IssueListView:
+				m.activeView = WorklogView
 			case EntryTrackingView:
 				switch m.trackingFocussedField {
 				case entryBeginTS:
@@ -93,6 +95,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "shift+tab":
 			switch m.activeView {
+			case WorklogView:
+				m.activeView = IssueListView
 			case EntryTrackingView:
 				switch m.trackingFocussedField {
 				case entryBeginTS:
@@ -148,18 +152,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "1":
 			if m.activeView != IssueListView {
 				m.activeView = IssueListView
-				return m, tea.Batch(cmds...)
 			}
 		case "2":
 			if m.activeView != WorklogView {
 				m.activeView = WorklogView
 				cmds = append(cmds, fetchLogEntries(m.db))
-				return m, tea.Batch(cmds...)
 			}
 		case "ctrl+r":
 			if m.activeView == WorklogView {
 				cmds = append(cmds, fetchLogEntries(m.db))
-				return m, tea.Batch(cmds...)
 			}
 		case "ctrl+s":
 			if m.activeView == IssueListView {
@@ -176,7 +177,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.trackingInputs[i].Blur()
 				}
 				m.trackingInputs[m.trackingFocussedField].Focus()
-				return m, tea.Batch(cmds...)
 			}
 		case "ctrl+d":
 			switch m.activeView {
@@ -199,7 +199,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						message := "Changes locked momentarily"
 						m.message = message
 						m.messages = append(m.messages, message)
-						return m, tea.Batch(cmds...)
 					}
 					issue, ok := m.issueList.SelectedItem().(Issue)
 					if !ok {
@@ -232,7 +231,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "?":
 			m.lastView = m.activeView
 			m.activeView = HelpView
-			return m, tea.Batch(cmds...)
 		}
 
 	case tea.WindowSizeMsg:

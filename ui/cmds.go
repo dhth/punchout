@@ -50,28 +50,6 @@ LIMIT 1
 	}
 }
 
-func insertEntry(db *sql.DB, issue_key string) tea.Cmd {
-	return func() tea.Msg {
-
-		stmt, err := db.Prepare(`
-    INSERT INTO issue_log (issue_key, begin_ts, active, synced)
-    VALUES (?, ?, ?, ?);
-    `)
-
-		if err != nil {
-			return InsertEntryMsg{issue_key, err}
-		}
-		defer stmt.Close()
-
-		_, err = stmt.Exec(issue_key, time.Now(), true, 0)
-		if err != nil {
-			return InsertEntryMsg{issue_key, err}
-		}
-
-		return InsertEntryMsg{issue_key, nil}
-	}
-}
-
 func insertManualEntry(db *sql.DB, issueKey string, beginTS time.Time, endTS time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
 
@@ -91,30 +69,6 @@ func insertManualEntry(db *sql.DB, issueKey string, beginTS time.Time, endTS tim
 		}
 
 		return ManualEntryInserted{issueKey, nil}
-	}
-}
-
-func updateEntry(db *sql.DB, issue_key string) tea.Cmd {
-	return func() tea.Msg {
-
-		stmt, err := db.Prepare(`
-UPDATE issue_log
-SET active = 0,
-    end_ts = ?
-WHERE issue_key = ?
-AND active = 1;
-`)
-		if err != nil {
-			return UpdateEntryMsg{issue_key, err}
-		}
-		defer stmt.Close()
-
-		_, err = stmt.Exec(time.Now(), issue_key)
-		if err != nil {
-			return UpdateEntryMsg{issue_key, err}
-		}
-
-		return UpdateEntryMsg{issue_key, nil}
 	}
 }
 

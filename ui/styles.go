@@ -15,7 +15,7 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color("#83a598"))
 
-	baseListStyle = lipgloss.NewStyle().PaddingTop(1).PaddingRight(2).PaddingLeft(1).PaddingBottom(1).Width(listWidth + 10)
+	baseListStyle = lipgloss.NewStyle().PaddingTop(1).PaddingRight(2).PaddingLeft(1).PaddingBottom(1)
 	viewPortStyle = baseListStyle.Copy().Width(150).PaddingLeft(4)
 
 	stackListStyle = baseListStyle.Copy()
