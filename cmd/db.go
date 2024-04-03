@@ -9,6 +9,8 @@ const (
 func setupDB(dbpath string) (*sql.DB, error) {
 
 	db, err := sql.Open("sqlite", dbpath)
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
 	if err != nil {
 		return nil, err
 	}

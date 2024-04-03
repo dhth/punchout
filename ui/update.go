@@ -165,6 +165,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, fetchJIRAIssues(m.jiraClient, m.jql))
 			case WorklogView:
 				cmds = append(cmds, fetchLogEntries(m.db))
+				m.worklogList.ResetSelected()
 			}
 		case "ctrl+s":
 			if m.activeView == IssueListView {
@@ -230,7 +231,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 					}
 				}
-				return m, tea.Sequence(cmds...)
 			}
 		case "?":
 			m.lastView = m.activeView
