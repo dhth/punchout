@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -159,7 +160,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, fetchLogEntries(m.db))
 			}
 		case "ctrl+r":
-			if m.activeView == WorklogView {
+			switch m.activeView {
+			case IssueListView:
+				cmds = append(cmds, fetchJIRAIssues(m.jiraClient, m.jql))
+			case WorklogView:
 				cmds = append(cmds, fetchLogEntries(m.db))
 			}
 		case "ctrl+s":
@@ -231,6 +235,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "?":
 			m.lastView = m.activeView
 			m.activeView = HelpView
+		case "ctrl+b":
+			if m.activeView == IssueListView {
+				selectedIssue := m.issueList.SelectedItem().FilterValue()
+				cmds = append(cmds, openURLInBrowser(fmt.Sprintf("%sbrowse/%s", m.jiraClient.BaseURL.String(), selectedIssue)))
+			}
 		}
 
 	case tea.WindowSizeMsg:
@@ -356,6 +365,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case HideHelpMsg:
 		m.showHelpIndicator = false
+	case URLOpenedinBrowserMsg:
+		if msg.err != nil {
+			m.message = fmt.Sprintf("Error opening url: %s", msg.err.Error())
+		}
 	}
 
 	switch m.activeView {

@@ -52,3 +52,8 @@ type WLAddedOnJIRA struct {
 	entry WorklogEntry
 	err   error
 }
+
+type URLOpenedinBrowserMsg struct {
+	url string
+	err error
+}

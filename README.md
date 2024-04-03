@@ -6,7 +6,7 @@
 `punchout` takes the suck out of logging time on JIRA.
 
 <p align="center">
-  <img src="./punchout.gif?raw=true" alt="Usage" />
+  <img src="https://tools.dhruvs.space/images/punchout/punchout.gif" alt="Usage" />
 </p>
 
 Install
@@ -49,6 +49,9 @@ jql = "assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DES
 jira_time_delta_mins = 300
 ```
 
+*Note: `punchout` only supports [on-premise] installations of JIRA for now. I
+might add support for cloud installations in the future.*
+
 ### Using command line flags
 
 Use `punchout -h` for help.
@@ -71,6 +74,16 @@ punchout \
     jira-token='XXX' \
     jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC'
 ```
+
+Screenshots
+---
+
+<p align="center">
+  <img src="https://tools.dhruvs.space/images/punchout/punchout-1.png" alt="Usage" />
+</p>
+<p align="center">
+  <img src="https://tools.dhruvs.space/images/punchout/punchout-2.png" alt="Usage" />
+</p>
 
 Reference Manual
 ---
@@ -115,3 +128,4 @@ Acknowledgements
 `punchout` is built using the awesome TUI framework [bubbletea][1].
 
 [1]: https://github.com/charmbracelet/bubbletea
+[2]: https://community.atlassian.com/t5/Atlassian-Migration-Program/Product-features-comparison-Atlassian-Cloud-vs-on-premise/ba-p/1918147

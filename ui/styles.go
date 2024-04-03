@@ -5,6 +5,12 @@ import (
 	"hash/fnv"
 )
 
+const (
+	ActiveIssueColor  = "#d3869b"
+	IssueStatusColor  = "#665c54"
+	AggTimeSpentColor = "#928374"
+)
+
 var (
 	baseStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
@@ -47,7 +53,7 @@ var (
 
 	activeIssueMsgStyle = baseStyle.Copy().
 				Bold(true).
-				Foreground(lipgloss.Color("#d3869b"))
+				Foreground(lipgloss.Color(ActiveIssueColor))
 
 	helpTitleStyle = baseStyle.Copy().
 			Bold(true).
@@ -64,11 +70,40 @@ var (
 		color := issueTypeColors[int(hash)%len(issueTypeColors)]
 		return lipgloss.NewStyle().
 			PaddingLeft(1).
-			PaddingRight(1).
 			Foreground(lipgloss.Color("#282828")).Copy().
 			Bold(true).
 			Align(lipgloss.Center).
 			Width(18).
 			Background(lipgloss.Color(color))
 	}
+
+	assigneeColors = []string{
+		"#ccccff", // Lavender Blue
+		"#ffa87d", // Light orange
+		"#7385D8", // Light blue
+		"#fabd2f", // Bright Yellow
+		"#00abe5", // Deep Sky
+		"#d3691e", // Chocolate
+	}
+	assigneeStyle = func(assignee string) lipgloss.Style {
+		h := fnv.New32()
+		h.Write([]byte(assignee))
+		hash := h.Sum32()
+
+		color := assigneeColors[int(hash)%len(assigneeColors)]
+
+		st := lipgloss.NewStyle().
+			PaddingLeft(1).
+			Foreground(lipgloss.Color(color))
+
+		return st
+	}
+
+	issueStatusStyle = lipgloss.NewStyle().
+				PaddingLeft(1).
+				Foreground(lipgloss.Color(IssueStatusColor))
+
+	aggTimeSpentStyle = lipgloss.NewStyle().
+				PaddingLeft(2).
+				Foreground(lipgloss.Color(AggTimeSpentColor))
 )

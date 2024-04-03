@@ -2,6 +2,8 @@ package ui
 
 import (
 	"database/sql"
+	"os/exec"
+	"runtime"
 	"time"
 
 	jira "github.com/andygrunwald/go-jira/v2/onpremise"
@@ -129,7 +131,22 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 		jIssues, err := getIssues(cl, jql)
 		var issues []Issue
 		for _, issue := range jIssues {
-			issues = append(issues, Issue{issue.Key, issue.Fields.Type.Name, issue.Fields.Summary})
+			var assignee string
+			var totalSecsSpent int
+			var status string
+			if issue.Fields != nil {
+				if issue.Fields.Assignee != nil {
+					assignee = issue.Fields.Assignee.Name
+				}
+
+				totalSecsSpent = issue.Fields.AggregateTimeSpent
+
+				if issue.Fields.Status != nil {
+					status = issue.Fields.Status.Name
+
+				}
+			}
+			issues = append(issues, Issue{issue.Key, issue.Fields.Type.Name, issue.Fields.Summary, assignee, status, totalSecsSpent})
 		}
 		return IssuesFetchedFromJIRAMsg{issues, err}
 	}
@@ -145,5 +162,22 @@ func syncWorklogWithJIRA(cl *jira.Client, entry WorklogEntry, index int, timeDel
 func hideHelp(interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
 		return HideHelpMsg{}
+	})
+}
+
+func openURLInBrowser(url string) tea.Cmd {
+	var openCmd string
+	switch runtime.GOOS {
+	case "darwin":
+		openCmd = "open"
+	default:
+		openCmd = "xdg-open"
+	}
+	c := exec.Command(openCmd, url)
+	return tea.ExecProcess(c, func(err error) tea.Msg {
+		if err != nil {
+			return URLOpenedinBrowserMsg{url: url, err: err}
+		}
+		return tea.Msg(URLOpenedinBrowserMsg{url: url})
 	})
 }
