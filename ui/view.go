@@ -49,7 +49,7 @@ func (m model) View() string {
 		for i := 0; i < m.terminalHeight-20+10; i++ {
 			content += "\n"
 		}
-	case EntryTrackingView:
+	case ManualWorklogEntryView:
 
 		content = fmt.Sprintf(
 			`

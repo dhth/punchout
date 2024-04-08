@@ -18,6 +18,12 @@ type ManualEntryInserted struct {
 	err      error
 }
 
+type ManualEntryUpdated struct {
+	rowId    int
+	issueKey string
+	err      error
+}
+
 type UpdateEntryMsg struct {
 	err error
 }

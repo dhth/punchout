@@ -56,8 +56,8 @@ func insertManualEntry(db *sql.DB, issueKey string, beginTS time.Time, endTS tim
 	return func() tea.Msg {
 
 		stmt, err := db.Prepare(`
-    INSERT INTO issue_log (issue_key, begin_ts, end_ts, comment, active, synced)
-    VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO issue_log (issue_key, begin_ts, end_ts, comment, active, synced)
+VALUES (?, ?, ?, ?, ?, ?);
     `)
 
 		if err != nil {
@@ -71,6 +71,31 @@ func insertManualEntry(db *sql.DB, issueKey string, beginTS time.Time, endTS tim
 		}
 
 		return ManualEntryInserted{issueKey, nil}
+	}
+}
+
+func updateManualEntry(db *sql.DB, rowID int, issueKey string, beginTS time.Time, endTS time.Time, comment string) tea.Cmd {
+	return func() tea.Msg {
+
+		stmt, err := db.Prepare(`
+UPDATE issue_log
+SET begin_ts = ?,
+    end_ts = ?,
+    comment = ?
+WHERE ID = ?;
+    `)
+
+		if err != nil {
+			return ManualEntryUpdated{rowID, issueKey, err}
+		}
+		defer stmt.Close()
+
+		_, err = stmt.Exec(beginTS, endTS, comment, rowID)
+		if err != nil {
+			return ManualEntryUpdated{rowID, issueKey, err}
+		}
+
+		return ManualEntryUpdated{rowID, issueKey, nil}
 	}
 }
 

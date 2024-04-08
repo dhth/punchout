@@ -30,6 +30,7 @@ Issue List View
     <ctrl+s>    Add manual worklog entry
 
 Worklog List View
+    <ctrl+s>    Update worklog entry
     <ctrl+d>    Delete worklog entry
     s           Sync all visible entries to JIRA
     <ctrl+r>    Refresh list

@@ -31,7 +31,7 @@ const (
 	IssueListView StateView = iota
 	WorklogView
 	AskForCommentView
-	EntryTrackingView
+	ManualWorklogEntryView
 	HelpView
 )
 
@@ -41,6 +41,13 @@ const (
 	entryBeginTS trackingFocussedField = iota
 	entryEndTS
 	entryComment
+)
+
+type worklogSaveType uint
+
+const (
+	worklogInsert worklogSaveType = iota
+	worklogUpdate
 )
 
 const (
@@ -62,6 +69,7 @@ type model struct {
 	lastChange            DBChange
 	changesLocked         bool
 	activeIssue           string
+	worklogSaveType       worklogSaveType
 	message               string
 	errorMessage          string
 	messages              []string
