@@ -21,7 +21,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+d":
+		case "enter":
 			switch m.activeView {
 			case AskForCommentView:
 				m.activeView = IssueListView
@@ -78,7 +78,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.activeView = IssueListView
 				m.trackingInputs[entryComment].SetValue("")
 			case ManualWorklogEntryView:
-				m.activeView = IssueListView
+				switch m.worklogSaveType {
+				case worklogInsert:
+					m.activeView = IssueListView
+				case worklogUpdate:
+					m.activeView = WorklogView
+				}
 				for i := range m.trackingInputs {
 					m.trackingInputs[i].SetValue("")
 				}

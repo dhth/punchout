@@ -44,12 +44,19 @@ func (m model) View() string {
 `,
 			formFieldNameStyle.Render(RightPadTrim("Comment:", 16)),
 			m.trackingInputs[entryComment].View(),
-			formContextStyle.Render("Press ctrl+d to submit"),
+			formContextStyle.Render("Press enter to submit"),
 		)
 		for i := 0; i < m.terminalHeight-20+10; i++ {
 			content += "\n"
 		}
 	case ManualWorklogEntryView:
+		var formHeadingText string
+		switch m.worklogSaveType {
+		case worklogInsert:
+			formHeadingText = "Adding a manual entry. Enter the following details:"
+		case worklogUpdate:
+			formHeadingText = "Updating worklog entry. Enter the following details:"
+		}
 
 		content = fmt.Sprintf(
 			`
@@ -70,14 +77,14 @@ func (m model) View() string {
 
     %s
 `,
-			formContextStyle.Render("Adding a manual entry. Entry the following details:"),
+			formContextStyle.Render(formHeadingText),
 			formFieldNameStyle.Render("Begin Time  (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryBeginTS].View(),
 			formFieldNameStyle.Render("End Time  (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryEndTS].View(),
 			formFieldNameStyle.Render(RightPadTrim("Comment:", 16)),
 			m.trackingInputs[entryComment].View(),
-			formContextStyle.Render("Press ctrl+d to submit"),
+			formContextStyle.Render("Press enter to submit"),
 		)
 		for i := 0; i < m.terminalHeight-20; i++ {
 			content += "\n"
@@ -86,7 +93,7 @@ func (m model) View() string {
 		if !m.helpVPReady {
 			content = "\n  Initializing..."
 		} else {
-			content = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n", helpTitleStyle.Render("Help"), m.helpVP.View()))
+			content = viewPortStyle.Render(fmt.Sprintf("%s\n\n%s\n", helpTitleStyle.Render("Help"), m.helpVP.View()))
 		}
 	}
 
