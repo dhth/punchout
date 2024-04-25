@@ -93,7 +93,7 @@ func (m model) View() string {
 		if !m.helpVPReady {
 			content = "\n  Initializing..."
 		} else {
-			content = viewPortStyle.Render(fmt.Sprintf("%s\n\n%s\n", helpTitleStyle.Render("Help"), m.helpVP.View()))
+			content = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n", helpTitleStyle.Render("Help"), m.helpVP.View()))
 		}
 	}
 

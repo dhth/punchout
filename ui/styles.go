@@ -6,9 +6,13 @@ import (
 )
 
 const (
-	ActiveIssueColor  = "#d3869b"
-	IssueStatusColor  = "#665c54"
-	AggTimeSpentColor = "#928374"
+	ActiveIssueColor   = "#d3869b"
+	IssueStatusColor   = "#665c54"
+	AggTimeSpentColor  = "#928374"
+	helpMsgColor       = "#83a598"
+	helpViewTitleColor = "#83a598"
+	helpHeaderColor    = "#83a598"
+	helpSectionColor   = "#fabd2f"
 )
 
 var (
@@ -22,7 +26,11 @@ var (
 			Foreground(lipgloss.Color("#83a598"))
 
 	baseListStyle = lipgloss.NewStyle().PaddingTop(1).PaddingRight(2).PaddingLeft(1).PaddingBottom(1)
-	viewPortStyle = baseListStyle.Copy().Width(150).PaddingLeft(4)
+	viewPortStyle = lipgloss.NewStyle().
+			PaddingTop(1).
+			PaddingRight(2).
+			PaddingLeft(1).
+			PaddingBottom(1)
 
 	stackListStyle = baseListStyle.Copy()
 
@@ -54,11 +62,6 @@ var (
 	activeIssueMsgStyle = baseStyle.Copy().
 				Bold(true).
 				Foreground(lipgloss.Color(ActiveIssueColor))
-
-	helpTitleStyle = baseStyle.Copy().
-			Bold(true).
-			Background(lipgloss.Color("#8ec07c")).
-			Align(lipgloss.Left)
 
 	issueTypeColors = []string{"#928374", "#d3869b", "#fabd2f", "#8ec07c", "#83a598", "#b8bb26", "#fe8019"}
 
@@ -106,4 +109,16 @@ var (
 	aggTimeSpentStyle = lipgloss.NewStyle().
 				PaddingLeft(2).
 				Foreground(lipgloss.Color(AggTimeSpentColor))
+
+	helpTitleStyle = baseStyle.Copy().
+			Bold(true).
+			Background(lipgloss.Color(helpViewTitleColor)).
+			Align(lipgloss.Left)
+
+	helpHeaderStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color(helpHeaderColor))
+
+	helpSectionStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color(helpSectionColor))
 )
