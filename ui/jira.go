@@ -2,9 +2,14 @@ package ui
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	jira "github.com/andygrunwald/go-jira/v2/onpremise"
+)
+
+var (
+	jiraRepliedWithEmptyWorklogErr = errors.New("JIRA replied with an empty worklog; something is probably wrong")
 )
 
 func getIssues(cl *jira.Client, jql string) ([]jira.Issue, error) {
@@ -26,10 +31,13 @@ func addWLtoJira(cl *jira.Client, entry WorklogEntry, timeDeltaMins int) error {
 		TimeSpentSeconds: timeSpentSecs,
 		Comment:          entry.Comment,
 	}
-	_, _, err := cl.Issue.AddWorklogRecord(context.Background(),
+	cwl, _, err := cl.Issue.AddWorklogRecord(context.Background(),
 		entry.IssueKey,
 		&wl,
 	)
-	return err
 
+	if cwl != nil && cwl.Started == nil {
+		return jiraRepliedWithEmptyWorklogErr
+	}
+	return err
 }

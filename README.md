@@ -9,7 +9,7 @@
   <img src="https://tools.dhruvs.space/images/punchout/punchout.gif" alt="Usage" />
 </p>
 
-Install
+💾 Install
 ---
 
 **homebrew**:
@@ -36,8 +36,6 @@ Create a toml file that looks like the following. The default location for this
 file is `~/.config/punchout/punchout.toml`.
 
 ```toml
-db_path = "/path/to/punchout/db/file.db"
-
 [jira]
 jira_url = "https://jira.company.com"
 jira_token = "XXX"
@@ -75,7 +73,7 @@ punchout \
     jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC'
 ```
 
-Screenshots
+🖥️ Screenshots
 ---
 
 <p align="center">
@@ -88,47 +86,54 @@ Screenshots
   <img src="https://tools.dhruvs.space/images/punchout/punchout-3.png" alt="Usage" />
 </p>
 
-Reference Manual
+📋 Reference Manual
 ---
 
 ```
 punchout Reference Manual
 
-punchout has 3 panes:
-- Issues List View              Shows you issues matching your JQL query
-- Worklog List View             Shows you your worklog entries; you sync these entries
-                                to JIRA from here
-- Worklog Entry View            You enter/update a worklog entry from here
+punchout has 4 panes:
+  - Issues List View                  Shows you issues matching your JQL query
+  - Worklog List View                 Shows you your worklog entries; you sync these entries
+                                      to JIRA from here
+  - Worklog Entry View                You enter/update a worklog entry from here
+  - Help View (this one)
 
-Keyboard Shortcuts:
+Keyboard Shortcuts
 
 General
-    1                           Switch to Issues List View
-    2                           Switch to Worklog List View
-    <tab>                       Go to next view/form entry
-    <shift+tab>                 Go to previous view/form entry
+
+  1                                   Switch to Issues List View
+  2                                   Switch to Worklog List View
+  <tab>                               Go to next view/form entry
+  <shift+tab>                         Go to previous view/form entry
+    ?                                 Show help view
 
 General List Controls
-    h/<Up>                      Move cursor up
-    k/<Down>                    Move cursor down
-    h<Left>                     Go to previous page
-    l<Right>                    Go to next page
-    /                           Start filtering
+
+  h/<Up>                              Move cursor up
+  k/<Down>                            Move cursor down
+  h<Left>                             Go to previous page
+  l<Right>                            Go to next page
+  /                                   Start filtering
 
 Issue List View
-    s                           Toggle recording time on the currently selected issue,
-                                will open up a form to record a comment on the second
-                                "s" keypress
-    <ctrl+s>                    Add manual worklog entry
+
+  s                                   Toggle recording time on the currently selected issue,
+                                          will open up a form to record a comment on the second
+                                      "s" keypress
+  <ctrl+s>                            Add manual worklog entry
 
 Worklog List View
-    <ctrl+s>                    Update worklog entry
-    <ctrl+d>                    Delete worklog entry
-    s                           Sync all visible entries to JIRA
-    <ctrl+r>                    Refresh list
+
+  <ctrl+s>                            Update worklog entry
+  <ctrl+d>                            Delete worklog entry
+  s                                   Sync all visible entries to JIRA
+  <ctrl+r>                            Refresh list
 
 Worklog Entry View
-    enter                       Save worklog entry
+
+  enter                               Save worklog entry
 ```
 
 Acknowledgements

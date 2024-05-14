@@ -27,16 +27,16 @@ var (
 func Execute() {
 	currentUser, err := user.Current()
 
-	var defaultConfigFP string
-	if err == nil {
-		defaultConfigFP = fmt.Sprintf("%s/.config/punchout/punchout.toml", currentUser.HomeDir)
+	if err != nil {
+		die("Error getting your home directory, explicitly specify the path for the config file using -config-file-path")
 	}
+
+	var defaultConfigFP string
+	defaultConfigFP = fmt.Sprintf("%s/.config/punchout/punchout.toml", currentUser.HomeDir)
 	configFilePath := flag.String("config-file-path", defaultConfigFP, "location of the punchout config file")
 
 	var defaultDBPath string
-	if err == nil {
-		defaultDBPath = fmt.Sprintf("%s/punchout.v%s.db", currentUser.HomeDir, PUNCHOUT_DB_VERSION)
-	}
+	defaultDBPath = fmt.Sprintf("%s/punchout.v%s.db", currentUser.HomeDir, PUNCHOUT_DB_VERSION)
 	dbPath := flag.String("db-path", defaultDBPath, "location where punchout should create its DB file")
 
 	flag.Usage = func() {
@@ -51,6 +51,12 @@ func Execute() {
 		die("config-file-path cannot be empty")
 	}
 
+	if *dbPath == "" {
+		die("db-path cannot be empty")
+	}
+
+	dbPathFull := expandTilde(*dbPath)
+
 	var jiraTimeDeltaMins int
 	if *jiraTimeDeltaMinsStr != "" {
 		jiraTimeDeltaMins, err = strconv.Atoi(*jiraTimeDeltaMinsStr)
@@ -62,10 +68,6 @@ func Execute() {
 	poCfg, err := readConfig(*configFilePath)
 	if err != nil {
 		die("error reading config at %s: %s", *configFilePath, err.Error())
-	}
-	if *dbPath != "" {
-		expandedPath := expandTilde(*dbPath)
-		poCfg.DbPath = &expandedPath
 	}
 
 	if *jiraURL != "" {
@@ -87,7 +89,7 @@ func Execute() {
 	if *listConfig {
 		fmt.Fprint(os.Stdout, "Config:\n\n")
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("Config File Path", configKeyMaxLen), *configFilePath)
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("DB File Path", configKeyMaxLen), *poCfg.DbPath)
+		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("DB File Path", configKeyMaxLen), dbPathFull)
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA URL", configKeyMaxLen), *poCfg.Jira.JiraURL)
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA Token", configKeyMaxLen), *poCfg.Jira.JiraToken)
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JQL", configKeyMaxLen), *poCfg.Jira.Jql)
@@ -96,9 +98,6 @@ func Execute() {
 	}
 
 	// validations
-	if *poCfg.DbPath == "" {
-		die("db-path cannot be empty")
-	}
 
 	if *poCfg.Jira.JiraURL == "" {
 		die("jira-url cannot be empty")
@@ -112,7 +111,7 @@ func Execute() {
 		die("jql cannot be empty")
 	}
 
-	db, err := setupDB(*poCfg.DbPath)
+	db, err := setupDB(dbPathFull)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Couldn't set up punchout database. This is a fatal error\n")
 		os.Exit(1)

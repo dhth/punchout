@@ -12,8 +12,7 @@ type JiraConfig struct {
 }
 
 type POConfig struct {
-	DbPath *string `toml:"db_path"`
-	Jira   JiraConfig
+	Jira JiraConfig
 }
 
 func readConfig(filePath string) (POConfig, error) {
@@ -22,9 +21,6 @@ func readConfig(filePath string) (POConfig, error) {
 	_, err := toml.DecodeFile(expandTilde(filePath), &config)
 	if err != nil {
 		return config, err
-	}
-	if config.DbPath != nil {
-		*config.DbPath = expandTilde(*config.DbPath)
 	}
 
 	return config, nil
