@@ -92,7 +92,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.activeView {
 			case IssueListView:
 				m.activeView = WorklogView
+				cmds = append(cmds, fetchLogEntries(m.db))
 			case WorklogView:
+				m.activeView = SyncedWorklogView
+				cmds = append(cmds, fetchSyncedLogEntries(m.db))
+			case SyncedWorklogView:
 				m.activeView = IssueListView
 			case ManualWorklogEntryView:
 				switch m.trackingFocussedField {
@@ -112,8 +116,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.activeView {
 			case WorklogView:
 				m.activeView = IssueListView
-			case IssueListView:
+			case SyncedWorklogView:
 				m.activeView = WorklogView
+				cmds = append(cmds, fetchLogEntries(m.db))
+			case IssueListView:
+				m.activeView = SyncedWorklogView
+				cmds = append(cmds, fetchSyncedLogEntries(m.db))
 			case ManualWorklogEntryView:
 				switch m.trackingFocussedField {
 				case entryBeginTS:
@@ -165,6 +173,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case HelpView:
 				m.activeView = IssueListView
+			default:
+				return m, tea.Quit
 			}
 		case "1":
 			if m.activeView != IssueListView {
@@ -175,6 +185,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.activeView = WorklogView
 				cmds = append(cmds, fetchLogEntries(m.db))
 			}
+		case "3":
+			if m.activeView != SyncedWorklogView {
+				m.activeView = SyncedWorklogView
+				cmds = append(cmds, fetchSyncedLogEntries(m.db))
+			}
 		case "ctrl+r":
 			switch m.activeView {
 			case IssueListView:
@@ -182,6 +197,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case WorklogView:
 				cmds = append(cmds, fetchLogEntries(m.db))
 				m.worklogList.ResetSelected()
+			case SyncedWorklogView:
+				cmds = append(cmds, fetchSyncedLogEntries(m.db))
+				m.syncedWorklogList.ResetSelected()
 			}
 		case "ctrl+s":
 			if m.activeView == IssueListView {
@@ -283,6 +301,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.terminalHeight = msg.Height
 		m.issueList.SetHeight(msg.Height - h - 2)
 		m.worklogList.SetHeight(msg.Height - h - 2)
+		m.syncedWorklogList.SetHeight(msg.Height - h - 2)
 		if !m.helpVPReady {
 			m.helpVP = viewport.New(w-5, m.terminalHeight-7)
 			m.helpVP.HighPerformanceRendering = useHighPerformanceRenderer
@@ -348,6 +367,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				items = append(items, list.Item(e))
 			}
 			m.worklogList.SetItems(items)
+		}
+	case SyncedLogEntriesFetchedMsg:
+		if msg.err != nil {
+			message := msg.err.Error()
+			m.message = "Error fetching synced worklog entries: " + message
+			m.messages = append(m.messages, message)
+		} else {
+			var items []list.Item
+			for _, e := range msg.entries {
+				items = append(items, list.Item(e))
+			}
+			m.syncedWorklogList.SetItems(items)
 		}
 	case UpdateEntryMsg:
 		if msg.err != nil {
@@ -425,6 +456,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case WorklogView:
 		m.worklogList, cmd = m.worklogList.Update(msg)
+		cmds = append(cmds, cmd)
+	case SyncedWorklogView:
+		m.syncedWorklogList, cmd = m.syncedWorklogList.Update(msg)
 		cmds = append(cmds, cmd)
 	case HelpView:
 		m.helpVP, cmd = m.helpVP.Update(msg)

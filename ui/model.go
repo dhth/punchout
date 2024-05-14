@@ -30,6 +30,7 @@ type StateView uint
 const (
 	IssueListView StateView = iota
 	WorklogView
+	SyncedWorklogView
 	AskForCommentView
 	ManualWorklogEntryView
 	HelpView
@@ -55,27 +56,29 @@ const (
 )
 
 type model struct {
-	activeView            StateView
-	lastView              StateView
-	db                    *sql.DB
-	jiraClient            *jira.Client
-	jql                   string
-	issueList             list.Model
-	worklogList           list.Model
-	trackingInputs        []textinput.Model
-	trackingFocussedField trackingFocussedField
-	helpVP                viewport.Model
-	helpVPReady           bool
-	lastChange            DBChange
-	changesLocked         bool
-	activeIssue           string
-	worklogSaveType       worklogSaveType
-	message               string
-	errorMessage          string
-	messages              []string
-	jiraTimeDeltaMins     int
-	showHelpIndicator     bool
-	terminalHeight        int
+	activeView             StateView
+	lastView               StateView
+	db                     *sql.DB
+	jiraClient             *jira.Client
+	jql                    string
+	issueList              list.Model
+	worklogList            list.Model
+	syncedWorklogList      list.Model
+	syncedWLEntriesFetched bool
+	trackingInputs         []textinput.Model
+	trackingFocussedField  trackingFocussedField
+	helpVP                 viewport.Model
+	helpVPReady            bool
+	lastChange             DBChange
+	changesLocked          bool
+	activeIssue            string
+	worklogSaveType        worklogSaveType
+	message                string
+	errorMessage           string
+	messages               []string
+	jiraTimeDeltaMins      int
+	showHelpIndicator      bool
+	terminalHeight         int
 }
 
 func (m model) Init() tea.Cmd {

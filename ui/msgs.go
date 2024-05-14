@@ -38,6 +38,11 @@ type LogEntriesFetchedMsg struct {
 	err     error
 }
 
+type SyncedLogEntriesFetchedMsg struct {
+	entries []SyncedWorklogEntry
+	err     error
+}
+
 type LogEntriesDeletedMsg struct {
 	err error
 }

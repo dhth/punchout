@@ -131,6 +131,16 @@ func fetchLogEntries(db *sql.DB) tea.Cmd {
 	}
 }
 
+func fetchSyncedLogEntries(db *sql.DB) tea.Cmd {
+	return func() tea.Msg {
+		entries, err := fetchSyncedEntries(db)
+		return SyncedLogEntriesFetchedMsg{
+			entries: entries,
+			err:     err,
+		}
+	}
+}
+
 func deleteLogEntry(db *sql.DB, id int) tea.Cmd {
 	return func() tea.Msg {
 		err := deleteEntry(db, id)

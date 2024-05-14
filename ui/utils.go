@@ -77,7 +77,7 @@ func fetchEntries(db *sql.DB) ([]WorklogEntry, error) {
 SELECT ID, issue_key, begin_ts, end_ts, comment, active, synced
 FROM issue_log
 WHERE active=false AND synced=false
-ORDER by begin_ts ASC;
+ORDER by begin_ts DESC;
     `)
 	if err != nil {
 		return nil, err
@@ -93,6 +93,38 @@ ORDER by begin_ts ASC;
 			&entry.Comment,
 			&entry.Active,
 			&entry.Synced,
+		)
+		if err != nil {
+			return nil, err
+		}
+		logEntries = append(logEntries, entry)
+
+	}
+	return logEntries, nil
+}
+
+func fetchSyncedEntries(db *sql.DB) ([]SyncedWorklogEntry, error) {
+
+	var logEntries []SyncedWorklogEntry
+
+	rows, err := db.Query(`
+SELECT ID, issue_key, begin_ts, end_ts, comment
+FROM issue_log
+WHERE active=false AND synced=true
+ORDER by begin_ts DESC LIMIT 30;
+    `)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var entry SyncedWorklogEntry
+		err = rows.Scan(&entry.Id,
+			&entry.IssueKey,
+			&entry.BeginTS,
+			&entry.EndTS,
+			&entry.Comment,
 		)
 		if err != nil {
 			return nil, err

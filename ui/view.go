@@ -32,6 +32,8 @@ func (m model) View() string {
 		content = stackListStyle.Render(m.issueList.View())
 	case WorklogView:
 		content = stackListStyle.Render(m.worklogList.View())
+	case SyncedWorklogView:
+		content = stackListStyle.Render(m.syncedWorklogList.View())
 	case AskForCommentView:
 		content = fmt.Sprintf(
 			`

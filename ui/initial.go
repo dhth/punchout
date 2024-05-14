@@ -12,6 +12,7 @@ import (
 func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDeltaMins int) model {
 	var stackItems []list.Item
 	var worklogListItems []list.Item
+	var syncedWorklogListItems []list.Item
 
 	itemDel := newItemDelegate()
 
@@ -40,6 +41,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDelta
 		jql:               jql,
 		issueList:         list.New(stackItems, itemDel, listWidth, 0),
 		worklogList:       list.New(worklogListItems, itemDel, listWidth, 0),
+		syncedWorklogList: list.New(syncedWorklogListItems, itemDel, listWidth, 0),
 		jiraTimeDeltaMins: jiraTimeDeltaMins,
 		showHelpIndicator: true,
 		trackingInputs:    trackingInputs,
@@ -60,6 +62,15 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDelta
 	m.worklogList.Styles.Title.Foreground(lipgloss.Color("#282828"))
 	m.worklogList.Styles.Title.Background(lipgloss.Color("#fe8019"))
 	m.worklogList.Styles.Title.Bold(true)
+
+	m.syncedWorklogList.Title = "Synced Worklog Entries (from local db)"
+	m.syncedWorklogList.SetStatusBarItemName("entry", "entries")
+	m.syncedWorklogList.SetFilteringEnabled(false)
+	m.syncedWorklogList.DisableQuitKeybindings()
+	m.syncedWorklogList.SetShowHelp(false)
+	m.syncedWorklogList.Styles.Title.Foreground(lipgloss.Color("#282828"))
+	m.syncedWorklogList.Styles.Title.Background(lipgloss.Color("#fe8019"))
+	m.syncedWorklogList.Styles.Title.Bold(true)
 
 	return m
 }

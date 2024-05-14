@@ -57,6 +57,14 @@ type WorklogEntry struct {
 	Error          error
 }
 
+type SyncedWorklogEntry struct {
+	Id       int
+	IssueKey string
+	BeginTS  time.Time
+	EndTS    time.Time
+	Comment  string
+}
+
 func (entry WorklogEntry) Title() string {
 	return entry.Comment
 }
@@ -83,3 +91,17 @@ func (entry WorklogEntry) Description() string {
 	)
 }
 func (entry WorklogEntry) FilterValue() string { return entry.IssueKey }
+
+func (entry SyncedWorklogEntry) Title() string {
+	return entry.Comment
+}
+func (entry SyncedWorklogEntry) Description() string {
+	minsSpent := int(entry.EndTS.Sub(entry.BeginTS).Minutes())
+	minsSpentStr := fmt.Sprintf("spent %d mins", minsSpent)
+	return fmt.Sprintf("%s%s%s",
+		RightPadTrim(entry.IssueKey, int(listWidth/4)),
+		RightPadTrim("started: "+entry.BeginTS.Format("Mon, 3:04pm"), int(listWidth/4)),
+		RightPadTrim(minsSpentStr, int(listWidth/4)),
+	)
+}
+func (entry SyncedWorklogEntry) FilterValue() string { return entry.IssueKey }
