@@ -7,10 +7,10 @@ import (
 
 const (
 	trackingColor           = "#fabd2f"
-	ActiveIssueKeyColor     = "#d3869b"
-	ActiveIssueSummaryColor = "#8ec07c"
-	IssueStatusColor        = "#665c54"
-	AggTimeSpentColor       = "#928374"
+	activeIssueKeyColor     = "#d3869b"
+	activeIssueSummaryColor = "#8ec07c"
+	issueStatusColor        = "#665c54"
+	aggTimeSpentColor       = "#928374"
 	helpMsgColor            = "#83a598"
 	helpViewTitleColor      = "#83a598"
 	helpHeaderColor         = "#83a598"
@@ -69,11 +69,11 @@ var (
 
 	activeIssueKeyMsgStyle = trackingStyle.Copy().
 				PaddingLeft(1).
-				Foreground(lipgloss.Color(ActiveIssueKeyColor))
+				Foreground(lipgloss.Color(activeIssueKeyColor))
 
 	activeIssueSummaryMsgStyle = trackingStyle.Copy().
 					PaddingLeft(1).
-					Foreground(lipgloss.Color(ActiveIssueSummaryColor))
+					Foreground(lipgloss.Color(activeIssueSummaryColor))
 
 	issueTypeColors = []string{"#928374", "#d3869b", "#fabd2f", "#8ec07c", "#83a598", "#b8bb26", "#fe8019"}
 
@@ -116,11 +116,11 @@ var (
 
 	issueStatusStyle = lipgloss.NewStyle().
 				PaddingLeft(1).
-				Foreground(lipgloss.Color(IssueStatusColor))
+				Foreground(lipgloss.Color(issueStatusColor))
 
 	aggTimeSpentStyle = lipgloss.NewStyle().
 				PaddingLeft(2).
-				Foreground(lipgloss.Color(AggTimeSpentColor))
+				Foreground(lipgloss.Color(aggTimeSpentColor))
 
 	helpTitleStyle = baseStyle.Copy().
 			Bold(true).

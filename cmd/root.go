@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	jira "github.com/andygrunwald/go-jira/v2/onpremise"
-	"github.com/dhth/punchout/ui"
+	"github.com/dhth/punchout/internal/ui"
 )
 
 func die(msg string, args ...any) {
