@@ -4,13 +4,9 @@ type HideHelpMsg struct{}
 
 type TrackingToggledMsg struct {
 	activeIssue string
+	issueIndex  int
 	finished    bool
 	err         error
-}
-
-type InsertEntryMsg struct {
-	issueKey string
-	err      error
 }
 
 type ManualEntryInserted struct {
@@ -22,10 +18,6 @@ type ManualEntryUpdated struct {
 	rowId    int
 	issueKey string
 	err      error
-}
-
-type UpdateEntryMsg struct {
-	err error
 }
 
 type FetchActiveMsg struct {

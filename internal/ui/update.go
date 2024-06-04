@@ -20,6 +20,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if m.issueList.FilterState() == list.Filtering {
+			m.issueList, cmd = m.issueList.Update(msg)
+			cmds = append(cmds, cmd)
+			return m, tea.Batch(cmds...)
+		}
+	}
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
 			switch m.activeView {
@@ -56,11 +65,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				for i := range m.trackingInputs {
 					m.trackingInputs[i].SetValue("")
 				}
-				issue, ok := m.issueList.SelectedItem().(Issue)
+				issue, ok := m.issueList.SelectedItem().(*Issue)
 				if ok {
 					switch m.worklogSaveType {
 					case worklogInsert:
-						cmds = append(cmds, insertManualEntry(m.db, issue.IssueKey, beginTS.Local(), endTS.Local(), comment))
+						cmds = append(cmds, insertManualEntry(m.db, issue.issueKey, beginTS.Local(), endTS.Local(), comment))
 						m.activeView = IssueListView
 					case worklogUpdate:
 						wl, ok := m.worklogList.SelectedItem().(WorklogEntry)
@@ -201,8 +210,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, fetchSyncedLogEntries(m.db))
 				m.syncedWorklogList.ResetSelected()
 			}
-		case "ctrl+s":
+		case "ctrl+t":
 			if m.activeView == IssueListView {
+				if m.trackingActive {
+					if m.issueList.IsFiltered() {
+						m.issueList.ResetFilter()
+					}
+					activeIndex, ok := m.issueIndexMap[m.activeIssue]
+					if ok {
+						m.issueList.Select(activeIndex)
+					}
+				} else {
+					m.message = "Nothing is being tracked right now"
+				}
+			}
+		case "ctrl+s":
+			if m.activeView == IssueListView && !m.trackingActive {
 				m.activeView = ManualWorklogEntryView
 				m.worklogSaveType = worklogInsert
 				m.trackingFocussedField = entryBeginTS
@@ -259,7 +282,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.message = message
 						m.messages = append(m.messages, message)
 					}
-					issue, ok := m.issueList.SelectedItem().(Issue)
+					issue, ok := m.issueList.SelectedItem().(*Issue)
 					if !ok {
 						message := "Something went horribly wrong"
 						m.message = message
@@ -267,7 +290,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					} else {
 						if m.lastChange == UpdateChange {
 							m.changesLocked = true
-							cmds = append(cmds, toggleTracking(m.db, issue.IssueKey, ""))
+							cmds = append(cmds, toggleTracking(m.db, issue.issueKey, ""))
 						} else if m.lastChange == InsertChange {
 							m.activeView = AskForCommentView
 							m.trackingFocussedField = entryComment
@@ -319,21 +342,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.messages = append(m.messages, message)
 		} else {
 			issues := make([]list.Item, 0, len(msg.issues))
-			for _, issue := range msg.issues {
-				issues = append(issues, issue)
-				m.issueMap[issue.IssueKey] = &issue
+			for i, issue := range msg.issues {
+				issues = append(issues, &issue)
+				m.issueMap[issue.issueKey] = &issue
+				m.issueIndexMap[issue.issueKey] = i
 			}
 			m.issueList.SetItems(issues)
 			m.issueList.Title = "Issues"
 			m.issuesFetched = true
-		}
-	case InsertEntryMsg:
-		if msg.err != nil {
-			message := msg.err.Error()
-			m.message = message
-			m.messages = append(m.messages, message)
-		} else {
-			m.activeIssue = msg.issueKey
+
+			cmds = append(cmds, fetchActiveStatus(m.db, 0))
 		}
 	case ManualEntryInserted:
 		if msg.err != nil {
@@ -341,7 +359,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.message = "Error inserting worklog: " + message
 			m.messages = append(m.messages, message)
 		} else {
-			m.message = "Manual entry saved"
 			for i := range m.trackingInputs {
 				m.trackingInputs[i].SetValue("")
 			}
@@ -382,14 +399,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.syncedWorklogList.SetItems(items)
 		}
-	case UpdateEntryMsg:
-		if msg.err != nil {
-			message := msg.err.Error()
-			m.message = message
-			m.messages = append(m.messages, message)
-		} else {
-			m.activeIssue = ""
-		}
 	case LogEntrySyncUpdated:
 		if msg.err != nil {
 			msg.entry.Error = msg.err
@@ -407,6 +416,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.lastChange = UpdateChange
 			} else {
 				m.lastChange = InsertChange
+				activeIssue, ok := m.issueMap[m.activeIssue]
+				if ok {
+					activeIssue.trackingActive = true
+
+					// go to tracked item on startup
+					activeIndex, ok := m.issueIndexMap[msg.activeIssue]
+					if ok {
+						m.issueList.Select(activeIndex)
+					}
+				}
+				m.trackingActive = true
 			}
 		}
 	case LogEntriesDeletedMsg:
@@ -434,15 +454,29 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			message := msg.err.Error()
 			m.message = message
 			m.messages = append(m.messages, message)
+			m.trackingActive = false
 		} else {
-			m.activeIssue = msg.activeIssue
+			var activeIssue *Issue
+			if msg.activeIssue != "" {
+				activeIssue = m.issueMap[msg.activeIssue]
+			} else {
+				activeIssue = m.issueMap[m.activeIssue]
+			}
 			m.changesLocked = false
 			if msg.finished {
 				m.lastChange = UpdateChange
-				m.message = "Saved!"
+				if activeIssue != nil {
+					activeIssue.trackingActive = false
+				}
+				m.trackingActive = false
 			} else {
 				m.lastChange = InsertChange
+				if activeIssue != nil {
+					activeIssue.trackingActive = true
+				}
+				m.trackingActive = true
 			}
+			m.activeIssue = msg.activeIssue
 		}
 	case HideHelpMsg:
 		m.showHelpIndicator = false

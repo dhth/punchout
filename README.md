@@ -126,6 +126,7 @@ Issue List View
                                               will open up a form to record a comment on the second
                                           "s" keypress
   <ctrl+s>                                Add manual worklog entry
+  <ctrl+t>                                Go to currently tracked item
 
 Worklog List View
 

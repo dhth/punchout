@@ -27,9 +27,9 @@ func (m model) View() string {
 		var issueSummaryMsg string
 		issue, ok := m.issueMap[m.activeIssue]
 		if ok {
-			issueSummaryMsg = fmt.Sprintf("(%s)", Trim(issue.Summary, 50))
+			issueSummaryMsg = fmt.Sprintf("(%s)", Trim(issue.summary, 50))
 		}
-		activeMsg = fmt.Sprintf("%s%s%s ⚡️",
+		activeMsg = fmt.Sprintf("%s%s%s",
 			trackingStyle.Render("tracking:"),
 			activeIssueKeyMsgStyle.Render(m.activeIssue),
 			activeIssueSummaryMsgStyle.Render(issueSummaryMsg),

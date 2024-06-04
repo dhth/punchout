@@ -29,7 +29,7 @@ brews:
     repository:
       owner: dhth
       name: homebrew-tap
-    folder: Formula
+    directory: Formula
     license: MIT
     homepage: "https://github.com/dhth/punchout"
     description: "punchout takes the suck out of logging time on JIRA"

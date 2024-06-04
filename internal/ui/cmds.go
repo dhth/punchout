@@ -181,7 +181,7 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 
 				}
 			}
-			issues = append(issues, Issue{issue.Key, issue.Fields.Type.Name, issue.Fields.Summary, assignee, status, totalSecsSpent})
+			issues = append(issues, Issue{issue.Key, issue.Fields.Type.Name, issue.Fields.Summary, assignee, status, totalSecsSpent, false})
 		}
 		return IssuesFetchedFromJIRAMsg{issues, err}
 	}

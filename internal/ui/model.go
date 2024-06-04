@@ -63,6 +63,7 @@ type model struct {
 	jql                    string
 	issueList              list.Model
 	issueMap               map[string]*Issue
+	issueIndexMap          map[string]int
 	issuesFetched          bool
 	worklogList            list.Model
 	syncedWorklogList      list.Model
@@ -81,12 +82,12 @@ type model struct {
 	jiraTimeDeltaMins      int
 	showHelpIndicator      bool
 	terminalHeight         int
+	trackingActive         bool
 }
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		hideHelp(time.Minute*1),
 		fetchJIRAIssues(m.jiraClient, m.jql),
-		fetchActiveStatus(m.db, 0),
 	)
 }

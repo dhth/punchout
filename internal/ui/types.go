@@ -6,16 +6,21 @@ import (
 )
 
 type Issue struct {
-	IssueKey        string
-	IssueType       string
-	Summary         string
-	Assignee        string
-	Status          string
-	AggSecondsSpent int
+	issueKey        string
+	issueType       string
+	summary         string
+	assignee        string
+	status          string
+	aggSecondsSpent int
+	trackingActive  bool
 }
 
 func (issue Issue) Title() string {
-	return RightPadTrim(issue.Summary, int(float64(listWidth)*0.8))
+	var trackingIndicator string
+	if issue.trackingActive {
+		trackingIndicator = "⏲ "
+	}
+	return RightPadTrim(trackingIndicator+issue.summary, int(float64(listWidth)*0.8))
 }
 func (issue Issue) Description() string {
 	// TODO: The padding here is a bit of a mess; make it more readable
@@ -23,27 +28,27 @@ func (issue Issue) Description() string {
 	var status string
 	var totalSecsSpent string
 
-	issueType := getIssueTypeStyle(issue.IssueType).Render(Trim(issue.IssueType, int(float64(listWidth)*0.2)))
+	issueType := getIssueTypeStyle(issue.issueType).Render(Trim(issue.issueType, int(float64(listWidth)*0.2)))
 
-	if issue.Assignee != "" {
-		assignee = assigneeStyle(issue.Assignee).Render(RightPadTrim("@"+issue.Assignee, int(float64(listWidth)*0.2)))
+	if issue.assignee != "" {
+		assignee = assigneeStyle(issue.assignee).Render(RightPadTrim("@"+issue.assignee, int(float64(listWidth)*0.2)))
 	} else {
-		assignee = assigneeStyle(issue.Assignee).Render(RightPadTrim("", int(float64(listWidth)*0.2)))
+		assignee = assigneeStyle(issue.assignee).Render(RightPadTrim("", int(float64(listWidth)*0.2)))
 	}
 
-	status = issueStatusStyle.Render(RightPadTrim(issue.Status, int(float64(listWidth)*0.2)))
+	status = issueStatusStyle.Render(RightPadTrim(issue.status, int(float64(listWidth)*0.2)))
 
-	if issue.AggSecondsSpent > 0 {
-		if issue.AggSecondsSpent < 3600 {
-			totalSecsSpent = aggTimeSpentStyle.Render(fmt.Sprintf("%2dm", int(issue.AggSecondsSpent/60)))
+	if issue.aggSecondsSpent > 0 {
+		if issue.aggSecondsSpent < 3600 {
+			totalSecsSpent = aggTimeSpentStyle.Render(fmt.Sprintf("%2dm", int(issue.aggSecondsSpent/60)))
 		} else {
-			totalSecsSpent = aggTimeSpentStyle.Render(fmt.Sprintf("%2dh", int(issue.AggSecondsSpent/3600)))
+			totalSecsSpent = aggTimeSpentStyle.Render(fmt.Sprintf("%2dh", int(issue.aggSecondsSpent/3600)))
 		}
 	}
 
-	return fmt.Sprintf("%s%s%s%s%s", RightPadTrim(issue.IssueKey, int(float64(listWidth)*0.3)), status, assignee, issueType, totalSecsSpent)
+	return fmt.Sprintf("%s%s%s%s%s", RightPadTrim(issue.issueKey, int(float64(listWidth)*0.3)), status, assignee, issueType, totalSecsSpent)
 }
-func (issue Issue) FilterValue() string { return issue.IssueKey }
+func (issue Issue) FilterValue() string { return issue.issueKey }
 
 type WorklogEntry struct {
 	Id             int
