@@ -62,6 +62,8 @@ type model struct {
 	jiraClient             *jira.Client
 	jql                    string
 	issueList              list.Model
+	issueMap               map[string]*Issue
+	issuesFetched          bool
 	worklogList            list.Model
 	syncedWorklogList      list.Model
 	syncedWLEntriesFetched bool
@@ -83,7 +85,7 @@ type model struct {
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
-		hideHelp(time.Second*15),
+		hideHelp(time.Minute*1),
 		fetchJIRAIssues(m.jiraClient, m.jql),
 		fetchActiveStatus(m.db, 0),
 	)

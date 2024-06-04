@@ -23,8 +23,17 @@ func (m model) View() string {
 		errorMsg = "error: " + Trim(m.errorMessage, 120)
 	}
 	var activeMsg string
-	if m.activeIssue != "" {
-		activeMsg = activeIssueMsgStyle.Render("tracking: " + m.activeIssue + " ⚡️")
+	if m.issuesFetched && m.activeIssue != "" {
+		var issueSummaryMsg string
+		issue, ok := m.issueMap[m.activeIssue]
+		if ok {
+			issueSummaryMsg = fmt.Sprintf("(%s)", Trim(issue.Summary, 50))
+		}
+		activeMsg = fmt.Sprintf("%s%s%s ⚡️",
+			trackingStyle.Render("tracking:"),
+			activeIssueKeyMsgStyle.Render(m.activeIssue),
+			activeIssueSummaryMsgStyle.Render(issueSummaryMsg),
+		)
 	}
 
 	switch m.activeView {

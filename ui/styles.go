@@ -6,13 +6,15 @@ import (
 )
 
 const (
-	ActiveIssueColor   = "#d3869b"
-	IssueStatusColor   = "#665c54"
-	AggTimeSpentColor  = "#928374"
-	helpMsgColor       = "#83a598"
-	helpViewTitleColor = "#83a598"
-	helpHeaderColor    = "#83a598"
-	helpSectionColor   = "#fabd2f"
+	trackingColor           = "#fabd2f"
+	ActiveIssueKeyColor     = "#d3869b"
+	ActiveIssueSummaryColor = "#8ec07c"
+	IssueStatusColor        = "#665c54"
+	AggTimeSpentColor       = "#928374"
+	helpMsgColor            = "#83a598"
+	helpViewTitleColor      = "#83a598"
+	helpHeaderColor         = "#83a598"
+	helpSectionColor        = "#fabd2f"
 )
 
 var (
@@ -21,7 +23,8 @@ var (
 			PaddingRight(1).
 			Foreground(lipgloss.Color("#282828"))
 
-	helpMsgStyle = baseStyle.Copy().
+	helpMsgStyle = lipgloss.NewStyle().
+			PaddingLeft(1).
 			Bold(true).
 			Foreground(lipgloss.Color("#83a598"))
 
@@ -59,9 +62,18 @@ var (
 	formFieldNameStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#504945"))
 
-	activeIssueMsgStyle = baseStyle.Copy().
-				Bold(true).
-				Foreground(lipgloss.Color(ActiveIssueColor))
+	trackingStyle = lipgloss.NewStyle().
+			PaddingLeft(2).
+			Bold(true).
+			Foreground(lipgloss.Color(trackingColor))
+
+	activeIssueKeyMsgStyle = trackingStyle.Copy().
+				PaddingLeft(1).
+				Foreground(lipgloss.Color(ActiveIssueKeyColor))
+
+	activeIssueSummaryMsgStyle = trackingStyle.Copy().
+					PaddingLeft(1).
+					Foreground(lipgloss.Color(ActiveIssueSummaryColor))
 
 	issueTypeColors = []string{"#928374", "#d3869b", "#fabd2f", "#8ec07c", "#83a598", "#b8bb26", "#fe8019"}
 

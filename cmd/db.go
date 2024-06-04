@@ -37,5 +37,10 @@ END;
 `); err != nil {
 		return nil, err
 	}
+
+	_, _ = db.Exec(`
+DELETE from issue_log 
+WHERE end_ts < DATE('now', '-60 days');
+`)
 	return db, nil
 }

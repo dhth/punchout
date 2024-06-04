@@ -40,6 +40,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDelta
 		jiraClient:        jiraClient,
 		jql:               jql,
 		issueList:         list.New(stackItems, itemDel, listWidth, 0),
+		issueMap:          make(map[string]*Issue),
 		worklogList:       list.New(worklogListItems, itemDel, listWidth, 0),
 		syncedWorklogList: list.New(syncedWorklogListItems, itemDel, listWidth, 0),
 		jiraTimeDeltaMins: jiraTimeDeltaMins,

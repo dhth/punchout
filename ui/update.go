@@ -321,9 +321,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			issues := make([]list.Item, 0, len(msg.issues))
 			for _, issue := range msg.issues {
 				issues = append(issues, issue)
+				m.issueMap[issue.IssueKey] = &issue
 			}
 			m.issueList.SetItems(issues)
 			m.issueList.Title = "Issues"
+			m.issuesFetched = true
 		}
 	case InsertEntryMsg:
 		if msg.err != nil {
