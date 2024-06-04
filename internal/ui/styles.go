@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	defaultBackgroundColor  = "#282828"
 	trackingColor           = "#fabd2f"
 	activeIssueKeyColor     = "#d3869b"
 	activeIssueSummaryColor = "#8ec07c"
@@ -21,7 +22,7 @@ var (
 	baseStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			PaddingRight(1).
-			Foreground(lipgloss.Color("#282828"))
+			Foreground(lipgloss.Color(defaultBackgroundColor))
 
 	helpMsgStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
@@ -75,7 +76,22 @@ var (
 					PaddingLeft(1).
 					Foreground(lipgloss.Color(activeIssueSummaryColor))
 
-	issueTypeColors = []string{"#928374", "#d3869b", "#fabd2f", "#8ec07c", "#83a598", "#b8bb26", "#fe8019"}
+	issueTypeColors = []string{
+		"#d3869b",
+		"#b5e48c",
+		"#90e0ef",
+		"#ca7df9",
+		"#ada7ff",
+		"#bbd0ff",
+		"#48cae4",
+		"#8187dc",
+		"#ffb4a2",
+		"#b8bb26",
+		"#ffc6ff",
+		"#4895ef",
+		"#83a598",
+		"#fabd2f",
+	}
 
 	getIssueTypeStyle = func(issueType string) lipgloss.Style {
 		h := fnv.New32()
@@ -85,7 +101,7 @@ var (
 		color := issueTypeColors[int(hash)%len(issueTypeColors)]
 		return lipgloss.NewStyle().
 			PaddingLeft(1).
-			Foreground(lipgloss.Color("#282828")).Copy().
+			Foreground(lipgloss.Color(defaultBackgroundColor)).Copy().
 			Bold(true).
 			Align(lipgloss.Center).
 			Width(18).

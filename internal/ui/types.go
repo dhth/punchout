@@ -20,7 +20,7 @@ func (issue Issue) Title() string {
 	if issue.trackingActive {
 		trackingIndicator = "⏲ "
 	}
-	return RightPadTrim(trackingIndicator+issue.summary, int(float64(listWidth)*0.8))
+	return trackingIndicator + RightPadTrim(issue.summary, int(float64(listWidth)*0.8))
 }
 func (issue Issue) Description() string {
 	// TODO: The padding here is a bit of a mess; make it more readable
