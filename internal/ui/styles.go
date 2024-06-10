@@ -11,7 +11,8 @@ const (
 	issueListColor          = "#fe8019"
 	worklogListColor        = "#fabd2f"
 	syncedWorklogListColor  = "#b8bb26"
-	trackingColor           = "#fabd2f"
+	trackingColor           = "#fe8019"
+	unsyncedCountColor      = "#fabd2f"
 	activeIssueKeyColor     = "#d3869b"
 	activeIssueSummaryColor = "#8ec07c"
 	issueStatusColor        = "#665c54"
@@ -22,7 +23,7 @@ const (
 	formFieldNameColor      = "#8ec07c"
 	formContextColor        = "#fabd2f"
 	aggTimeSpentColor       = "#928374"
-	helpMsgColor            = "#83a598"
+	helpMsgColor            = "#7c6f64"
 	helpViewTitleColor      = "#83a598"
 	helpHeaderColor         = "#83a598"
 	helpSectionColor        = "#fabd2f"
@@ -147,6 +148,11 @@ var (
 	aggTimeSpentStyle = lipgloss.NewStyle().
 				PaddingLeft(2).
 				Foreground(lipgloss.Color(aggTimeSpentColor))
+
+	unsyncedCountStyle = lipgloss.NewStyle().
+				PaddingLeft(2).
+				Bold(true).
+				Foreground(lipgloss.Color(unsyncedCountColor))
 
 	helpTitleStyle = baseStyle.Copy().
 			Bold(true).

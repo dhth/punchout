@@ -66,6 +66,7 @@ type model struct {
 	issueIndexMap         map[string]int
 	issuesFetched         bool
 	worklogList           list.Model
+	unsyncedWLCount       uint
 	syncedWorklogList     list.Model
 	activeIssueBeginTS    time.Time
 	activeIssueEndTS      time.Time
@@ -89,6 +90,7 @@ func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		hideHelp(time.Minute*1),
 		fetchJIRAIssues(m.jiraClient, m.jql),
+		fetchLogEntries(m.db),
 		fetchSyncedLogEntries(m.db),
 	)
 }

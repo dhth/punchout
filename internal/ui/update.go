@@ -432,6 +432,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for i := range m.trackingInputs {
 				m.trackingInputs[i].SetValue("")
 			}
+			m.unsyncedWLCount++
 		}
 	case ManualEntryUpdated:
 		if msg.err != nil {
@@ -456,6 +457,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				items = append(items, list.Item(e))
 			}
 			m.worklogList.SetItems(items)
+			m.unsyncedWLCount = uint(len(msg.entries))
 		}
 	case SyncedLogEntriesFetchedMsg:
 		if msg.err != nil {
@@ -474,6 +476,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			msg.entry.Error = msg.err
 			m.messages = append(m.messages, msg.err.Error())
 			m.worklogList.SetItem(msg.index, msg.entry)
+		} else {
+			m.unsyncedWLCount--
 		}
 	case FetchActiveMsg:
 		if msg.err != nil {
@@ -507,6 +511,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.messages = append(m.messages, message)
 		} else {
 			cmds = append(cmds, fetchLogEntries(m.db))
+			m.unsyncedWLCount--
 		}
 	case WLAddedOnJIRA:
 		if msg.err != nil {
@@ -540,6 +545,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					activeIssue.trackingActive = false
 				}
 				m.trackingActive = false
+				m.unsyncedWLCount++
 			} else {
 				m.lastChange = InsertChange
 				if activeIssue != nil {

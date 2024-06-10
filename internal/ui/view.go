@@ -129,10 +129,19 @@ func (m model) View() string {
 		helpMsg = " " + helpMsgStyle.Render("Press ? for help")
 	}
 
-	footerStr := fmt.Sprintf("%s%s%s",
+	var unsyncedMsg string
+	if m.unsyncedWLCount > 0 {
+		entryWord := "entries"
+		if m.unsyncedWLCount == 1 {
+			entryWord = "entry"
+		}
+		unsyncedMsg = unsyncedCountStyle.Render(fmt.Sprintf("(%d unsynced %s)", m.unsyncedWLCount, entryWord))
+	}
+	footerStr := fmt.Sprintf("%s%s%s%s",
 		modeStyle.Render("punchout"),
-		helpMsg,
+		unsyncedMsg,
 		activeMsg,
+		helpMsg,
 	)
 	footer = footerStyle.Render(footerStr)
 
