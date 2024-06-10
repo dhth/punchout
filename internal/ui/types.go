@@ -13,6 +13,7 @@ type Issue struct {
 	status          string
 	aggSecondsSpent int
 	trackingActive  bool
+	desc            string
 }
 
 func (issue Issue) Title() string {
@@ -23,30 +24,7 @@ func (issue Issue) Title() string {
 	return trackingIndicator + RightPadTrim(issue.summary, int(float64(listWidth)*0.8))
 }
 func (issue Issue) Description() string {
-	// TODO: The padding here is a bit of a mess; make it more readable
-	var assignee string
-	var status string
-	var totalSecsSpent string
-
-	issueType := getIssueTypeStyle(issue.issueType).Render(Trim(issue.issueType, int(float64(listWidth)*0.2)))
-
-	if issue.assignee != "" {
-		assignee = assigneeStyle(issue.assignee).Render(RightPadTrim("@"+issue.assignee, int(float64(listWidth)*0.2)))
-	} else {
-		assignee = assigneeStyle(issue.assignee).Render(RightPadTrim("", int(float64(listWidth)*0.2)))
-	}
-
-	status = issueStatusStyle.Render(RightPadTrim(issue.status, int(float64(listWidth)*0.2)))
-
-	if issue.aggSecondsSpent > 0 {
-		if issue.aggSecondsSpent < 3600 {
-			totalSecsSpent = aggTimeSpentStyle.Render(fmt.Sprintf("%2dm", int(issue.aggSecondsSpent/60)))
-		} else {
-			totalSecsSpent = aggTimeSpentStyle.Render(fmt.Sprintf("%2dh", int(issue.aggSecondsSpent/3600)))
-		}
-	}
-
-	return fmt.Sprintf("%s%s%s%s%s", RightPadTrim(issue.issueKey, int(float64(listWidth)*0.3)), status, assignee, issueType, totalSecsSpent)
+	return issue.desc
 }
 func (issue Issue) FilterValue() string { return issue.issueKey }
 

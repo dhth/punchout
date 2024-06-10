@@ -1,10 +1,11 @@
 package ui
 
+import "time"
+
 type HideHelpMsg struct{}
 
 type TrackingToggledMsg struct {
 	activeIssue string
-	issueIndex  int
 	finished    bool
 	err         error
 }
@@ -22,6 +23,7 @@ type ManualEntryUpdated struct {
 
 type FetchActiveMsg struct {
 	activeIssue string
+	beginTs     time.Time
 	err         error
 }
 

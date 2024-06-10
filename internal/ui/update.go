@@ -2,12 +2,12 @@ package ui
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const useHighPerformanceRenderer = false
@@ -16,7 +16,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	m.message = ""
-	m.errorMessage = ""
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -33,51 +32,98 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			switch m.activeView {
 			case AskForCommentView:
-				m.activeView = IssueListView
-				if m.trackingInputs[entryComment].Value() != "" {
-					cmds = append(cmds, toggleTracking(m.db, m.activeIssue, m.trackingInputs[entryComment].Value()))
-					m.trackingInputs[entryComment].SetValue("")
-					return m, tea.Batch(cmds...)
-				}
-			case ManualWorklogEntryView:
+
 				beginTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryBeginTS].Value(), time.Local)
 				if err != nil {
-					m.errorMessage = err.Error()
-					log.Println(err.Error())
+					m.message = err.Error()
 					return m, tea.Batch(cmds...)
 				}
+				m.activeIssueBeginTS = beginTS.Local()
 
 				endTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryEndTS].Value(), time.Local)
 
 				if err != nil {
-					m.errorMessage = err.Error()
+					m.message = err.Error()
+					return m, tea.Batch(cmds...)
+				}
+				m.activeIssueEndTS = endTS.Local()
+
+				if m.trackingInputs[entryComment].Value() == "" {
+					m.message = "Comment cannot be empty"
 					return m, tea.Batch(cmds...)
 				}
 
-				comment := m.trackingInputs[entryComment].Value()
-
-				if len(comment) == 0 {
-					m.errorMessage = "Comment cannot be empty"
+				if m.activeIssueEndTS.Sub(m.activeIssueBeginTS).Seconds() <= 0 {
+					m.message = "time spent needs to be greater than zero"
 					return m, tea.Batch(cmds...)
-
 				}
 
+				cmds = append(cmds, toggleTracking(m.db,
+					m.activeIssue,
+					m.activeIssueBeginTS,
+					m.activeIssueEndTS,
+					m.trackingInputs[entryComment].Value(),
+				))
+
+				m.activeView = IssueListView
 				for i := range m.trackingInputs {
 					m.trackingInputs[i].SetValue("")
 				}
+				return m, tea.Batch(cmds...)
+			case ManualWorklogEntryView:
+				beginTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryBeginTS].Value(), time.Local)
+				if err != nil {
+					m.message = err.Error()
+					return m, tea.Batch(cmds...)
+				}
+				beginTS = beginTS.Local()
+
+				endTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryEndTS].Value(), time.Local)
+
+				if err != nil {
+					m.message = err.Error()
+					return m, tea.Batch(cmds...)
+				}
+				endTS = endTS.Local()
+
+				if m.trackingInputs[entryComment].Value() == "" {
+					m.message = "Comment cannot be empty"
+					return m, tea.Batch(cmds...)
+				}
+
+				if endTS.Sub(beginTS).Seconds() <= 0 {
+					m.message = "time spent needs to be greater than zero"
+					return m, tea.Batch(cmds...)
+				}
+
 				issue, ok := m.issueList.SelectedItem().(*Issue)
+
 				if ok {
 					switch m.worklogSaveType {
 					case worklogInsert:
-						cmds = append(cmds, insertManualEntry(m.db, issue.issueKey, beginTS.Local(), endTS.Local(), comment))
+						cmds = append(cmds, insertManualEntry(m.db,
+							issue.issueKey,
+							beginTS,
+							endTS,
+							m.trackingInputs[entryComment].Value(),
+						))
 						m.activeView = IssueListView
 					case worklogUpdate:
 						wl, ok := m.worklogList.SelectedItem().(WorklogEntry)
 						if ok {
-							cmds = append(cmds, updateManualEntry(m.db, wl.Id, wl.IssueKey, beginTS.Local(), endTS.Local(), comment))
+							cmds = append(cmds, updateManualEntry(m.db,
+								wl.Id,
+								wl.IssueKey,
+								beginTS,
+								endTS,
+								m.trackingInputs[entryComment].Value(),
+							))
 							m.activeView = WorklogView
 						}
 					}
+				}
+				for i := range m.trackingInputs {
+					m.trackingInputs[i].SetValue("")
 				}
 				return m, tea.Batch(cmds...)
 			}
@@ -107,7 +153,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, fetchSyncedLogEntries(m.db))
 			case SyncedWorklogView:
 				m.activeView = IssueListView
-			case ManualWorklogEntryView:
+			case AskForCommentView, ManualWorklogEntryView:
 				switch m.trackingFocussedField {
 				case entryBeginTS:
 					m.trackingFocussedField = entryEndTS
@@ -131,7 +177,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case IssueListView:
 				m.activeView = SyncedWorklogView
 				cmds = append(cmds, fetchSyncedLogEntries(m.db))
-			case ManualWorklogEntryView:
+			case AskForCommentView, ManualWorklogEntryView:
 				switch m.trackingFocussedField {
 				case entryBeginTS:
 					m.trackingFocussedField = entryComment
@@ -149,11 +195,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch m.activeView {
-	case AskForCommentView:
-		m.trackingInputs[entryComment], cmd = m.trackingInputs[entryComment].Update(msg)
-		cmds = append(cmds, cmd)
-		return m, tea.Batch(cmds...)
-	case ManualWorklogEntryView:
+	case AskForCommentView, ManualWorklogEntryView:
 		for i := range m.trackingInputs {
 			m.trackingInputs[i], cmd = m.trackingInputs[i].Update(msg)
 			cmds = append(cmds, cmd)
@@ -181,7 +223,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, tea.Quit
 				}
 			case HelpView:
-				m.activeView = IssueListView
+				m.activeView = m.lastView
 			default:
 				return m, tea.Quit
 			}
@@ -197,11 +239,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "3":
 			if m.activeView != SyncedWorklogView {
 				m.activeView = SyncedWorklogView
-				cmds = append(cmds, fetchSyncedLogEntries(m.db))
 			}
 		case "ctrl+r":
 			switch m.activeView {
 			case IssueListView:
+				m.issueList.Title = "fetching..."
+				m.issueList.Styles.Title.Background(lipgloss.Color(issueListUnfetchedColor))
 				cmds = append(cmds, fetchJIRAIssues(m.jiraClient, m.jql))
 			case WorklogView:
 				cmds = append(cmds, fetchLogEntries(m.db))
@@ -290,8 +333,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					} else {
 						if m.lastChange == UpdateChange {
 							m.changesLocked = true
-							cmds = append(cmds, toggleTracking(m.db, issue.issueKey, ""))
+							m.activeIssueBeginTS = time.Now()
+							cmds = append(cmds, toggleTracking(m.db,
+								issue.issueKey,
+								m.activeIssueBeginTS,
+								m.activeIssueEndTS,
+								"",
+							))
 						} else if m.lastChange == InsertChange {
+
+							currentTime := time.Now()
+							beginTimeStr := m.activeIssueBeginTS.Format(timeFormat)
+							currentTimeStr := currentTime.Format(timeFormat)
+
+							m.trackingInputs[entryBeginTS].SetValue(beginTimeStr)
+							m.trackingInputs[entryEndTS].SetValue(currentTimeStr)
+
+							for i := range m.trackingInputs {
+								m.trackingInputs[i].Blur()
+							}
+
 							m.activeView = AskForCommentView
 							m.trackingFocussedField = entryComment
 							m.trackingInputs[m.trackingFocussedField].Focus()
@@ -310,8 +371,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "?":
-			m.lastView = m.activeView
-			m.activeView = HelpView
+			if m.activeView == IssueListView || m.activeView == WorklogView || m.activeView == SyncedWorklogView {
+				m.lastView = m.activeView
+				m.activeView = HelpView
+			}
 		case "ctrl+b":
 			if m.activeView == IssueListView {
 				selectedIssue := m.issueList.SelectedItem().FilterValue()
@@ -320,11 +383,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		w, h := stackListStyle.GetFrameSize()
+		w, h := listStyle.GetFrameSize()
 		m.terminalHeight = msg.Height
+
+		m.issueList.SetWidth(msg.Width - w)
+		m.worklogList.SetWidth(msg.Width - w)
+		m.syncedWorklogList.SetWidth(msg.Width - w)
 		m.issueList.SetHeight(msg.Height - h - 2)
 		m.worklogList.SetHeight(msg.Height - h - 2)
 		m.syncedWorklogList.SetHeight(msg.Height - h - 2)
+
 		if !m.helpVPReady {
 			m.helpVP = viewport.New(w-5, m.terminalHeight-7)
 			m.helpVP.HighPerformanceRendering = useHighPerformanceRenderer
@@ -343,12 +411,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			issues := make([]list.Item, 0, len(msg.issues))
 			for i, issue := range msg.issues {
+				issue.setDesc()
 				issues = append(issues, &issue)
 				m.issueMap[issue.issueKey] = &issue
 				m.issueIndexMap[issue.issueKey] = i
 			}
 			m.issueList.SetItems(issues)
 			m.issueList.Title = "Issues"
+			m.issueList.Styles.Title.Background(lipgloss.Color(issueListColor))
 			m.issuesFetched = true
 
 			cmds = append(cmds, fetchActiveStatus(m.db, 0))
@@ -417,6 +487,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.lastChange = InsertChange
 				activeIssue, ok := m.issueMap[m.activeIssue]
+				m.activeIssueBeginTS = msg.beginTs
 				if ok {
 					activeIssue.trackingActive = true
 

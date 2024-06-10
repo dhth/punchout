@@ -7,10 +7,20 @@ import (
 
 const (
 	defaultBackgroundColor  = "#282828"
+	issueListUnfetchedColor = "#928374"
+	issueListColor          = "#fe8019"
+	worklogListColor        = "#fabd2f"
+	syncedWorklogListColor  = "#b8bb26"
 	trackingColor           = "#fabd2f"
 	activeIssueKeyColor     = "#d3869b"
 	activeIssueSummaryColor = "#8ec07c"
 	issueStatusColor        = "#665c54"
+	toolNameColor           = "#b8bb26"
+	syncedColor             = "#b8bb26"
+	syncingColor            = "#fabd2f"
+	notSyncedColor          = "#928374"
+	formFieldNameColor      = "#8ec07c"
+	formContextColor        = "#fabd2f"
 	aggTimeSpentColor       = "#928374"
 	helpMsgColor            = "#83a598"
 	helpViewTitleColor      = "#83a598"
@@ -27,7 +37,7 @@ var (
 	helpMsgStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			Bold(true).
-			Foreground(lipgloss.Color("#83a598"))
+			Foreground(lipgloss.Color(helpMsgColor))
 
 	baseListStyle = lipgloss.NewStyle().PaddingTop(1).PaddingRight(2).PaddingLeft(1).PaddingBottom(1)
 	viewPortStyle = lipgloss.NewStyle().
@@ -36,32 +46,32 @@ var (
 			PaddingLeft(1).
 			PaddingBottom(1)
 
-	stackListStyle = baseListStyle.Copy()
+	listStyle = baseListStyle.Copy()
 
 	modeStyle = baseStyle.Copy().
 			Align(lipgloss.Center).
 			Bold(true).
-			Background(lipgloss.Color("#b8bb26"))
+			Background(lipgloss.Color(toolNameColor))
 
 	statusStyle = baseStyle.Copy().
 			Bold(true).
 			Align(lipgloss.Center).
-			Width(12)
+			Width(14)
 
 	syncedStyle = statusStyle.Copy().
-			Background(lipgloss.Color("#b8bb26"))
+			Background(lipgloss.Color(syncedColor))
 
 	syncingStyle = statusStyle.Copy().
-			Background(lipgloss.Color("#83a598"))
+			Background(lipgloss.Color(syncingColor))
 
 	notSyncedStyle = statusStyle.Copy().
-			Background(lipgloss.Color("#fb4934"))
+			Background(lipgloss.Color(notSyncedColor))
 
 	formContextStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#fe8019"))
+				Foreground(lipgloss.Color(formContextColor))
 
 	formFieldNameStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#504945"))
+				Foreground(lipgloss.Color(formFieldNameColor))
 
 	trackingStyle = lipgloss.NewStyle().
 			PaddingLeft(2).
@@ -104,7 +114,7 @@ var (
 			Foreground(lipgloss.Color(defaultBackgroundColor)).Copy().
 			Bold(true).
 			Align(lipgloss.Center).
-			Width(18).
+			Width(20).
 			Background(lipgloss.Color(color))
 	}
 

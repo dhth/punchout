@@ -11,7 +11,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func toggleTracking(db *sql.DB, selectedIssue string, comment string) tea.Cmd {
+func toggleTracking(db *sql.DB, selectedIssue string, beginTs, endTs time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
 
 		row := db.QueryRow(`
@@ -34,7 +34,7 @@ LIMIT 1
 
 		switch trackStatus {
 		case TrackingInactive:
-			err = insertNewEntry(db, selectedIssue)
+			err = insertNewEntry(db, selectedIssue, beginTs)
 			if err != nil {
 				return TrackingToggledMsg{err: err}
 			} else {
@@ -42,7 +42,7 @@ LIMIT 1
 			}
 
 		default:
-			err := updateLastEntry(db, activeIssue, comment)
+			err := updateLastEntry(db, activeIssue, comment, beginTs, endTs)
 			if err != nil {
 				return TrackingToggledMsg{err: err}
 			} else {
@@ -102,14 +102,15 @@ WHERE ID = ?;
 func fetchActiveStatus(db *sql.DB, interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
 		row := db.QueryRow(`
-SELECT issue_key
+SELECT issue_key, begin_ts
 from issue_log
 WHERE active=1
 ORDER BY begin_ts DESC
 LIMIT 1
 `)
 		var activeIssue string
-		err := row.Scan(&activeIssue)
+		var beginTs time.Time
+		err := row.Scan(&activeIssue, &beginTs)
 		if err == sql.ErrNoRows {
 			return FetchActiveMsg{activeIssue: activeIssue}
 		}
@@ -117,7 +118,7 @@ LIMIT 1
 			return FetchActiveMsg{err: err}
 		}
 
-		return FetchActiveMsg{activeIssue: activeIssue}
+		return FetchActiveMsg{activeIssue: activeIssue, beginTs: beginTs}
 	})
 }
 
@@ -181,7 +182,14 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 
 				}
 			}
-			issues = append(issues, Issue{issue.Key, issue.Fields.Type.Name, issue.Fields.Summary, assignee, status, totalSecsSpent, false})
+			issues = append(issues, Issue{issueKey: issue.Key,
+				issueType:       issue.Fields.Type.Name,
+				summary:         issue.Fields.Summary,
+				assignee:        assignee,
+				status:          status,
+				aggSecondsSpent: totalSecsSpent,
+				trackingActive:  false,
+			})
 		}
 		return IssuesFetchedFromJIRAMsg{issues, err}
 	}

@@ -26,7 +26,7 @@ func Trim(s string, length int) string {
 	return s
 }
 
-func insertNewEntry(db *sql.DB, issueKey string) error {
+func insertNewEntry(db *sql.DB, issueKey string, beginTs time.Time) error {
 
 	stmt, err := db.Prepare(`
     INSERT INTO issue_log (issue_key, begin_ts, active, synced)
@@ -38,7 +38,7 @@ func insertNewEntry(db *sql.DB, issueKey string) error {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(issueKey, time.Now(), true, 0)
+	_, err = stmt.Exec(issueKey, beginTs, true, 0)
 	if err != nil {
 		return err
 	}
@@ -46,10 +46,11 @@ func insertNewEntry(db *sql.DB, issueKey string) error {
 	return nil
 }
 
-func updateLastEntry(db *sql.DB, issueKey, comment string) error {
+func updateLastEntry(db *sql.DB, issueKey, comment string, beginTs, endTs time.Time) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
 SET active = 0,
+    begin_ts = ?,
     end_ts = ?,
     comment = ?
 WHERE issue_key = ?
@@ -60,7 +61,7 @@ AND active = 1;
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(time.Now(), comment, issueKey)
+	_, err = stmt.Exec(beginTs, endTs, comment, issueKey)
 	if err != nil {
 		return err
 	}

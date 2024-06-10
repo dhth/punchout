@@ -56,38 +56,39 @@ const (
 )
 
 type model struct {
-	activeView             StateView
-	lastView               StateView
-	db                     *sql.DB
-	jiraClient             *jira.Client
-	jql                    string
-	issueList              list.Model
-	issueMap               map[string]*Issue
-	issueIndexMap          map[string]int
-	issuesFetched          bool
-	worklogList            list.Model
-	syncedWorklogList      list.Model
-	syncedWLEntriesFetched bool
-	trackingInputs         []textinput.Model
-	trackingFocussedField  trackingFocussedField
-	helpVP                 viewport.Model
-	helpVPReady            bool
-	lastChange             DBChange
-	changesLocked          bool
-	activeIssue            string
-	worklogSaveType        worklogSaveType
-	message                string
-	errorMessage           string
-	messages               []string
-	jiraTimeDeltaMins      int
-	showHelpIndicator      bool
-	terminalHeight         int
-	trackingActive         bool
+	activeView            StateView
+	lastView              StateView
+	db                    *sql.DB
+	jiraClient            *jira.Client
+	jql                   string
+	issueList             list.Model
+	issueMap              map[string]*Issue
+	issueIndexMap         map[string]int
+	issuesFetched         bool
+	worklogList           list.Model
+	syncedWorklogList     list.Model
+	activeIssueBeginTS    time.Time
+	activeIssueEndTS      time.Time
+	trackingInputs        []textinput.Model
+	trackingFocussedField trackingFocussedField
+	helpVP                viewport.Model
+	helpVPReady           bool
+	lastChange            DBChange
+	changesLocked         bool
+	activeIssue           string
+	worklogSaveType       worklogSaveType
+	message               string
+	messages              []string
+	jiraTimeDeltaMins     int
+	showHelpIndicator     bool
+	terminalHeight        int
+	trackingActive        bool
 }
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		hideHelp(time.Minute*1),
 		fetchJIRAIssues(m.jiraClient, m.jql),
+		fetchSyncedLogEntries(m.db),
 	)
 }

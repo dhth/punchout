@@ -31,19 +31,16 @@ func Execute() {
 		die("Error getting your home directory, explicitly specify the path for the config file using -config-file-path")
 	}
 
-	var defaultConfigFP string
-	defaultConfigFP = fmt.Sprintf("%s/.config/punchout/punchout.toml", currentUser.HomeDir)
+	defaultConfigFP := fmt.Sprintf("%s/.config/punchout/punchout.toml", currentUser.HomeDir)
 	configFilePath := flag.String("config-file-path", defaultConfigFP, "location of the punchout config file")
 
-	var defaultDBPath string
-	defaultDBPath = fmt.Sprintf("%s/punchout.v%s.db", currentUser.HomeDir, PUNCHOUT_DB_VERSION)
+	defaultDBPath := fmt.Sprintf("%s/punchout.v%s.db", currentUser.HomeDir, PUNCHOUT_DB_VERSION)
 	dbPath := flag.String("db-path", defaultDBPath, "location where punchout should create its DB file")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stdout, "Take the suck out of logging time on JIRA.\n\nFlags:\n")
 		flag.CommandLine.SetOutput(os.Stdout)
 		flag.PrintDefaults()
-		fmt.Fprintf(os.Stdout, "\n------\n%s", ui.HelpText)
 	}
 	flag.Parse()
 

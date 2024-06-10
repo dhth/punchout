@@ -5,13 +5,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func newItemDelegate() list.DefaultDelegate {
+func newItemDelegate(color lipgloss.Color) list.DefaultDelegate {
 	d := list.NewDefaultDelegate()
 
 	d.Styles.SelectedTitle = d.Styles.
 		SelectedTitle.
-		Foreground(lipgloss.Color("#fe8019")).
-		BorderLeftForeground(lipgloss.Color("#fe8019"))
+		Foreground(color).
+		BorderLeftForeground(color)
 	d.Styles.SelectedDesc = d.Styles.
 		SelectedTitle.
 		Copy()

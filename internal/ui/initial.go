@@ -14,8 +14,6 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDelta
 	var worklogListItems []list.Item
 	var syncedWorklogListItems []list.Item
 
-	itemDel := newItemDelegate()
-
 	trackingInputs := make([]textinput.Model, 3)
 	trackingInputs[entryBeginTS] = textinput.New()
 	trackingInputs[entryBeginTS].Placeholder = "09:30"
@@ -39,21 +37,21 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDelta
 		db:                db,
 		jiraClient:        jiraClient,
 		jql:               jql,
-		issueList:         list.New(stackItems, itemDel, listWidth, 0),
+		issueList:         list.New(stackItems, newItemDelegate(lipgloss.Color(issueListColor)), listWidth, 0),
 		issueMap:          make(map[string]*Issue),
 		issueIndexMap:     make(map[string]int),
-		worklogList:       list.New(worklogListItems, itemDel, listWidth, 0),
-		syncedWorklogList: list.New(syncedWorklogListItems, itemDel, listWidth, 0),
+		worklogList:       list.New(worklogListItems, newItemDelegate(lipgloss.Color(worklogListColor)), listWidth, 0),
+		syncedWorklogList: list.New(syncedWorklogListItems, newItemDelegate(syncedWorklogListColor), listWidth, 0),
 		jiraTimeDeltaMins: jiraTimeDeltaMins,
 		showHelpIndicator: true,
 		trackingInputs:    trackingInputs,
 	}
-	m.issueList.Title = "Issues (fetching...)"
+	m.issueList.Title = "fetching..."
 	m.issueList.SetStatusBarItemName("issue", "issues")
 	m.issueList.DisableQuitKeybindings()
 	m.issueList.SetShowHelp(false)
-	m.issueList.Styles.Title.Foreground(lipgloss.Color("#282828"))
-	m.issueList.Styles.Title.Background(lipgloss.Color("#fe8019"))
+	m.issueList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
+	m.issueList.Styles.Title.Background(lipgloss.Color(issueListUnfetchedColor))
 	m.issueList.Styles.Title.Bold(true)
 
 	m.worklogList.Title = "Worklog Entries"
@@ -61,8 +59,8 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDelta
 	m.worklogList.SetFilteringEnabled(false)
 	m.worklogList.DisableQuitKeybindings()
 	m.worklogList.SetShowHelp(false)
-	m.worklogList.Styles.Title.Foreground(lipgloss.Color("#282828"))
-	m.worklogList.Styles.Title.Background(lipgloss.Color("#fe8019"))
+	m.worklogList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
+	m.worklogList.Styles.Title.Background(lipgloss.Color(worklogListColor))
 	m.worklogList.Styles.Title.Bold(true)
 
 	m.syncedWorklogList.Title = "Synced Worklog Entries (from local db)"
@@ -70,8 +68,8 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDelta
 	m.syncedWorklogList.SetFilteringEnabled(false)
 	m.syncedWorklogList.DisableQuitKeybindings()
 	m.syncedWorklogList.SetShowHelp(false)
-	m.syncedWorklogList.Styles.Title.Foreground(lipgloss.Color("#282828"))
-	m.syncedWorklogList.Styles.Title.Background(lipgloss.Color("#fe8019"))
+	m.syncedWorklogList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
+	m.syncedWorklogList.Styles.Title.Background(lipgloss.Color(syncedWorklogListColor))
 	m.syncedWorklogList.Styles.Title.Bold(true)
 
 	return m
