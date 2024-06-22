@@ -50,27 +50,27 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDelta
 	m.issueList.SetStatusBarItemName("issue", "issues")
 	m.issueList.DisableQuitKeybindings()
 	m.issueList.SetShowHelp(false)
-	m.issueList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
-	m.issueList.Styles.Title.Background(lipgloss.Color(issueListUnfetchedColor))
-	m.issueList.Styles.Title.Bold(true)
+	m.issueList.Styles.Title = m.issueList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor)).
+		Background(lipgloss.Color(issueListUnfetchedColor)).
+		Bold(true)
 
 	m.worklogList.Title = "Worklog Entries"
 	m.worklogList.SetStatusBarItemName("entry", "entries")
 	m.worklogList.SetFilteringEnabled(false)
 	m.worklogList.DisableQuitKeybindings()
 	m.worklogList.SetShowHelp(false)
-	m.worklogList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
-	m.worklogList.Styles.Title.Background(lipgloss.Color(worklogListColor))
-	m.worklogList.Styles.Title.Bold(true)
+	m.worklogList.Styles.Title = m.worklogList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor)).
+		Background(lipgloss.Color(worklogListColor)).
+		Bold(true)
 
 	m.syncedWorklogList.Title = "Synced Worklog Entries (from local db)"
 	m.syncedWorklogList.SetStatusBarItemName("entry", "entries")
 	m.syncedWorklogList.SetFilteringEnabled(false)
 	m.syncedWorklogList.DisableQuitKeybindings()
 	m.syncedWorklogList.SetShowHelp(false)
-	m.syncedWorklogList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
-	m.syncedWorklogList.Styles.Title.Background(lipgloss.Color(syncedWorklogListColor))
-	m.syncedWorklogList.Styles.Title.Bold(true)
+	m.syncedWorklogList.Styles.Title = m.syncedWorklogList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor)).
+		Background(lipgloss.Color(syncedWorklogListColor)).
+		Bold(true)
 
 	return m
 }

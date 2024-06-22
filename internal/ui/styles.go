@@ -47,25 +47,25 @@ var (
 			PaddingLeft(1).
 			PaddingBottom(1)
 
-	listStyle = baseListStyle.Copy()
+	listStyle = baseListStyle
 
-	modeStyle = baseStyle.Copy().
+	modeStyle = baseStyle.
 			Align(lipgloss.Center).
 			Bold(true).
 			Background(lipgloss.Color(toolNameColor))
 
-	statusStyle = baseStyle.Copy().
+	statusStyle = baseStyle.
 			Bold(true).
 			Align(lipgloss.Center).
 			Width(14)
 
-	syncedStyle = statusStyle.Copy().
+	syncedStyle = statusStyle.
 			Background(lipgloss.Color(syncedColor))
 
-	syncingStyle = statusStyle.Copy().
+	syncingStyle = statusStyle.
 			Background(lipgloss.Color(syncingColor))
 
-	notSyncedStyle = statusStyle.Copy().
+	notSyncedStyle = statusStyle.
 			Background(lipgloss.Color(notSyncedColor))
 
 	formContextStyle = lipgloss.NewStyle().
@@ -79,11 +79,11 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color(trackingColor))
 
-	activeIssueKeyMsgStyle = trackingStyle.Copy().
+	activeIssueKeyMsgStyle = trackingStyle.
 				PaddingLeft(1).
 				Foreground(lipgloss.Color(activeIssueKeyColor))
 
-	activeIssueSummaryMsgStyle = trackingStyle.Copy().
+	activeIssueSummaryMsgStyle = trackingStyle.
 					PaddingLeft(1).
 					Foreground(lipgloss.Color(activeIssueSummaryColor))
 
@@ -112,7 +112,7 @@ var (
 		color := issueTypeColors[int(hash)%len(issueTypeColors)]
 		return lipgloss.NewStyle().
 			PaddingLeft(1).
-			Foreground(lipgloss.Color(defaultBackgroundColor)).Copy().
+			Foreground(lipgloss.Color(defaultBackgroundColor)).
 			Bold(true).
 			Align(lipgloss.Center).
 			Width(20).
@@ -154,7 +154,7 @@ var (
 				Bold(true).
 				Foreground(lipgloss.Color(unsyncedCountColor))
 
-	helpTitleStyle = baseStyle.Copy().
+	helpTitleStyle = baseStyle.
 			Bold(true).
 			Background(lipgloss.Color(helpViewTitleColor)).
 			Align(lipgloss.Left)

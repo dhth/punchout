@@ -78,7 +78,7 @@ func fetchEntries(db *sql.DB) ([]WorklogEntry, error) {
 SELECT ID, issue_key, begin_ts, end_ts, comment, active, synced
 FROM issue_log
 WHERE active=false AND synced=false
-ORDER by begin_ts DESC;
+ORDER by end_ts DESC;
     `)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func fetchSyncedEntries(db *sql.DB) ([]SyncedWorklogEntry, error) {
 SELECT ID, issue_key, begin_ts, end_ts, comment
 FROM issue_log
 WHERE active=false AND synced=true
-ORDER by begin_ts DESC LIMIT 30;
+ORDER by end_ts DESC LIMIT 30;
     `)
 	if err != nil {
 		return nil, err

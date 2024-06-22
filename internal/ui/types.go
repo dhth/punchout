@@ -68,7 +68,7 @@ func (entry WorklogEntry) Description() string {
 	minsSpentStr := fmt.Sprintf("spent %d mins", minsSpent)
 	return fmt.Sprintf("%s%s%s%s",
 		RightPadTrim(entry.IssueKey, int(listWidth/4)),
-		RightPadTrim("started: "+entry.BeginTS.Format("Mon, 3:04pm"), int(listWidth/4)),
+		RightPadTrim("ended: "+entry.BeginTS.Format("Mon, 3:04pm"), int(listWidth/4)),
 		RightPadTrim(minsSpentStr, int(listWidth/4)),
 		syncedStatus,
 	)
@@ -83,7 +83,7 @@ func (entry SyncedWorklogEntry) Description() string {
 	minsSpentStr := fmt.Sprintf("spent %d mins", minsSpent)
 	return fmt.Sprintf("%s%s%s",
 		RightPadTrim(entry.IssueKey, int(listWidth/4)),
-		RightPadTrim("started: "+entry.BeginTS.Format("Mon, 3:04pm"), int(listWidth/4)),
+		RightPadTrim("ended: "+entry.BeginTS.Format("Mon, 3:04pm"), int(listWidth/4)),
 		RightPadTrim(minsSpentStr, int(listWidth/4)),
 	)
 }

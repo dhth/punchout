@@ -244,7 +244,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.activeView {
 			case IssueListView:
 				m.issueList.Title = "fetching..."
-				m.issueList.Styles.Title.Background(lipgloss.Color(issueListUnfetchedColor))
+				m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListUnfetchedColor))
 				cmds = append(cmds, fetchJIRAIssues(m.jiraClient, m.jql))
 			case WorklogView:
 				cmds = append(cmds, fetchLogEntries(m.db))
@@ -418,7 +418,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.issueList.SetItems(issues)
 			m.issueList.Title = "Issues"
-			m.issueList.Styles.Title.Background(lipgloss.Color(issueListColor))
+			m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListColor))
 			m.issuesFetched = true
 
 			cmds = append(cmds, fetchActiveStatus(m.db, 0))

@@ -13,8 +13,7 @@ func newItemDelegate(color lipgloss.Color) list.DefaultDelegate {
 		Foreground(color).
 		BorderLeftForeground(color)
 	d.Styles.SelectedDesc = d.Styles.
-		SelectedTitle.
-		Copy()
+		SelectedTitle
 
 	return d
 }
