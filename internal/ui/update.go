@@ -316,6 +316,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.messages = append(m.messages, msg)
 				}
 			}
+		case "ctrl+x":
+			if m.activeView == IssueListView && m.trackingActive {
+				cmds = append(cmds, deleteActiveIssueLog(m.db))
+			}
 		case "s":
 			switch m.activeView {
 			case IssueListView:
@@ -512,6 +516,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			cmds = append(cmds, fetchLogEntries(m.db))
 			m.unsyncedWLCount--
+		}
+	case activeTaskLogDeletedMsg:
+		if msg.err != nil {
+			m.message = fmt.Sprintf("Error deleting active log entry: %s", msg.err)
+		} else {
+			activeIssue, ok := m.issueMap[m.activeIssue]
+			if ok {
+				activeIssue.trackingActive = false
+			}
+			m.lastChange = UpdateChange
+			m.trackingActive = false
+			m.activeIssue = ""
 		}
 	case WLAddedOnJIRA:
 		if msg.err != nil {

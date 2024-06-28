@@ -15,6 +15,7 @@ const (
 	unsyncedCountColor      = "#fabd2f"
 	activeIssueKeyColor     = "#d3869b"
 	activeIssueSummaryColor = "#8ec07c"
+	trackingBeganColor      = "#d3869b"
 	issueStatusColor        = "#665c54"
 	toolNameColor           = "#b8bb26"
 	syncedColor             = "#b8bb26"
@@ -23,6 +24,7 @@ const (
 	formFieldNameColor      = "#8ec07c"
 	formContextColor        = "#fabd2f"
 	aggTimeSpentColor       = "#928374"
+	initialHelpMsgColor     = "#83a598"
 	helpMsgColor            = "#7c6f64"
 	helpViewTitleColor      = "#83a598"
 	helpHeaderColor         = "#83a598"
@@ -87,6 +89,10 @@ var (
 					PaddingLeft(1).
 					Foreground(lipgloss.Color(activeIssueSummaryColor))
 
+	trackingBeginStyle = lipgloss.NewStyle().
+				PaddingLeft(1).
+				Foreground(lipgloss.Color(trackingBeganColor))
+
 	issueTypeColors = []string{
 		"#d3869b",
 		"#b5e48c",
@@ -111,7 +117,6 @@ var (
 
 		color := issueTypeColors[int(hash)%len(issueTypeColors)]
 		return lipgloss.NewStyle().
-			PaddingLeft(1).
 			Foreground(lipgloss.Color(defaultBackgroundColor)).
 			Bold(true).
 			Align(lipgloss.Center).
@@ -135,14 +140,12 @@ var (
 		color := assigneeColors[int(hash)%len(assigneeColors)]
 
 		st := lipgloss.NewStyle().
-			PaddingLeft(1).
 			Foreground(lipgloss.Color(color))
 
 		return st
 	}
 
 	issueStatusStyle = lipgloss.NewStyle().
-				PaddingLeft(1).
 				Foreground(lipgloss.Color(issueStatusColor))
 
 	aggTimeSpentStyle = lipgloss.NewStyle().
@@ -153,6 +156,9 @@ var (
 				PaddingLeft(2).
 				Bold(true).
 				Foreground(lipgloss.Color(unsyncedCountColor))
+
+	initialHelpMsgStyle = helpMsgStyle.
+				Foreground(lipgloss.Color(initialHelpMsgColor))
 
 	helpTitleStyle = baseStyle.
 			Bold(true).

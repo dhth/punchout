@@ -15,6 +15,10 @@ type ManualEntryInserted struct {
 	err      error
 }
 
+type activeTaskLogDeletedMsg struct {
+	err error
+}
+
 type ManualEntryUpdated struct {
 	rowId    int
 	issueKey string

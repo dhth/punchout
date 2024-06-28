@@ -74,6 +74,13 @@ VALUES (?, ?, ?, ?, ?, ?);
 	}
 }
 
+func deleteActiveIssueLog(db *sql.DB) tea.Cmd {
+	return func() tea.Msg {
+		err := deleteActiveLogInDB(db)
+		return activeTaskLogDeletedMsg{err}
+	}
+}
+
 func updateManualEntry(db *sql.DB, rowID int, issueKey string, beginTS time.Time, endTS time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
 

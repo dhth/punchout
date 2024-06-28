@@ -15,21 +15,39 @@ func (m model) View() string {
 	var footer string
 
 	var statusBar string
+	var helpMsg string
 	if m.message != "" {
 		statusBar = Trim(m.message, 120)
 	}
 	var activeMsg string
-	if m.issuesFetched && m.activeIssue != "" {
-		var issueSummaryMsg string
-		issue, ok := m.issueMap[m.activeIssue]
-		if ok {
-			issueSummaryMsg = fmt.Sprintf("(%s)", Trim(issue.summary, 50))
+	if m.issuesFetched {
+		if m.activeIssue != "" {
+			var issueSummaryMsg, trackingSinceMsg string
+			issue, ok := m.issueMap[m.activeIssue]
+			if ok {
+				issueSummaryMsg = fmt.Sprintf("(%s)", Trim(issue.summary, 50))
+				if m.activeView != AskForCommentView {
+					trackingSinceMsg = fmt.Sprintf("(since %s)", m.activeIssueBeginTS.Format(timeOnlyFormat))
+				}
+			}
+			activeMsg = fmt.Sprintf("%s%s%s%s",
+				trackingStyle.Render("tracking:"),
+				activeIssueKeyMsgStyle.Render(m.activeIssue),
+				activeIssueSummaryMsgStyle.Render(issueSummaryMsg),
+				trackingBeginStyle.Render(trackingSinceMsg),
+			)
 		}
-		activeMsg = fmt.Sprintf("%s%s%s",
-			trackingStyle.Render("tracking:"),
-			activeIssueKeyMsgStyle.Render(m.activeIssue),
-			activeIssueSummaryMsgStyle.Render(issueSummaryMsg),
-		)
+
+		if m.showHelpIndicator {
+			// first time help
+			if m.activeView == IssueListView && len(m.syncedWorklogList.Items()) == 0 && m.unsyncedWLCount == 0 {
+				if m.trackingActive {
+					helpMsg += " " + initialHelpMsgStyle.Render("Press s to stop tracking time")
+				} else {
+					helpMsg += " " + initialHelpMsgStyle.Render("Press s to start tracking time")
+				}
+			}
+		}
 	}
 
 	switch m.activeView {
@@ -124,9 +142,8 @@ func (m model) View() string {
 		Foreground(lipgloss.Color("#282828")).
 		Background(lipgloss.Color("#7c6f64"))
 
-	var helpMsg string
 	if m.showHelpIndicator {
-		helpMsg = " " + helpMsgStyle.Render("Press ? for help")
+		helpMsg += " " + helpMsgStyle.Render("Press ? for help")
 	}
 
 	var unsyncedMsg string
@@ -139,9 +156,9 @@ func (m model) View() string {
 	}
 	footerStr := fmt.Sprintf("%s%s%s%s",
 		modeStyle.Render("punchout"),
+		helpMsg,
 		unsyncedMsg,
 		activeMsg,
-		helpMsg,
 	)
 	footer = footerStyle.Render(footerStr)
 
