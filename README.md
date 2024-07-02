@@ -127,6 +127,7 @@ Issue List View
                                           "s" keypress
   <ctrl+s>                                Add manual worklog entry
   <ctrl+t>                                Go to currently tracked item
+  <ctrl+x>                                Discard currently active recording
 
 Worklog List View
 
@@ -138,6 +139,10 @@ Worklog List View
 Worklog Entry View
 
   enter                                   Save worklog entry
+  k                                       Move timestamp backwards by one minute
+  j                                       Move timestamp forwards by one minute
+  K                                       Move timestamp backwards by five minutes
+  J                                       Move timestamp forwards by five minutes
 
 Synced Worklog Entry View
 

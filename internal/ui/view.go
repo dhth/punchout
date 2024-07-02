@@ -67,9 +67,11 @@ func (m model) View() string {
 
     %s
 
-    %s
+    %s    %s
 
     %s
+
+    %s    %s
 
     %s
 
@@ -79,15 +81,18 @@ func (m model) View() string {
     %s
 `,
 			formContextStyle.Render(formHeadingText),
+			formHelpStyle.Render("Use tab/shift-tab to move between sections; esc to go back."),
 			formFieldNameStyle.Render("Begin Time  (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryBeginTS].View(),
+			formHelpStyle.Render("(k/j/K/J moves time, when correct)"),
 			formFieldNameStyle.Render("End Time  (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryEndTS].View(),
+			formHelpStyle.Render("(k/j/K/J moves time, when correct)"),
 			formFieldNameStyle.Render(RightPadTrim("Comment:", 16)),
 			m.trackingInputs[entryComment].View(),
 			formContextStyle.Render("Press enter to submit"),
 		)
-		for i := 0; i < m.terminalHeight-20; i++ {
+		for i := 0; i < m.terminalHeight-22; i++ {
 			content += "\n"
 		}
 	case ManualWorklogEntryView:
@@ -107,9 +112,11 @@ func (m model) View() string {
 
     %s
 
-    %s
+    %s    %s
 
     %s
+
+    %s    %s
 
     %s
 
@@ -119,15 +126,18 @@ func (m model) View() string {
     %s
 `,
 			formContextStyle.Render(formHeadingText),
+			formHelpStyle.Render("Use tab/shift-tab to move between sections; esc to go back."),
 			formFieldNameStyle.Render("Begin Time  (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryBeginTS].View(),
+			formHelpStyle.Render("(k/j/K/J moves time, when correct)"),
 			formFieldNameStyle.Render("End Time  (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryEndTS].View(),
+			formHelpStyle.Render("(k/j/K/J moves time, when correct)"),
 			formFieldNameStyle.Render(RightPadTrim("Comment:", 16)),
 			m.trackingInputs[entryComment].View(),
 			formContextStyle.Render("Press enter to submit"),
 		)
-		for i := 0; i < m.terminalHeight-20; i++ {
+		for i := 0; i < m.terminalHeight-22; i++ {
 			content += "\n"
 		}
 	case HelpView:

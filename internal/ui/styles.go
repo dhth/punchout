@@ -23,6 +23,7 @@ const (
 	notSyncedColor          = "#928374"
 	formFieldNameColor      = "#8ec07c"
 	formContextColor        = "#fabd2f"
+	formHelpColor           = "#928374"
 	aggTimeSpentColor       = "#928374"
 	initialHelpMsgColor     = "#83a598"
 	helpMsgColor            = "#7c6f64"
@@ -75,6 +76,9 @@ var (
 
 	formFieldNameStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color(formFieldNameColor))
+
+	formHelpStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(formHelpColor))
 
 	trackingStyle = lipgloss.NewStyle().
 			PaddingLeft(2).

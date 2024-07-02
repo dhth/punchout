@@ -191,6 +191,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.trackingInputs[m.trackingFocussedField].Focus()
 			}
+		case "k":
+			err := m.shiftTime(shiftBackward, shiftMinute)
+			if err != nil {
+				return m, tea.Batch(cmds...)
+			}
+		case "j":
+			err := m.shiftTime(shiftForward, shiftMinute)
+			if err != nil {
+				return m, tea.Batch(cmds...)
+			}
+		case "K":
+			err := m.shiftTime(shiftBackward, shiftFiveMinutes)
+			if err != nil {
+				return m, tea.Batch(cmds...)
+			}
+		case "J":
+			err := m.shiftTime(shiftForward, shiftFiveMinutes)
+			if err != nil {
+				return m, tea.Batch(cmds...)
+			}
 		}
 	}
 
@@ -268,6 +288,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "ctrl+s":
+			if !m.issuesFetched {
+				break
+			}
+
 			if m.activeView == IssueListView && !m.trackingActive {
 				m.activeView = ManualWorklogEntryView
 				m.worklogSaveType = worklogInsert
@@ -321,6 +345,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, deleteActiveIssueLog(m.db))
 			}
 		case "s":
+			if !m.issuesFetched {
+				break
+			}
+
 			switch m.activeView {
 			case IssueListView:
 				if m.issueList.FilterState() != list.Filtering {
@@ -380,6 +408,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.activeView = HelpView
 			}
 		case "ctrl+b":
+			if !m.issuesFetched {
+				break
+			}
+
 			if m.activeView == IssueListView {
 				selectedIssue := m.issueList.SelectedItem().FilterValue()
 				cmds = append(cmds, openURLInBrowser(fmt.Sprintf("%sbrowse/%s", m.jiraClient.BaseURL.String(), selectedIssue)))
@@ -595,4 +627,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m model) shiftTime(direction timeShiftDirection, duration timeShiftDuration) error {
+	if m.activeView == AskForCommentView || m.activeView == ManualWorklogEntryView {
+		if m.trackingFocussedField == entryBeginTS || m.trackingFocussedField == entryEndTS {
+			ts, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[m.trackingFocussedField].Value(), time.Local)
+			if err != nil {
+				return err
+			}
+
+			newTs := getShiftedTime(ts, direction, duration)
+
+			m.trackingInputs[m.trackingFocussedField].SetValue(newTs.Format(timeFormat))
+		}
+	}
+	return nil
 }

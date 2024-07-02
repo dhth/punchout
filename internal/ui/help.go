@@ -58,6 +58,7 @@ var (
                                             "s" keypress
     <ctrl+s>                                Add manual worklog entry
     <ctrl+t>                                Go to currently tracked item
+    <ctrl+x>                                Discard currently active recording
 `),
 		helpHeaderStyle.Render("Worklog List View"),
 		helpSectionStyle.Render(`
@@ -69,6 +70,10 @@ var (
 		helpHeaderStyle.Render("Worklog Entry View"),
 		helpSectionStyle.Render(`
     enter                                   Save worklog entry
+    k                                       Move timestamp backwards by one minute
+    j                                       Move timestamp forwards by one minute
+    K                                       Move timestamp backwards by five minutes
+    J                                       Move timestamp forwards by five minutes
 `),
 		helpHeaderStyle.Render("Synced Worklog Entry View"),
 		helpSectionStyle.Render(`
