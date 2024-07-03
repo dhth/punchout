@@ -11,29 +11,29 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type TrackingStatus uint
+type trackingStatus uint
 
 const (
-	TrackingInactive TrackingStatus = iota
-	TrackingActive
+	trackingInactive trackingStatus = iota
+	trackingActive
 )
 
-type DBChange uint
+type dBChange uint
 
 const (
-	InsertChange DBChange = iota
-	UpdateChange
+	insertChange dBChange = iota
+	updateChange
 )
 
-type StateView uint
+type stateView uint
 
 const (
-	IssueListView StateView = iota
-	WorklogView
-	SyncedWorklogView
-	AskForCommentView
-	ManualWorklogEntryView
-	HelpView
+	issueListView stateView = iota
+	worklogView
+	syncedWorklogView
+	askForCommentView
+	manualWorklogEntryView
+	helpView
 )
 
 type trackingFocussedField uint
@@ -59,8 +59,8 @@ const (
 )
 
 type model struct {
-	activeView            StateView
-	lastView              StateView
+	activeView            stateView
+	lastView              stateView
 	db                    *sql.DB
 	jiraClient            *jira.Client
 	jql                   string
@@ -77,7 +77,7 @@ type model struct {
 	trackingFocussedField trackingFocussedField
 	helpVP                viewport.Model
 	helpVPReady           bool
-	lastChange            DBChange
+	lastChange            dBChange
 	changesLocked         bool
 	activeIssue           string
 	worklogSaveType       worklogSaveType

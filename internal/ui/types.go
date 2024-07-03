@@ -32,7 +32,7 @@ func (issue Issue) Description() string {
 
 func (issue Issue) FilterValue() string { return issue.issueKey }
 
-type WorklogEntry struct {
+type worklogEntry struct {
 	Id             int
 	IssueKey       string
 	BeginTS        time.Time
@@ -44,7 +44,7 @@ type WorklogEntry struct {
 	Error          error
 }
 
-type SyncedWorklogEntry struct {
+type syncedWorklogEntry struct {
 	Id       int
 	IssueKey string
 	BeginTS  time.Time
@@ -52,10 +52,10 @@ type SyncedWorklogEntry struct {
 	Comment  string
 }
 
-func (entry WorklogEntry) Title() string {
+func (entry worklogEntry) Title() string {
 	return entry.Comment
 }
-func (entry WorklogEntry) Description() string {
+func (entry worklogEntry) Description() string {
 	if entry.Error != nil {
 		return "error: " + entry.Error.Error()
 	}
@@ -94,12 +94,12 @@ func (entry WorklogEntry) Description() string {
 		syncedStatus,
 	)
 }
-func (entry WorklogEntry) FilterValue() string { return entry.IssueKey }
+func (entry worklogEntry) FilterValue() string { return entry.IssueKey }
 
-func (entry SyncedWorklogEntry) Title() string {
+func (entry syncedWorklogEntry) Title() string {
 	return entry.Comment
 }
-func (entry SyncedWorklogEntry) Description() string {
+func (entry syncedWorklogEntry) Description() string {
 	durationMsg := humanize.Time(entry.EndTS)
 	timeSpentStr := humanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
 	return fmt.Sprintf("%s%s%s",
@@ -108,4 +108,4 @@ func (entry SyncedWorklogEntry) Description() string {
 		fmt.Sprintf("(%s)", timeSpentStr),
 	)
 }
-func (entry SyncedWorklogEntry) FilterValue() string { return entry.IssueKey }
+func (entry syncedWorklogEntry) FilterValue() string { return entry.IssueKey }

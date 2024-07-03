@@ -2,15 +2,15 @@ package ui
 
 import "time"
 
-type HideHelpMsg struct{}
+type hideHelpMsg struct{}
 
-type TrackingToggledMsg struct {
+type trackingToggledMsg struct {
 	activeIssue string
 	finished    bool
 	err         error
 }
 
-type ManualEntryInserted struct {
+type manualEntryInserted struct {
 	issueKey string
 	err      error
 }
@@ -19,50 +19,50 @@ type activeTaskLogDeletedMsg struct {
 	err error
 }
 
-type ManualEntryUpdated struct {
+type manualEntryUpdated struct {
 	rowId    int
 	issueKey string
 	err      error
 }
 
-type FetchActiveMsg struct {
+type fetchActiveMsg struct {
 	activeIssue string
 	beginTs     time.Time
 	err         error
 }
 
-type LogEntriesFetchedMsg struct {
-	entries []WorklogEntry
+type logEntriesFetchedMsg struct {
+	entries []worklogEntry
 	err     error
 }
 
-type SyncedLogEntriesFetchedMsg struct {
-	entries []SyncedWorklogEntry
+type syncedLogEntriesFetchedMsg struct {
+	entries []syncedWorklogEntry
 	err     error
 }
 
-type LogEntriesDeletedMsg struct {
+type logEntriesDeletedMsg struct {
 	err error
 }
 
-type LogEntrySyncUpdated struct {
-	entry WorklogEntry
+type logEntrySyncUpdated struct {
+	entry worklogEntry
 	index int
 	err   error
 }
 
-type IssuesFetchedFromJIRAMsg struct {
+type issuesFetchedFromJIRAMsg struct {
 	issues []Issue
 	err    error
 }
 
-type WLAddedOnJIRA struct {
+type wlAddedOnJIRA struct {
 	index int
-	entry WorklogEntry
+	entry worklogEntry
 	err   error
 }
 
-type URLOpenedinBrowserMsg struct {
+type urlOpenedinBrowserMsg struct {
 	url string
 	err error
 }

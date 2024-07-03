@@ -3,7 +3,7 @@ package ui
 import "fmt"
 
 var (
-	HelpText = fmt.Sprintf(`
+	helpText = fmt.Sprintf(`
   %s
 %s
   %s

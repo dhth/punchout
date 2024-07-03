@@ -72,9 +72,9 @@ AND active = 1;
 
 }
 
-func fetchEntries(db *sql.DB) ([]WorklogEntry, error) {
+func fetchEntries(db *sql.DB) ([]worklogEntry, error) {
 
-	var logEntries []WorklogEntry
+	var logEntries []worklogEntry
 
 	rows, err := db.Query(`
 SELECT ID, issue_key, begin_ts, end_ts, comment, active, synced
@@ -88,7 +88,7 @@ ORDER by end_ts DESC;
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry WorklogEntry
+		var entry worklogEntry
 		err = rows.Scan(&entry.Id,
 			&entry.IssueKey,
 			&entry.BeginTS,
@@ -106,9 +106,9 @@ ORDER by end_ts DESC;
 	return logEntries, nil
 }
 
-func fetchSyncedEntries(db *sql.DB) ([]SyncedWorklogEntry, error) {
+func fetchSyncedEntries(db *sql.DB) ([]syncedWorklogEntry, error) {
 
-	var logEntries []SyncedWorklogEntry
+	var logEntries []syncedWorklogEntry
 
 	rows, err := db.Query(`
 SELECT ID, issue_key, begin_ts, end_ts, comment
@@ -122,7 +122,7 @@ ORDER by end_ts DESC LIMIT 30;
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry SyncedWorklogEntry
+		var entry syncedWorklogEntry
 		err = rows.Scan(&entry.Id,
 			&entry.IssueKey,
 			&entry.BeginTS,

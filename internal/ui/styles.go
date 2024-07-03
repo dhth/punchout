@@ -15,7 +15,7 @@ const (
 	unsyncedCountColor      = "#fabd2f"
 	activeIssueKeyColor     = "#d3869b"
 	activeIssueSummaryColor = "#8ec07c"
-	trackingBeganColor      = "#d3869b"
+	trackingBeganColor      = "#fabd2f"
 	issueStatusColor        = "#665c54"
 	toolNameColor           = "#b8bb26"
 	syncedColor             = "#b8bb26"
@@ -93,7 +93,7 @@ var (
 					PaddingLeft(1).
 					Foreground(lipgloss.Color(activeIssueSummaryColor))
 
-	trackingBeginStyle = lipgloss.NewStyle().
+	trackingBeganStyle = trackingStyle.
 				PaddingLeft(1).
 				Foreground(lipgloss.Color(trackingBeganColor))
 

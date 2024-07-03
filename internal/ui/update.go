@@ -31,7 +31,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "enter":
 			switch m.activeView {
-			case AskForCommentView:
+			case askForCommentView:
 
 				beginTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryBeginTS].Value(), time.Local)
 				if err != nil {
@@ -65,12 +65,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.trackingInputs[entryComment].Value(),
 				))
 
-				m.activeView = IssueListView
+				m.activeView = issueListView
 				for i := range m.trackingInputs {
 					m.trackingInputs[i].SetValue("")
 				}
 				return m, tea.Batch(cmds...)
-			case ManualWorklogEntryView:
+			case manualWorklogEntryView:
 				beginTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryBeginTS].Value(), time.Local)
 				if err != nil {
 					m.message = err.Error()
@@ -107,9 +107,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							endTS,
 							m.trackingInputs[entryComment].Value(),
 						))
-						m.activeView = IssueListView
+						m.activeView = issueListView
 					case worklogUpdate:
-						wl, ok := m.worklogList.SelectedItem().(WorklogEntry)
+						wl, ok := m.worklogList.SelectedItem().(worklogEntry)
 						if ok {
 							cmds = append(cmds, updateManualEntry(m.db,
 								wl.Id,
@@ -118,7 +118,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								endTS,
 								m.trackingInputs[entryComment].Value(),
 							))
-							m.activeView = WorklogView
+							m.activeView = worklogView
 						}
 					}
 				}
@@ -129,15 +129,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "esc":
 			switch m.activeView {
-			case AskForCommentView:
-				m.activeView = IssueListView
+			case askForCommentView:
+				m.activeView = issueListView
 				m.trackingInputs[entryComment].SetValue("")
-			case ManualWorklogEntryView:
+			case manualWorklogEntryView:
 				switch m.worklogSaveType {
 				case worklogInsert:
-					m.activeView = IssueListView
+					m.activeView = issueListView
 				case worklogUpdate:
-					m.activeView = WorklogView
+					m.activeView = worklogView
 				}
 				for i := range m.trackingInputs {
 					m.trackingInputs[i].SetValue("")
@@ -145,15 +145,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "tab":
 			switch m.activeView {
-			case IssueListView:
-				m.activeView = WorklogView
+			case issueListView:
+				m.activeView = worklogView
 				cmds = append(cmds, fetchLogEntries(m.db))
-			case WorklogView:
-				m.activeView = SyncedWorklogView
+			case worklogView:
+				m.activeView = syncedWorklogView
 				cmds = append(cmds, fetchSyncedLogEntries(m.db))
-			case SyncedWorklogView:
-				m.activeView = IssueListView
-			case AskForCommentView, ManualWorklogEntryView:
+			case syncedWorklogView:
+				m.activeView = issueListView
+			case askForCommentView, manualWorklogEntryView:
 				switch m.trackingFocussedField {
 				case entryBeginTS:
 					m.trackingFocussedField = entryEndTS
@@ -169,15 +169,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "shift+tab":
 			switch m.activeView {
-			case WorklogView:
-				m.activeView = IssueListView
-			case SyncedWorklogView:
-				m.activeView = WorklogView
+			case worklogView:
+				m.activeView = issueListView
+			case syncedWorklogView:
+				m.activeView = worklogView
 				cmds = append(cmds, fetchLogEntries(m.db))
-			case IssueListView:
-				m.activeView = SyncedWorklogView
+			case issueListView:
+				m.activeView = syncedWorklogView
 				cmds = append(cmds, fetchSyncedLogEntries(m.db))
-			case AskForCommentView, ManualWorklogEntryView:
+			case askForCommentView, manualWorklogEntryView:
 				switch m.trackingFocussedField {
 				case entryBeginTS:
 					m.trackingFocussedField = entryComment
@@ -215,7 +215,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch m.activeView {
-	case AskForCommentView, ManualWorklogEntryView:
+	case askForCommentView, manualWorklogEntryView:
 		for i := range m.trackingInputs {
 			m.trackingInputs[i], cmd = m.trackingInputs[i].Update(msg)
 			cmds = append(cmds, cmd)
@@ -228,53 +228,53 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			switch m.activeView {
-			case IssueListView:
+			case issueListView:
 				fs := m.issueList.FilterState()
 				if fs == list.Filtering || fs == list.FilterApplied {
 					m.issueList.ResetFilter()
 				} else {
 					return m, tea.Quit
 				}
-			case WorklogView:
+			case worklogView:
 				fs := m.worklogList.FilterState()
 				if fs == list.Filtering || fs == list.FilterApplied {
 					m.worklogList.ResetFilter()
 				} else {
 					return m, tea.Quit
 				}
-			case HelpView:
+			case helpView:
 				m.activeView = m.lastView
 			default:
 				return m, tea.Quit
 			}
 		case "1":
-			if m.activeView != IssueListView {
-				m.activeView = IssueListView
+			if m.activeView != issueListView {
+				m.activeView = issueListView
 			}
 		case "2":
-			if m.activeView != WorklogView {
-				m.activeView = WorklogView
+			if m.activeView != worklogView {
+				m.activeView = worklogView
 				cmds = append(cmds, fetchLogEntries(m.db))
 			}
 		case "3":
-			if m.activeView != SyncedWorklogView {
-				m.activeView = SyncedWorklogView
+			if m.activeView != syncedWorklogView {
+				m.activeView = syncedWorklogView
 			}
 		case "ctrl+r":
 			switch m.activeView {
-			case IssueListView:
+			case issueListView:
 				m.issueList.Title = "fetching..."
 				m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListUnfetchedColor))
 				cmds = append(cmds, fetchJIRAIssues(m.jiraClient, m.jql))
-			case WorklogView:
+			case worklogView:
 				cmds = append(cmds, fetchLogEntries(m.db))
 				m.worklogList.ResetSelected()
-			case SyncedWorklogView:
+			case syncedWorklogView:
 				cmds = append(cmds, fetchSyncedLogEntries(m.db))
 				m.syncedWorklogList.ResetSelected()
 			}
 		case "ctrl+t":
-			if m.activeView == IssueListView {
+			if m.activeView == issueListView {
 				if m.trackingActive {
 					if m.issueList.IsFiltered() {
 						m.issueList.ResetFilter()
@@ -292,8 +292,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			if m.activeView == IssueListView && !m.trackingActive {
-				m.activeView = ManualWorklogEntryView
+			if m.activeView == issueListView && !m.trackingActive {
+				m.activeView = manualWorklogEntryView
 				m.worklogSaveType = worklogInsert
 				m.trackingFocussedField = entryBeginTS
 				currentTime := time.Now()
@@ -307,10 +307,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.trackingInputs[i].Blur()
 				}
 				m.trackingInputs[m.trackingFocussedField].Focus()
-			} else if m.activeView == WorklogView {
-				wl, ok := m.worklogList.SelectedItem().(WorklogEntry)
+			} else if m.activeView == worklogView {
+				wl, ok := m.worklogList.SelectedItem().(worklogEntry)
 				if ok {
-					m.activeView = ManualWorklogEntryView
+					m.activeView = manualWorklogEntryView
 					m.worklogSaveType = worklogUpdate
 					m.trackingFocussedField = entryBeginTS
 
@@ -329,8 +329,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "ctrl+d":
 			switch m.activeView {
-			case WorklogView:
-				issue, ok := m.worklogList.SelectedItem().(WorklogEntry)
+			case worklogView:
+				issue, ok := m.worklogList.SelectedItem().(worklogEntry)
 				if ok {
 					cmds = append(cmds, deleteLogEntry(m.db, issue.Id))
 					return m, tea.Batch(cmds...)
@@ -341,7 +341,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "ctrl+x":
-			if m.activeView == IssueListView && m.trackingActive {
+			if m.activeView == issueListView && m.trackingActive {
 				cmds = append(cmds, deleteActiveIssueLog(m.db))
 			}
 		case "s":
@@ -350,7 +350,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			switch m.activeView {
-			case IssueListView:
+			case issueListView:
 				if m.issueList.FilterState() != list.Filtering {
 					if m.changesLocked {
 						message := "Changes locked momentarily"
@@ -363,7 +363,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.message = message
 						m.messages = append(m.messages, message)
 					} else {
-						if m.lastChange == UpdateChange {
+						if m.lastChange == updateChange {
 							m.changesLocked = true
 							m.activeIssueBeginTS = time.Now()
 							cmds = append(cmds, toggleTracking(m.db,
@@ -372,7 +372,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								m.activeIssueEndTS,
 								"",
 							))
-						} else if m.lastChange == InsertChange {
+						} else if m.lastChange == insertChange {
 
 							currentTime := time.Now()
 							beginTimeStr := m.activeIssueBeginTS.Format(timeFormat)
@@ -385,15 +385,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								m.trackingInputs[i].Blur()
 							}
 
-							m.activeView = AskForCommentView
+							m.activeView = askForCommentView
 							m.trackingFocussedField = entryComment
 							m.trackingInputs[m.trackingFocussedField].Focus()
 						}
 					}
 				}
-			case WorklogView:
+			case worklogView:
 				for i, entry := range m.worklogList.Items() {
-					if wl, ok := entry.(WorklogEntry); ok {
+					if wl, ok := entry.(worklogEntry); ok {
 						if !wl.Synced {
 							wl.SyncInProgress = true
 							m.worklogList.SetItem(i, wl)
@@ -403,16 +403,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "?":
-			if m.activeView == IssueListView || m.activeView == WorklogView || m.activeView == SyncedWorklogView {
+			if m.activeView == issueListView || m.activeView == worklogView || m.activeView == syncedWorklogView {
 				m.lastView = m.activeView
-				m.activeView = HelpView
+				m.activeView = helpView
 			}
 		case "ctrl+b":
 			if !m.issuesFetched {
 				break
 			}
 
-			if m.activeView == IssueListView {
+			if m.activeView == issueListView {
 				selectedIssue := m.issueList.SelectedItem().FilterValue()
 				cmds = append(cmds, openURLInBrowser(fmt.Sprintf("%sbrowse/%s", m.jiraClient.BaseURL.String(), selectedIssue)))
 			}
@@ -432,14 +432,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !m.helpVPReady {
 			m.helpVP = viewport.New(w-5, m.terminalHeight-7)
 			m.helpVP.HighPerformanceRendering = useHighPerformanceRenderer
-			m.helpVP.SetContent(HelpText)
+			m.helpVP.SetContent(helpText)
 			m.helpVPReady = true
 		} else {
 			m.helpVP.Height = m.terminalHeight - 7
 			m.helpVP.Width = w - 5
 
 		}
-	case IssuesFetchedFromJIRAMsg:
+	case issuesFetchedFromJIRAMsg:
 		if msg.err != nil {
 			message := "error fetching issues from JIRA: " + msg.err.Error()
 			m.message = message
@@ -459,7 +459,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			cmds = append(cmds, fetchActiveStatus(m.db, 0))
 		}
-	case ManualEntryInserted:
+	case manualEntryInserted:
 		if msg.err != nil {
 			message := msg.err.Error()
 			m.message = "Error inserting worklog: " + message
@@ -470,7 +470,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.unsyncedWLCount++
 		}
-	case ManualEntryUpdated:
+	case manualEntryUpdated:
 		if msg.err != nil {
 			message := msg.err.Error()
 			m.message = "Error updating worklog: " + message
@@ -482,7 +482,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			cmds = append(cmds, fetchLogEntries(m.db))
 		}
-	case LogEntriesFetchedMsg:
+	case logEntriesFetchedMsg:
 		if msg.err != nil {
 			message := msg.err.Error()
 			m.message = message
@@ -495,7 +495,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.worklogList.SetItems(items)
 			m.unsyncedWLCount = uint(len(msg.entries))
 		}
-	case SyncedLogEntriesFetchedMsg:
+	case syncedLogEntriesFetchedMsg:
 		if msg.err != nil {
 			message := msg.err.Error()
 			m.message = "Error fetching synced worklog entries: " + message
@@ -507,7 +507,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.syncedWorklogList.SetItems(items)
 		}
-	case LogEntrySyncUpdated:
+	case logEntrySyncUpdated:
 		if msg.err != nil {
 			msg.entry.Error = msg.err
 			m.messages = append(m.messages, msg.err.Error())
@@ -515,7 +515,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.unsyncedWLCount--
 		}
-	case FetchActiveMsg:
+	case fetchActiveMsg:
 		if msg.err != nil {
 			message := msg.err.Error()
 			m.message = message
@@ -523,9 +523,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.activeIssue = msg.activeIssue
 			if msg.activeIssue == "" {
-				m.lastChange = UpdateChange
+				m.lastChange = updateChange
 			} else {
-				m.lastChange = InsertChange
+				m.lastChange = insertChange
 				activeIssue, ok := m.issueMap[m.activeIssue]
 				m.activeIssueBeginTS = msg.beginTs
 				if ok {
@@ -540,7 +540,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.trackingActive = true
 			}
 		}
-	case LogEntriesDeletedMsg:
+	case logEntriesDeletedMsg:
 		if msg.err != nil {
 			message := "error deleting entry: " + msg.err.Error()
 			m.message = message
@@ -557,11 +557,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if ok {
 				activeIssue.trackingActive = false
 			}
-			m.lastChange = UpdateChange
+			m.lastChange = updateChange
 			m.trackingActive = false
 			m.activeIssue = ""
 		}
-	case WLAddedOnJIRA:
+	case wlAddedOnJIRA:
 		if msg.err != nil {
 			msg.entry.Error = msg.err
 			m.worklogList.SetItem(msg.index, msg.entry)
@@ -573,7 +573,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, updateSyncStatusForEntry(m.db, msg.entry, msg.index))
 
 		}
-	case TrackingToggledMsg:
+	case trackingToggledMsg:
 		if msg.err != nil {
 			message := msg.err.Error()
 			m.message = message
@@ -588,14 +588,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.changesLocked = false
 			if msg.finished {
-				m.lastChange = UpdateChange
+				m.lastChange = updateChange
 				if activeIssue != nil {
 					activeIssue.trackingActive = false
 				}
 				m.trackingActive = false
 				m.unsyncedWLCount++
 			} else {
-				m.lastChange = InsertChange
+				m.lastChange = insertChange
 				if activeIssue != nil {
 					activeIssue.trackingActive = true
 				}
@@ -603,25 +603,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.activeIssue = msg.activeIssue
 		}
-	case HideHelpMsg:
+	case hideHelpMsg:
 		m.showHelpIndicator = false
-	case URLOpenedinBrowserMsg:
+	case urlOpenedinBrowserMsg:
 		if msg.err != nil {
 			m.message = fmt.Sprintf("Error opening url: %s", msg.err.Error())
 		}
 	}
 
 	switch m.activeView {
-	case IssueListView:
+	case issueListView:
 		m.issueList, cmd = m.issueList.Update(msg)
 		cmds = append(cmds, cmd)
-	case WorklogView:
+	case worklogView:
 		m.worklogList, cmd = m.worklogList.Update(msg)
 		cmds = append(cmds, cmd)
-	case SyncedWorklogView:
+	case syncedWorklogView:
 		m.syncedWorklogList, cmd = m.syncedWorklogList.Update(msg)
 		cmds = append(cmds, cmd)
-	case HelpView:
+	case helpView:
 		m.helpVP, cmd = m.helpVP.Update(msg)
 		cmds = append(cmds, cmd)
 	}
@@ -630,7 +630,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) shiftTime(direction timeShiftDirection, duration timeShiftDuration) error {
-	if m.activeView == AskForCommentView || m.activeView == ManualWorklogEntryView {
+	if m.activeView == askForCommentView || m.activeView == manualWorklogEntryView {
 		if m.trackingFocussedField == entryBeginTS || m.trackingFocussedField == entryEndTS {
 			ts, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[m.trackingFocussedField].Value(), time.Local)
 			if err != nil {

@@ -26,7 +26,7 @@ func (m model) View() string {
 			issue, ok := m.issueMap[m.activeIssue]
 			if ok {
 				issueSummaryMsg = fmt.Sprintf("(%s)", Trim(issue.summary, 50))
-				if m.activeView != AskForCommentView {
+				if m.activeView != askForCommentView {
 					trackingSinceMsg = fmt.Sprintf("(since %s)", m.activeIssueBeginTS.Format(timeOnlyFormat))
 				}
 			}
@@ -34,13 +34,13 @@ func (m model) View() string {
 				trackingStyle.Render("tracking:"),
 				activeIssueKeyMsgStyle.Render(m.activeIssue),
 				activeIssueSummaryMsgStyle.Render(issueSummaryMsg),
-				trackingBeginStyle.Render(trackingSinceMsg),
+				trackingBeganStyle.Render(trackingSinceMsg),
 			)
 		}
 
 		if m.showHelpIndicator {
 			// first time help
-			if m.activeView == IssueListView && len(m.syncedWorklogList.Items()) == 0 && m.unsyncedWLCount == 0 {
+			if m.activeView == issueListView && len(m.syncedWorklogList.Items()) == 0 && m.unsyncedWLCount == 0 {
 				if m.trackingActive {
 					helpMsg += " " + initialHelpMsgStyle.Render("Press s to stop tracking time")
 				} else {
@@ -51,13 +51,13 @@ func (m model) View() string {
 	}
 
 	switch m.activeView {
-	case IssueListView:
+	case issueListView:
 		content = listStyle.Render(m.issueList.View())
-	case WorklogView:
+	case worklogView:
 		content = listStyle.Render(m.worklogList.View())
-	case SyncedWorklogView:
+	case syncedWorklogView:
 		content = listStyle.Render(m.syncedWorklogList.View())
-	case AskForCommentView:
+	case askForCommentView:
 		formHeadingText := "Saving worklog entry. Enter/update the following details:"
 		content = fmt.Sprintf(
 			`
@@ -95,7 +95,7 @@ func (m model) View() string {
 		for i := 0; i < m.terminalHeight-22; i++ {
 			content += "\n"
 		}
-	case ManualWorklogEntryView:
+	case manualWorklogEntryView:
 		var formHeadingText string
 		switch m.worklogSaveType {
 		case worklogInsert:
@@ -140,7 +140,7 @@ func (m model) View() string {
 		for i := 0; i < m.terminalHeight-22; i++ {
 			content += "\n"
 		}
-	case HelpView:
+	case helpView:
 		if !m.helpVPReady {
 			content = "\n  Initializing..."
 		} else {

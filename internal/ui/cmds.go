@@ -21,32 +21,32 @@ WHERE active=1
 ORDER BY begin_ts DESC
 LIMIT 1
 `)
-		var trackStatus TrackingStatus
+		var trackStatus trackingStatus
 		var activeIssue string
 		err := row.Scan(&activeIssue)
 		if err == sql.ErrNoRows {
-			trackStatus = TrackingInactive
+			trackStatus = trackingInactive
 		} else if err != nil {
-			return TrackingToggledMsg{err: err}
+			return trackingToggledMsg{err: err}
 		} else {
-			trackStatus = TrackingActive
+			trackStatus = trackingActive
 		}
 
 		switch trackStatus {
-		case TrackingInactive:
+		case trackingInactive:
 			err = insertNewEntry(db, selectedIssue, beginTs)
 			if err != nil {
-				return TrackingToggledMsg{err: err}
+				return trackingToggledMsg{err: err}
 			} else {
-				return TrackingToggledMsg{activeIssue: selectedIssue}
+				return trackingToggledMsg{activeIssue: selectedIssue}
 			}
 
 		default:
 			err := updateLastEntry(db, activeIssue, comment, beginTs, endTs)
 			if err != nil {
-				return TrackingToggledMsg{err: err}
+				return trackingToggledMsg{err: err}
 			} else {
-				return TrackingToggledMsg{activeIssue: "", finished: true}
+				return trackingToggledMsg{activeIssue: "", finished: true}
 			}
 		}
 	}
@@ -61,16 +61,16 @@ VALUES (?, ?, ?, ?, ?, ?);
     `)
 
 		if err != nil {
-			return ManualEntryInserted{issueKey, err}
+			return manualEntryInserted{issueKey, err}
 		}
 		defer stmt.Close()
 
 		_, err = stmt.Exec(issueKey, beginTS, endTS, comment, false, false)
 		if err != nil {
-			return ManualEntryInserted{issueKey, err}
+			return manualEntryInserted{issueKey, err}
 		}
 
-		return ManualEntryInserted{issueKey, nil}
+		return manualEntryInserted{issueKey, nil}
 	}
 }
 
@@ -93,16 +93,16 @@ WHERE ID = ?;
     `)
 
 		if err != nil {
-			return ManualEntryUpdated{rowID, issueKey, err}
+			return manualEntryUpdated{rowID, issueKey, err}
 		}
 		defer stmt.Close()
 
 		_, err = stmt.Exec(beginTS, endTS, comment, rowID)
 		if err != nil {
-			return ManualEntryUpdated{rowID, issueKey, err}
+			return manualEntryUpdated{rowID, issueKey, err}
 		}
 
-		return ManualEntryUpdated{rowID, issueKey, nil}
+		return manualEntryUpdated{rowID, issueKey, nil}
 	}
 }
 
@@ -119,20 +119,20 @@ LIMIT 1
 		var beginTs time.Time
 		err := row.Scan(&activeIssue, &beginTs)
 		if err == sql.ErrNoRows {
-			return FetchActiveMsg{activeIssue: activeIssue}
+			return fetchActiveMsg{activeIssue: activeIssue}
 		}
 		if err != nil {
-			return FetchActiveMsg{err: err}
+			return fetchActiveMsg{err: err}
 		}
 
-		return FetchActiveMsg{activeIssue: activeIssue, beginTs: beginTs}
+		return fetchActiveMsg{activeIssue: activeIssue, beginTs: beginTs}
 	})
 }
 
 func fetchLogEntries(db *sql.DB) tea.Cmd {
 	return func() tea.Msg {
 		entries, err := fetchEntries(db)
-		return LogEntriesFetchedMsg{
+		return logEntriesFetchedMsg{
 			entries: entries,
 			err:     err,
 		}
@@ -142,7 +142,7 @@ func fetchLogEntries(db *sql.DB) tea.Cmd {
 func fetchSyncedLogEntries(db *sql.DB) tea.Cmd {
 	return func() tea.Msg {
 		entries, err := fetchSyncedEntries(db)
-		return SyncedLogEntriesFetchedMsg{
+		return syncedLogEntriesFetchedMsg{
 			entries: entries,
 			err:     err,
 		}
@@ -152,16 +152,16 @@ func fetchSyncedLogEntries(db *sql.DB) tea.Cmd {
 func deleteLogEntry(db *sql.DB, id int) tea.Cmd {
 	return func() tea.Msg {
 		err := deleteEntry(db, id)
-		return LogEntriesDeletedMsg{
+		return logEntriesDeletedMsg{
 			err: err,
 		}
 	}
 }
 
-func updateSyncStatusForEntry(db *sql.DB, entry WorklogEntry, index int) tea.Cmd {
+func updateSyncStatusForEntry(db *sql.DB, entry worklogEntry, index int) tea.Cmd {
 	return func() tea.Msg {
 		err := updateSyncStatus(db, entry.Id)
-		return LogEntrySyncUpdated{
+		return logEntrySyncUpdated{
 			entry: entry,
 			index: index,
 			err:   err,
@@ -198,20 +198,20 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 				trackingActive:  false,
 			})
 		}
-		return IssuesFetchedFromJIRAMsg{issues, err}
+		return issuesFetchedFromJIRAMsg{issues, err}
 	}
 }
 
-func syncWorklogWithJIRA(cl *jira.Client, entry WorklogEntry, index int, timeDeltaMins int) tea.Cmd {
+func syncWorklogWithJIRA(cl *jira.Client, entry worklogEntry, index int, timeDeltaMins int) tea.Cmd {
 	return func() tea.Msg {
 		err := addWLtoJira(cl, entry, timeDeltaMins)
-		return WLAddedOnJIRA{index, entry, err}
+		return wlAddedOnJIRA{index, entry, err}
 	}
 }
 
 func hideHelp(interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
-		return HideHelpMsg{}
+		return hideHelpMsg{}
 	})
 }
 
@@ -226,8 +226,8 @@ func openURLInBrowser(url string) tea.Cmd {
 	c := exec.Command(openCmd, url)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
-			return URLOpenedinBrowserMsg{url: url, err: err}
+			return urlOpenedinBrowserMsg{url: url, err: err}
 		}
-		return tea.Msg(URLOpenedinBrowserMsg{url: url})
+		return tea.Msg(urlOpenedinBrowserMsg{url: url})
 	})
 }
