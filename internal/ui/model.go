@@ -70,6 +70,7 @@ type model struct {
 	issuesFetched         bool
 	worklogList           list.Model
 	unsyncedWLCount       uint
+	unsyncedWLSecsSpent   int
 	syncedWorklogList     list.Model
 	activeIssueBeginTS    time.Time
 	activeIssueEndTS      time.Time
@@ -87,6 +88,7 @@ type model struct {
 	showHelpIndicator     bool
 	terminalHeight        int
 	trackingActive        bool
+	debug                 bool
 }
 
 func (m model) Init() tea.Cmd {
