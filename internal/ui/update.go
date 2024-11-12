@@ -41,7 +41,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.activeIssueBeginTS = beginTS.Local()
 
 				endTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryEndTS].Value(), time.Local)
-
 				if err != nil {
 					m.message = err.Error()
 					return m, tea.Batch(cmds...)
@@ -79,7 +78,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				beginTS = beginTS.Local()
 
 				endTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryEndTS].Value(), time.Local)
-
 				if err != nil {
 					m.message = err.Error()
 					return m, tea.Batch(cmds...)
@@ -468,7 +466,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for i := range m.trackingInputs {
 				m.trackingInputs[i].SetValue("")
 			}
-			m.unsyncedWLCount++
+			cmds = append(cmds, fetchLogEntries(m.db))
 		}
 	case manualEntryUpdated:
 		if msg.err != nil {
@@ -489,11 +487,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.messages = append(m.messages, message)
 		} else {
 			var items []list.Item
+			var secsSpent int
 			for _, e := range msg.entries {
+				secsSpent += e.SecsSpent()
 				items = append(items, list.Item(e))
 			}
 			m.worklogList.SetItems(items)
+			m.unsyncedWLSecsSpent = secsSpent
 			m.unsyncedWLCount = uint(len(msg.entries))
+			if m.debug {
+				m.message = "[io: log entries]"
+			}
 		}
 	case syncedLogEntriesFetchedMsg:
 		if msg.err != nil {
@@ -514,6 +518,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.worklogList.SetItem(msg.index, msg.entry)
 		} else {
 			m.unsyncedWLCount--
+			m.unsyncedWLSecsSpent -= msg.entry.SecsSpent()
 		}
 	case fetchActiveMsg:
 		if msg.err != nil {
@@ -547,7 +552,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.messages = append(m.messages, message)
 		} else {
 			cmds = append(cmds, fetchLogEntries(m.db))
-			m.unsyncedWLCount--
 		}
 	case activeTaskLogDeletedMsg:
 		if msg.err != nil {
@@ -593,7 +597,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					activeIssue.trackingActive = false
 				}
 				m.trackingActive = false
-				m.unsyncedWLCount++
+				cmds = append(cmds, fetchLogEntries(m.db))
 			} else {
 				m.lastChange = insertChange
 				if activeIssue != nil {

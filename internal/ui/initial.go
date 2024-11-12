@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDeltaMins int) model {
+func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDeltaMins int, debug bool) model {
 	var stackItems []list.Item
 	var worklogListItems []list.Item
 	var syncedWorklogListItems []list.Item
@@ -45,6 +45,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDelta
 		jiraTimeDeltaMins: jiraTimeDeltaMins,
 		showHelpIndicator: true,
 		trackingInputs:    trackingInputs,
+		debug:             debug,
 	}
 	m.issueList.Title = "fetching..."
 	m.issueList.SetStatusBarItemName("issue", "issues")

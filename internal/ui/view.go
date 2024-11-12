@@ -6,9 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var (
-	listWidth = 140
-)
+var listWidth = 140
 
 func (m model) View() string {
 	var content string
@@ -162,7 +160,8 @@ func (m model) View() string {
 		if m.unsyncedWLCount == 1 {
 			entryWord = "entry"
 		}
-		unsyncedMsg = unsyncedCountStyle.Render(fmt.Sprintf("(%d unsynced %s)", m.unsyncedWLCount, entryWord))
+		unsyncedTimeMsg := humanizeDuration(m.unsyncedWLSecsSpent)
+		unsyncedMsg = unsyncedCountStyle.Render(fmt.Sprintf("%d unsynced %s (%s)", m.unsyncedWLCount, entryWord, unsyncedTimeMsg))
 	}
 	footerStr := fmt.Sprintf("%s%s%s%s",
 		modeStyle.Render("punchout"),

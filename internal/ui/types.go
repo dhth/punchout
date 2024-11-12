@@ -52,9 +52,14 @@ type syncedWorklogEntry struct {
 	Comment  string
 }
 
+func (entry worklogEntry) SecsSpent() int {
+	return int(entry.EndTS.Sub(entry.BeginTS).Seconds())
+}
+
 func (entry worklogEntry) Title() string {
 	return entry.Comment
 }
+
 func (entry worklogEntry) Description() string {
 	if entry.Error != nil {
 		return "error: " + entry.Error.Error()
@@ -99,6 +104,7 @@ func (entry worklogEntry) FilterValue() string { return entry.IssueKey }
 func (entry syncedWorklogEntry) Title() string {
 	return entry.Comment
 }
+
 func (entry syncedWorklogEntry) Description() string {
 	durationMsg := humanize.Time(entry.EndTS)
 	timeSpentStr := humanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
