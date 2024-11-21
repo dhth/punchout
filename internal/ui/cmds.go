@@ -13,7 +13,6 @@ import (
 
 func toggleTracking(db *sql.DB, selectedIssue string, beginTs, endTs time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
-
 		row := db.QueryRow(`
 SELECT issue_key
 from issue_log
@@ -54,12 +53,10 @@ LIMIT 1
 
 func insertManualEntry(db *sql.DB, issueKey string, beginTS time.Time, endTS time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
-
 		stmt, err := db.Prepare(`
 INSERT INTO issue_log (issue_key, begin_ts, end_ts, comment, active, synced)
 VALUES (?, ?, ?, ?, ?, ?);
     `)
-
 		if err != nil {
 			return manualEntryInserted{issueKey, err}
 		}
@@ -83,7 +80,6 @@ func deleteActiveIssueLog(db *sql.DB) tea.Cmd {
 
 func updateManualEntry(db *sql.DB, rowID int, issueKey string, beginTS time.Time, endTS time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
-
 		stmt, err := db.Prepare(`
 UPDATE issue_log
 SET begin_ts = ?,
@@ -91,7 +87,6 @@ SET begin_ts = ?,
     comment = ?
 WHERE ID = ?;
     `)
-
 		if err != nil {
 			return manualEntryUpdated{rowID, issueKey, err}
 		}
@@ -186,10 +181,10 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 
 				if issue.Fields.Status != nil {
 					status = issue.Fields.Status.Name
-
 				}
 			}
-			issues = append(issues, Issue{issueKey: issue.Key,
+			issues = append(issues, Issue{
+				issueKey:        issue.Key,
 				issueType:       issue.Fields.Type.Name,
 				summary:         issue.Fields.Summary,
 				assignee:        assignee,
