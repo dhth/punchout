@@ -15,6 +15,7 @@ const (
 	shiftMinute timeShiftDuration = iota
 	shiftFiveMinutes
 	shiftHour
+	shiftDay
 )
 
 func getShiftedTime(ts time.Time, direction timeShiftDirection, duration timeShiftDuration) time.Time {
@@ -27,6 +28,8 @@ func getShiftedTime(ts time.Time, direction timeShiftDirection, duration timeShi
 		d = time.Minute * 5
 	case shiftHour:
 		d = time.Hour
+	case shiftDay:
+		d = time.Hour * 24
 	}
 
 	if direction == shiftBackward {
