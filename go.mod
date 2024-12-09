@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.2.1
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/dustin/go-humanize v1.0.1
-	modernc.org/sqlite v1.33.1
+	modernc.org/sqlite v1.34.2
 )
 
 require (
