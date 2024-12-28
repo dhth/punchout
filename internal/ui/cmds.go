@@ -56,7 +56,7 @@ func insertManualEntry(db *sql.DB, issueKey string, beginTS time.Time, endTS tim
 		stmt, err := db.Prepare(`
 INSERT INTO issue_log (issue_key, begin_ts, end_ts, comment, active, synced)
 VALUES (?, ?, ?, ?, ?, ?);
-    `)
+`)
 		if err != nil {
 			return manualEntryInserted{issueKey, err}
 		}
@@ -86,7 +86,7 @@ SET begin_ts = ?,
     end_ts = ?,
     comment = ?
 WHERE ID = ?;
-    `)
+`)
 		if err != nil {
 			return manualEntryUpdated{rowID, issueKey, err}
 		}

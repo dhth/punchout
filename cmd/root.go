@@ -58,13 +58,14 @@ func Execute() {
 	if *jiraTimeDeltaMinsStr != "" {
 		jiraTimeDeltaMins, err = strconv.Atoi(*jiraTimeDeltaMinsStr)
 		if err != nil {
-			die("could't convert jira-time-delta-mins to a number")
+			die("couldn't convert jira-time-delta-mins to a number")
 		}
 	}
 
 	poCfg, err := readConfig(*configFilePath)
 	if err != nil {
-		die("error reading config at %s: %s", *configFilePath, err.Error())
+		fmt.Fprintf(os.Stderr, "error reading config at %s: %s.\n"+
+			"continue with command line args only\n", *configFilePath, err.Error())
 	}
 
 	if *jiraURL != "" {
@@ -79,7 +80,7 @@ func Execute() {
 		poCfg.Jira.Jql = jql
 	}
 	if *jiraTimeDeltaMinsStr != "" {
-		poCfg.Jira.JiraTimeDeltaMins = &jiraTimeDeltaMins
+		poCfg.Jira.JiraTimeDeltaMins = jiraTimeDeltaMins
 	}
 
 	configKeyMaxLen := 40
@@ -90,28 +91,26 @@ func Execute() {
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA URL", configKeyMaxLen), *poCfg.Jira.JiraURL)
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA Token", configKeyMaxLen), *poCfg.Jira.JiraToken)
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JQL", configKeyMaxLen), *poCfg.Jira.Jql)
-		fmt.Fprintf(os.Stdout, "%s%d\n", ui.RightPadTrim("JIRA Time Delta Mins", configKeyMaxLen), *poCfg.Jira.JiraTimeDeltaMins)
+		fmt.Fprintf(os.Stdout, "%s%d\n", ui.RightPadTrim("JIRA Time Delta Mins", configKeyMaxLen), poCfg.Jira.JiraTimeDeltaMins)
 		os.Exit(0)
 	}
 
 	// validations
-
-	if *poCfg.Jira.JiraURL == "" {
+	if poCfg.Jira.JiraURL == nil || *poCfg.Jira.JiraURL == "" {
 		die("jira-url cannot be empty")
 	}
 
-	if *poCfg.Jira.JiraToken == "" {
+	if poCfg.Jira.JiraToken == nil || *poCfg.Jira.JiraToken == "" {
 		die("jira-token cannot be empty")
 	}
 
-	if *poCfg.Jira.Jql == "" {
+	if poCfg.Jira.Jql == nil || *poCfg.Jira.Jql == "" {
 		die("jql cannot be empty")
 	}
 
 	db, err := setupDB(dbPathFull)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't set up punchout database. This is a fatal error\n")
-		os.Exit(1)
+		die("couldn't set up punchout database. This is a fatal error\n")
 	}
 
 	tp := jira.BearerAuthTransport{
@@ -122,6 +121,6 @@ func Execute() {
 		panic(err)
 	}
 
-	ui.RenderUI(db, cl, *poCfg.Jira.Jql, *poCfg.Jira.JiraTimeDeltaMins)
+	ui.RenderUI(db, cl, *poCfg.Jira.Jql, poCfg.Jira.JiraTimeDeltaMins)
 
 }

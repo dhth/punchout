@@ -60,7 +60,7 @@ punchout \
     jira-url='https://jira.company.com' \
     jira-token='XXX' \
     jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC' \
-    jira-time-delta-mins='300' \
+    jira-time-delta-mins='300'
 ```
 
 Both the config file and the command line flags can be used in conjunction, but
@@ -114,8 +114,8 @@ General
 
 General List Controls
 
-  h/<Up>                                  Move cursor up
-  k/<Down>                                Move cursor down
+  k/<Up>                                  Move cursor up
+  j/<Down>                                Move cursor down
   h<Left>                                 Go to previous page
   l<Right>                                Go to next page
   /                                       Start filtering

@@ -33,7 +33,7 @@ func insertNewEntry(db *sql.DB, issueKey string, beginTs time.Time) error {
 	stmt, err := db.Prepare(`
     INSERT INTO issue_log (issue_key, begin_ts, active, synced)
     VALUES (?, ?, ?, ?);
-    `)
+`)
 
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ SELECT ID, issue_key, begin_ts, end_ts, comment, active, synced
 FROM issue_log
 WHERE active=false AND synced=false
 ORDER by end_ts DESC;
-    `)
+`)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ SELECT ID, issue_key, begin_ts, end_ts, comment
 FROM issue_log
 WHERE active=false AND synced=true
 ORDER by end_ts DESC LIMIT 30;
-    `)
+`)
 	if err != nil {
 		return nil, err
 	}

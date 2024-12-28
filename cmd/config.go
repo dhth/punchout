@@ -8,7 +8,7 @@ type JiraConfig struct {
 	JiraURL           *string `toml:"jira_url"`
 	JiraToken         *string `toml:"jira_token"`
 	Jql               *string
-	JiraTimeDeltaMins *int `toml:"jira_time_delta_mins"`
+	JiraTimeDeltaMins int `toml:"jira_time_delta_mins"`
 }
 
 type POConfig struct {
