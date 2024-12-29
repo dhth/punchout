@@ -6,9 +6,11 @@ import (
 
 type JiraConfig struct {
 	JiraURL           *string `toml:"jira_url"`
-	JiraToken         *string `toml:"jira_token"`
 	Jql               *string
-	JiraTimeDeltaMins int `toml:"jira_time_delta_mins"`
+	JiraTimeDeltaMins int     `toml:"jira_time_delta_mins"`
+	JiraToken         *string `toml:"jira_token"`
+	JiraCloudToken    *string `toml:"jira_cloud_token"`
+	JiraCloudUsername *string `toml:"jira_cloud_username"`
 }
 
 type POConfig struct {

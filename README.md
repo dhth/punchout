@@ -38,17 +38,24 @@ file is `~/.config/punchout/punchout.toml`.
 ```toml
 [jira]
 jira_url = "https://jira.company.com"
-jira_token = "XXX"
+
+# for on-premise installations
+# you can use a JIRA PAT token here:
+# jira_token = "XXX"
+
+# or if you use cloud instance
+# use your jira username and API token:
+# jira_cloud_username = "example@example.com"
+# jira_cloud_token = "XXX"
+
 # put whatever JQL you want to query for
 jql = "assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC"
+
 # I don't know how many people will find use for this.
 # I need this, since the JIRA server I use runs 5 hours behind
 # the actual time, for whatever reason 🤷
-jira_time_delta_mins = 300
+# jira_time_delta_mins = 300
 ```
-
-*Note: `punchout` only supports [on-premise] installations of JIRA for now. I
-might add support for cloud installations in the future.*
 
 ### Using command line flags
 
@@ -56,11 +63,13 @@ Use `punchout -h` for help.
 
 ```bash
 punchout \
-    db-path='/path/to/punchout/db/file.db' \
-    jira-url='https://jira.company.com' \
-    jira-token='XXX' \
-    jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC' \
-    jira-time-delta-mins='300'
+    [ -db-path='/path/to/punchout/db/file.db' ] \
+    [ -jira-url='https://jira.company.com' ] \
+    [ -jira-token='XXX' | { jira-cloud-token='XXX' jira-cloud-username='example@example.com' } ] \
+    [ -jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC' ] \
+    [ -jira-time-delta-mins='300' ] \
+    [ -config-file-path='/path/to/punchout/config/file.toml' ] \
+    [ -list-config ]
 ```
 
 Both the config file and the command line flags can be used in conjunction, but
@@ -68,9 +77,9 @@ the latter will take precedence over the former.
 
 ```bash
 punchout \
-    config-file-path='/path/to/punchout/config/file.toml' \
-    jira-token='XXX' \
-    jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC'
+    -config-file-path='/path/to/punchout/config/file.toml' \
+    -jira-token='XXX' \
+    -jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC'
 ```
 
 🖥️ Screenshots
