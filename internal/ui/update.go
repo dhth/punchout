@@ -12,7 +12,7 @@ import (
 
 const useHighPerformanceRenderer = false
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	m.message = ""
@@ -110,7 +110,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						wl, ok := m.worklogList.SelectedItem().(worklogEntry)
 						if ok {
 							cmds = append(cmds, updateManualEntry(m.db,
-								wl.Id,
+								wl.ID,
 								wl.IssueKey,
 								beginTS,
 								endTS,
@@ -340,7 +340,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case worklogView:
 				issue, ok := m.worklogList.SelectedItem().(worklogEntry)
 				if ok {
-					cmds = append(cmds, deleteLogEntry(m.db, issue.Id))
+					cmds = append(cmds, deleteLogEntry(m.db, issue.ID))
 					return m, tea.Batch(cmds...)
 				} else {
 					msg := "Couldn't delete worklog entry"
@@ -655,7 +655,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) shiftTime(direction timeShiftDirection, duration timeShiftDuration) error {
+func (m Model) shiftTime(direction timeShiftDirection, duration timeShiftDuration) error {
 	if m.activeView == askForCommentView || m.activeView == manualWorklogEntryView {
 		if m.trackingFocussedField == entryBeginTS || m.trackingFocussedField == entryEndTS {
 			ts, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[m.trackingFocussedField].Value(), time.Local)

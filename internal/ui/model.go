@@ -65,7 +65,7 @@ const (
 	timeOnlyFormat   = "15:04"
 )
 
-type model struct {
+type Model struct {
 	activeView            stateView
 	lastView              stateView
 	db                    *sql.DB
@@ -99,7 +99,7 @@ type model struct {
 	debug                 bool
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		hideHelp(time.Minute*1),
 		fetchJIRAIssues(m.jiraClient, m.jql),

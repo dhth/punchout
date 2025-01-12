@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	dbFileName           = fmt.Sprintf("punchout.v%s.db", PUNCHOUT_DB_VERSION)
+	dbFileName           = fmt.Sprintf("punchout.v%s.db", DBVersion)
 	jiraInstallationType = flag.String("jira-installation-type", "", "JIRA installation type; allowed values: [cloud, onpremise]")
 	jiraURL              = flag.String("jira-url", "", "URL of the JIRA server")
 	jiraToken            = flag.String("jira-token", "", "jira token (PAT for on-premise installation, API token for cloud installation)")
@@ -90,7 +90,7 @@ func Execute() error {
 	if *jiraTimeDeltaMinsStr != "" {
 		jiraTimeDeltaMins, err = strconv.Atoi(*jiraTimeDeltaMinsStr)
 		if err != nil {
-			return fmt.Errorf("%s: %s", errTimeDeltaIncorrect, err)
+			return fmt.Errorf("%w: %s", errTimeDeltaIncorrect, err.Error())
 		}
 	}
 
@@ -98,7 +98,7 @@ func Execute() error {
 
 	cfg, err := getConfig(configPathFull)
 	if err != nil {
-		return fmt.Errorf("%s: %s", errCouldntParseConfigFile, err)
+		return fmt.Errorf("%w: %s", errCouldntParseConfigFile, err.Error())
 	}
 
 	if *jiraInstallationType != "" {
@@ -166,7 +166,7 @@ func Execute() error {
 		}
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JQL", configKeyMaxLen), *cfg.Jira.JQL)
 		fmt.Fprintf(os.Stdout, "%s%d\n", ui.RightPadTrim("JIRA Time Delta Mins", configKeyMaxLen), cfg.Jira.JiraTimeDeltaMins)
-		os.Exit(0)
+		return nil
 	}
 
 	db, err := setupDB(dbPathFull)

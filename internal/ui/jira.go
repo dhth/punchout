@@ -8,7 +8,7 @@ import (
 	jira "github.com/andygrunwald/go-jira/v2/onpremise"
 )
 
-var jiraRepliedWithEmptyWorklogErr = errors.New("JIRA replied with an empty worklog; something is probably wrong")
+var errJIRARepliedWithEmptyWorklog = errors.New("JIRA replied with an empty worklog; something is probably wrong")
 
 func getIssues(cl *jira.Client, jql string) ([]jira.Issue, int, error) {
 	issues, resp, err := cl.Issue.Search(context.Background(), jql, nil)
@@ -35,7 +35,7 @@ func addWLtoJira(cl *jira.Client, entry worklogEntry, timeDeltaMins int) error {
 	)
 
 	if cwl != nil && cwl.Started == nil {
-		return jiraRepliedWithEmptyWorklogErr
+		return errJIRARepliedWithEmptyWorklog
 	}
 	return err
 }

@@ -8,7 +8,7 @@ import (
 
 var listWidth = 140
 
-func (m model) View() string {
+func (m Model) View() string {
 	var content string
 	var footer string
 
