@@ -11,7 +11,7 @@ func (issue *Issue) setDesc() {
 	issueType := getIssueTypeStyle(issue.issueType).Render(issue.issueType)
 
 	if issue.assignee != "" {
-		assignee = assigneeStyle(issue.assignee).Render(RightPadTrim("@"+issue.assignee, int(listWidth/4)))
+		assignee = assigneeStyle(issue.assignee).Render(RightPadTrim(issue.assignee, int(listWidth/4)))
 	} else {
 		assignee = assigneeStyle(issue.assignee).Render(RightPadTrim("", int(listWidth/4)))
 	}

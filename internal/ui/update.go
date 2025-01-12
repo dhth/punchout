@@ -439,9 +439,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case issuesFetchedFromJIRAMsg:
 		if msg.err != nil {
-			message := "error fetching issues from JIRA: " + msg.err.Error()
-			m.message = message
-			m.messages = append(m.messages, message)
+			var remoteServerName string
+			if msg.responseStatusCode >= 400 && msg.responseStatusCode < 500 {
+				switch m.installationType {
+				case OnPremiseInstallation:
+					remoteServerName = "Your on-premise JIRA installation"
+				case CloudInstallation:
+					remoteServerName = "Atlassian Cloud"
+				}
+				m.message = fmt.Sprintf("%s returned a %d status code, check if your configuration is correct", remoteServerName, msg.responseStatusCode)
+			} else {
+				m.message = fmt.Sprintf("error fetching issues from JIRA: %s", msg.err.Error())
+			}
+			m.messages = append(m.messages, m.message)
+			m.issueList.Title = "Failure"
+			m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(failureColor))
 		} else {
 			issues := make([]list.Item, 0, len(msg.issues))
 			for i, issue := range msg.issues {

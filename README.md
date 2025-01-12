@@ -9,7 +9,7 @@
   <img src="https://tools.dhruvs.space/images/punchout/punchout.gif" alt="Usage" />
 </p>
 
-💾 Install
+💾 Installation
 ---
 
 **homebrew**:
@@ -33,22 +33,31 @@ file.
 ### Using a config file
 
 Create a toml file that looks like the following. The default location for this
-file is `~/.config/punchout/punchout.toml`.
+file is `~/.config/punchout/punchout.toml`. The configuration needed for
+authenticating against your JIRA installation (on-premise or cloud) will depend
+on the kind of the installation.
 
 ```toml
 [jira]
 jira_url = "https://jira.company.com"
-jira_token = "XXX"
+
+# for on-premise installations
+installation_type = "onpremise"
+jira_token = "your personal access token"
+
+# for cloud installations
+installation_type = "cloud"
+jira_token = "your API token"
+jira_username = "example@example.com"
+
 # put whatever JQL you want to query for
 jql = "assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC"
+
 # I don't know how many people will find use for this.
-# I need this, since the JIRA server I use runs 5 hours behind
+# I need this, since the JIRA on-premise server I use runs 5 hours behind
 # the actual time, for whatever reason 🤷
 jira_time_delta_mins = 300
 ```
-
-*Note: `punchout` only supports [on-premise] installations of JIRA for now. I
-might add support for cloud installations in the future.*
 
 ### Using command line flags
 
@@ -56,11 +65,13 @@ Use `punchout -h` for help.
 
 ```bash
 punchout \
-    db-path='/path/to/punchout/db/file.db' \
-    jira-url='https://jira.company.com' \
-    jira-token='XXX' \
-    jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC' \
-    jira-time-delta-mins='300' \
+    -db-path='/path/to/punchout/db/file.db' \
+    -jira-url='https://jira.company.com' \
+    -jira-installation-type 'cloud' \
+    -jira-token='XXX' \
+    -jira-username='example@example.com' \
+    -jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC' \
+    -jira-time-delta-mins='300'
 ```
 
 Both the config file and the command line flags can be used in conjunction, but
@@ -68,9 +79,9 @@ the latter will take precedence over the former.
 
 ```bash
 punchout \
-    config-file-path='/path/to/punchout/config/file.toml' \
-    jira-token='XXX' \
-    jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC'
+    -config-file-path='/path/to/punchout/config/file.toml' \
+    -jira-token='XXX' \
+    -jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC'
 ```
 
 🖥️ Screenshots
@@ -114,8 +125,8 @@ General
 
 General List Controls
 
-  h/<Up>                                  Move cursor up
-  k/<Down>                                Move cursor down
+  k/<Up>                                  Move cursor up
+  j/<Down>                                Move cursor down
   h<Left>                                 Go to previous page
   l<Right>                                Go to next page
   /                                       Start filtering

@@ -52,8 +52,9 @@ type logEntrySyncUpdated struct {
 }
 
 type issuesFetchedFromJIRAMsg struct {
-	issues []Issue
-	err    error
+	issues             []Issue
+	responseStatusCode int
+	err                error
 }
 
 type wlAddedOnJIRA struct {
