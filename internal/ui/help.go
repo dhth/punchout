@@ -74,6 +74,8 @@ var (
     j                                       Move timestamp forwards by one minute
     K                                       Move timestamp backwards by five minutes
     J                                       Move timestamp forwards by five minutes
+    h                                       Move timestamp backwards by a day
+    l                                       Move timestamp forwards by a day
 `),
 		helpHeaderStyle.Render("Synced Worklog Entry View"),
 		helpSectionStyle.Render(`

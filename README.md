@@ -59,7 +59,7 @@ jql = "assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DES
 jira_time_delta_mins = 300
 ```
 
-### Using command line flags
+### Basic usage
 
 Use `punchout -h` for help.
 
@@ -67,11 +67,17 @@ Use `punchout -h` for help.
 punchout \
     -db-path='/path/to/punchout/db/file.db' \
     -jira-url='https://jira.company.com' \
+    -jira-installation-type 'onpremise' \
+    -jira-token='XXX' \
+    -jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC'
+
+punchout \
+    -db-path='/path/to/punchout/db/file.db' \
+    -jira-url='https://jira.company.com' \
     -jira-installation-type 'cloud' \
     -jira-token='XXX' \
     -jira-username='example@example.com' \
-    -jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC' \
-    -jira-time-delta-mins='300'
+    -jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC'
 ```
 
 Both the config file and the command line flags can be used in conjunction, but
@@ -154,6 +160,8 @@ Worklog Entry View
   j                                       Move timestamp forwards by one minute
   K                                       Move timestamp backwards by five minutes
   J                                       Move timestamp forwards by five minutes
+  h                                       Move timestamp backwards by a day
+  l                                       Move timestamp forwards by a day
 
 Synced Worklog Entry View
 
