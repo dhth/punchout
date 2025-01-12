@@ -166,15 +166,19 @@ func updateSyncStatusForEntry(db *sql.DB, entry worklogEntry, index int) tea.Cmd
 
 func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 	return func() tea.Msg {
-		jIssues, err := getIssues(cl, jql)
+		jIssues, statusCode, err := getIssues(cl, jql)
 		var issues []Issue
+		if err != nil {
+			return issuesFetchedFromJIRAMsg{issues, statusCode, err}
+		}
+
 		for _, issue := range jIssues {
 			var assignee string
 			var totalSecsSpent int
 			var status string
 			if issue.Fields != nil {
 				if issue.Fields.Assignee != nil {
-					assignee = issue.Fields.Assignee.Name
+					assignee = issue.Fields.Assignee.DisplayName
 				}
 
 				totalSecsSpent = issue.Fields.AggregateTimeSpent
@@ -193,7 +197,7 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 				trackingActive:  false,
 			})
 		}
-		return issuesFetchedFromJIRAMsg{issues, err}
+		return issuesFetchedFromJIRAMsg{issues, statusCode, nil}
 	}
 }
 

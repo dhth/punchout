@@ -11,6 +11,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+type JiraInstallationType uint
+
+const (
+	OnPremiseInstallation JiraInstallationType = iota
+	CloudInstallation
+)
+
 type trackingStatus uint
 
 const (
@@ -63,6 +70,7 @@ type model struct {
 	lastView              stateView
 	db                    *sql.DB
 	jiraClient            *jira.Client
+	installationType      JiraInstallationType
 	jql                   string
 	issueList             list.Model
 	issueMap              map[string]*Issue
