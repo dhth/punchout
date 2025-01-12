@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
-	"os/user"
+	"path/filepath"
+	"runtime"
 	"strconv"
 
 	jiraCloud "github.com/andygrunwald/go-jira/v2/cloud"
@@ -13,12 +15,12 @@ import (
 	"github.com/dhth/punchout/internal/ui"
 )
 
-func die(msg string, args ...any) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
-	os.Exit(1)
-}
+const (
+	configFileName = "punchout/punchout.toml"
+)
 
 var (
+	dbFileName           = fmt.Sprintf("punchout.v%s.db", PUNCHOUT_DB_VERSION)
 	jiraInstallationType = flag.String("jira-installation-type", "", "JIRA installation type; allowed values: [cloud, onpremise]")
 	jiraURL              = flag.String("jira-url", "", "URL of the JIRA server")
 	jiraToken            = flag.String("jira-token", "", "jira token (PAT for on-premise installation, API token for cloud installation)")
@@ -28,46 +30,75 @@ var (
 	listConfig           = flag.Bool("list-config", false, "print the config that punchout will use")
 )
 
-func Execute() {
-	currentUser, err := user.Current()
+var (
+	errCouldntGetHomeDir       = errors.New("couldn't get your home directory")
+	errCouldntGetConfigDir     = errors.New("couldn't get your default config directory")
+	errConfigFilePathEmpty     = errors.New("config file path cannot be empty")
+	errDBPathEmpty             = errors.New("db file path cannot be empty")
+	errTimeDeltaIncorrect      = errors.New("couldn't convert time delta to a number")
+	errCouldntParseConfigFile  = errors.New("couldn't parse config file")
+	errInvalidInstallationType = fmt.Errorf("invalid value for jira installation type (allowed values: [%s, %s])", jiraInstallationTypeOnPremise, jiraInstallationTypeCloud)
+	errCouldntSetUpDB          = errors.New("couldn't set up punchout database")
+	errCouldntCreateJiraClient = errors.New("couldn't create JIRA client")
+)
+
+func Execute() error {
+	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
-		die("Error getting your home directory, explicitly specify the path for the config file using -config-file-path")
+		return fmt.Errorf("%w: %s", errCouldntGetHomeDir, err.Error())
 	}
 
-	defaultConfigFP := fmt.Sprintf("%s/.config/punchout/punchout.toml", currentUser.HomeDir)
-	configFilePath := flag.String("config-file-path", defaultConfigFP, "location of the punchout config file")
+	defaultConfigDir, err := os.UserConfigDir()
+	if err != nil {
+		return fmt.Errorf("%w: %s", errCouldntGetConfigDir, err.Error())
+	}
 
-	defaultDBPath := fmt.Sprintf("%s/punchout.v%s.db", currentUser.HomeDir, PUNCHOUT_DB_VERSION)
-	dbPath := flag.String("db-path", defaultDBPath, "location where punchout should create its DB file")
+	ros := runtime.GOOS
+	var defaultConfigFilePath string
+
+	switch ros {
+	case "darwin":
+		// This is to maintain backwards compatibility with a decision made in the first release of punchout
+		defaultConfigFilePath = filepath.Join(userHomeDir, ".config", configFileName)
+	default:
+		defaultConfigFilePath = filepath.Join(defaultConfigDir, configFileName)
+	}
+
+	configFilePath := flag.String("config-file-path", defaultConfigFilePath, "location of the punchout config file")
+
+	defaultDBPath := filepath.Join(userHomeDir, dbFileName)
+	dbPath := flag.String("db-path", defaultDBPath, "location of punchout's local database")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stdout, "Take the suck out of logging time on JIRA.\n\nFlags:\n")
+		fmt.Fprintf(os.Stdout, "punchout takes the suck out of logging time on JIRA.\n\nFlags:\n")
 		flag.CommandLine.SetOutput(os.Stdout)
 		flag.PrintDefaults()
 	}
 	flag.Parse()
 
 	if *configFilePath == "" {
-		die("config-file-path cannot be empty")
+		return errConfigFilePathEmpty
 	}
 
 	if *dbPath == "" {
-		die("db-path cannot be empty")
+		return errDBPathEmpty
 	}
 
-	dbPathFull := expandTilde(*dbPath)
+	dbPathFull := expandTilde(*dbPath, userHomeDir)
 
 	var jiraTimeDeltaMins int
 	if *jiraTimeDeltaMinsStr != "" {
 		jiraTimeDeltaMins, err = strconv.Atoi(*jiraTimeDeltaMinsStr)
 		if err != nil {
-			die("couldn't convert jira-time-delta-mins to a number")
+			return fmt.Errorf("%s: %s", errTimeDeltaIncorrect, err)
 		}
 	}
 
-	cfg, err := readConfig(*configFilePath)
+	configPathFull := expandTilde(*configFilePath, userHomeDir)
+
+	cfg, err := getConfig(configPathFull)
 	if err != nil {
-		die("error reading config: %s.\n", err.Error())
+		return fmt.Errorf("%s: %s", errCouldntParseConfigFile, err)
 	}
 
 	if *jiraInstallationType != "" {
@@ -87,7 +118,7 @@ func Execute() {
 	}
 
 	if *jql != "" {
-		cfg.Jira.Jql = jql
+		cfg.Jira.JQL = jql
 	}
 
 	if *jiraTimeDeltaMinsStr != "" {
@@ -103,29 +134,29 @@ func Execute() {
 	case jiraInstallationTypeCloud:
 		installationType = ui.CloudInstallation
 	default:
-		die("invalid value for jira installation type (allowed values: [%s, %s]): %q", jiraInstallationTypeOnPremise, jiraInstallationTypeCloud, cfg.Jira.InstallationType)
+		return errInvalidInstallationType
 	}
 
 	if cfg.Jira.JiraURL == nil || *cfg.Jira.JiraURL == "" {
-		die("jira-url cannot be empty")
+		return fmt.Errorf("jira-url cannot be empty")
 	}
 
-	if cfg.Jira.Jql == nil || *cfg.Jira.Jql == "" {
-		die("jql cannot be empty")
+	if cfg.Jira.JQL == nil || *cfg.Jira.JQL == "" {
+		return fmt.Errorf("jql cannot be empty")
 	}
 
 	if cfg.Jira.JiraToken == nil || *cfg.Jira.JiraToken == "" {
-		die("jira-token cannot be empty")
+		return fmt.Errorf("jira-token cannot be empty")
 	}
 
 	if installationType == ui.CloudInstallation && (cfg.Jira.JiraUsername == nil || *cfg.Jira.JiraUsername == "") {
-		die("jira-username cannot be empty for installation type \"cloud\"")
+		return fmt.Errorf("jira-username cannot be empty for cloud installation")
 	}
 
 	configKeyMaxLen := 40
 	if *listConfig {
 		fmt.Fprint(os.Stdout, "Config:\n\n")
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("Config File Path", configKeyMaxLen), *configFilePath)
+		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("Config File Path", configKeyMaxLen), configPathFull)
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("DB File Path", configKeyMaxLen), dbPathFull)
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA Installation Type", configKeyMaxLen), cfg.Jira.InstallationType)
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA URL", configKeyMaxLen), *cfg.Jira.JiraURL)
@@ -133,14 +164,14 @@ func Execute() {
 		if installationType == ui.CloudInstallation {
 			fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA Username", configKeyMaxLen), *cfg.Jira.JiraUsername)
 		}
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JQL", configKeyMaxLen), *cfg.Jira.Jql)
+		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JQL", configKeyMaxLen), *cfg.Jira.JQL)
 		fmt.Fprintf(os.Stdout, "%s%d\n", ui.RightPadTrim("JIRA Time Delta Mins", configKeyMaxLen), cfg.Jira.JiraTimeDeltaMins)
 		os.Exit(0)
 	}
 
 	db, err := setupDB(dbPathFull)
 	if err != nil {
-		die("couldn't set up punchout database. This is a fatal error\n")
+		return fmt.Errorf("%w: %s", errCouldntSetUpDB, err.Error())
 	}
 
 	var httpClient *http.Client
@@ -165,8 +196,8 @@ func Execute() {
 	// https://github.com/andygrunwald/go-jira/issues/473
 	cl, err := jiraOnPremise.NewClient(*cfg.Jira.JiraURL, httpClient)
 	if err != nil {
-		die("couldn't create JIRA client: %s", err)
+		return fmt.Errorf("%w: %s", errCouldntCreateJiraClient, err.Error())
 	}
 
-	ui.RenderUI(db, cl, installationType, *cfg.Jira.Jql, cfg.Jira.JiraTimeDeltaMins)
+	return ui.RenderUI(db, cl, installationType, *cfg.Jira.JQL, cfg.Jira.JiraTimeDeltaMins)
 }
