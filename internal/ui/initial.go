@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDeltaMins int, debug bool) model {
+func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInstallationType, jql string, jiraTimeDeltaMins int, debug bool) model {
 	var stackItems []list.Item
 	var worklogListItems []list.Item
 	var syncedWorklogListItems []list.Item
@@ -36,6 +36,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, jql string, jiraTimeDelta
 	m := model{
 		db:                db,
 		jiraClient:        jiraClient,
+		installationType:  installationType,
 		jql:               jql,
 		issueList:         list.New(stackItems, newItemDelegate(lipgloss.Color(issueListColor)), listWidth, 0),
 		issueMap:          make(map[string]*Issue),

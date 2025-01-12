@@ -4,11 +4,18 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+const (
+	jiraInstallationTypeOnPremise = "onpremise"
+	jiraInstallationTypeCloud     = "cloud"
+)
+
 type JiraConfig struct {
+	InstallationType  string  `toml:"installation_type"`
 	JiraURL           *string `toml:"jira_url"`
-	JiraToken         *string `toml:"jira_token"`
 	Jql               *string
-	JiraTimeDeltaMins *int `toml:"jira_time_delta_mins"`
+	JiraTimeDeltaMins int     `toml:"jira_time_delta_mins"`
+	JiraToken         *string `toml:"jira_token"`
+	JiraUsername      *string `toml:"jira_username"`
 }
 
 type POConfig struct {
@@ -16,7 +23,6 @@ type POConfig struct {
 }
 
 func readConfig(filePath string) (POConfig, error) {
-
 	var config POConfig
 	_, err := toml.DecodeFile(expandTilde(filePath), &config)
 	if err != nil {
@@ -24,5 +30,4 @@ func readConfig(filePath string) (POConfig, error) {
 	}
 
 	return config, nil
-
 }

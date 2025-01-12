@@ -1,13 +1,15 @@
 package ui
 
 import (
-	"github.com/charmbracelet/lipgloss"
 	"hash/fnv"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
 	defaultBackgroundColor  = "#282828"
 	issueListUnfetchedColor = "#928374"
+	failureColor            = "#fb4934"
 	issueListColor          = "#fe8019"
 	worklogListColor        = "#fabd2f"
 	syncedWorklogListColor  = "#b8bb26"

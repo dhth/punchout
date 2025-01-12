@@ -3,11 +3,13 @@ package cmd
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/user"
 	"strconv"
 
-	jira "github.com/andygrunwald/go-jira/v2/onpremise"
+	jiraCloud "github.com/andygrunwald/go-jira/v2/cloud"
+	jiraOnPremise "github.com/andygrunwald/go-jira/v2/onpremise"
 	"github.com/dhth/punchout/internal/ui"
 )
 
@@ -17,16 +19,17 @@ func die(msg string, args ...any) {
 }
 
 var (
+	jiraInstallationType = flag.String("jira-installation-type", "", "JIRA installation type; allowed values: [cloud, onpremise]")
 	jiraURL              = flag.String("jira-url", "", "URL of the JIRA server")
-	jiraToken            = flag.String("jira-token", "", "personal access token for the JIRA server")
-	jql                  = flag.String("jql", "", "JQL to use to query issues at startup")
+	jiraToken            = flag.String("jira-token", "", "jira token (PAT for on-premise installation, API token for cloud installation)")
+	jiraUsername         = flag.String("jira-username", "", "username for authentication")
+	jql                  = flag.String("jql", "", "JQL to use to query issues")
 	jiraTimeDeltaMinsStr = flag.String("jira-time-delta-mins", "", "Time delta (in minutes) between your timezone and the timezone of the server; can be +/-")
-	listConfig           = flag.Bool("list-config", false, "Whether to only print out the config that punchout will use or not")
+	listConfig           = flag.Bool("list-config", false, "print the config that punchout will use")
 )
 
 func Execute() {
 	currentUser, err := user.Current()
-
 	if err != nil {
 		die("Error getting your home directory, explicitly specify the path for the config file using -config-file-path")
 	}
@@ -58,28 +61,65 @@ func Execute() {
 	if *jiraTimeDeltaMinsStr != "" {
 		jiraTimeDeltaMins, err = strconv.Atoi(*jiraTimeDeltaMinsStr)
 		if err != nil {
-			die("could't convert jira-time-delta-mins to a number")
+			die("couldn't convert jira-time-delta-mins to a number")
 		}
 	}
 
-	poCfg, err := readConfig(*configFilePath)
+	cfg, err := readConfig(*configFilePath)
 	if err != nil {
-		die("error reading config at %s: %s", *configFilePath, err.Error())
+		die("error reading config: %s.\n", err.Error())
+	}
+
+	if *jiraInstallationType != "" {
+		cfg.Jira.InstallationType = *jiraInstallationType
 	}
 
 	if *jiraURL != "" {
-		poCfg.Jira.JiraURL = jiraURL
+		cfg.Jira.JiraURL = jiraURL
 	}
 
 	if *jiraToken != "" {
-		poCfg.Jira.JiraToken = jiraToken
+		cfg.Jira.JiraToken = jiraToken
+	}
+
+	if *jiraUsername != "" {
+		cfg.Jira.JiraUsername = jiraUsername
 	}
 
 	if *jql != "" {
-		poCfg.Jira.Jql = jql
+		cfg.Jira.Jql = jql
 	}
+
 	if *jiraTimeDeltaMinsStr != "" {
-		poCfg.Jira.JiraTimeDeltaMins = &jiraTimeDeltaMins
+		cfg.Jira.JiraTimeDeltaMins = jiraTimeDeltaMins
+	}
+
+	// validations
+	var installationType ui.JiraInstallationType
+	switch cfg.Jira.InstallationType {
+	case "", jiraInstallationTypeOnPremise: // "" to maintain backwards compatibility
+		installationType = ui.OnPremiseInstallation
+		cfg.Jira.InstallationType = jiraInstallationTypeOnPremise
+	case jiraInstallationTypeCloud:
+		installationType = ui.CloudInstallation
+	default:
+		die("invalid value for jira installation type (allowed values: [%s, %s]): %q", jiraInstallationTypeOnPremise, jiraInstallationTypeCloud, cfg.Jira.InstallationType)
+	}
+
+	if cfg.Jira.JiraURL == nil || *cfg.Jira.JiraURL == "" {
+		die("jira-url cannot be empty")
+	}
+
+	if cfg.Jira.Jql == nil || *cfg.Jira.Jql == "" {
+		die("jql cannot be empty")
+	}
+
+	if cfg.Jira.JiraToken == nil || *cfg.Jira.JiraToken == "" {
+		die("jira-token cannot be empty")
+	}
+
+	if installationType == ui.CloudInstallation && (cfg.Jira.JiraUsername == nil || *cfg.Jira.JiraUsername == "") {
+		die("jira-username cannot be empty for installation type \"cloud\"")
 	}
 
 	configKeyMaxLen := 40
@@ -87,41 +127,46 @@ func Execute() {
 		fmt.Fprint(os.Stdout, "Config:\n\n")
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("Config File Path", configKeyMaxLen), *configFilePath)
 		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("DB File Path", configKeyMaxLen), dbPathFull)
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA URL", configKeyMaxLen), *poCfg.Jira.JiraURL)
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA Token", configKeyMaxLen), *poCfg.Jira.JiraToken)
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JQL", configKeyMaxLen), *poCfg.Jira.Jql)
-		fmt.Fprintf(os.Stdout, "%s%d\n", ui.RightPadTrim("JIRA Time Delta Mins", configKeyMaxLen), *poCfg.Jira.JiraTimeDeltaMins)
+		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA Installation Type", configKeyMaxLen), cfg.Jira.InstallationType)
+		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA URL", configKeyMaxLen), *cfg.Jira.JiraURL)
+		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA Token", configKeyMaxLen), *cfg.Jira.JiraToken)
+		if installationType == ui.CloudInstallation {
+			fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA Username", configKeyMaxLen), *cfg.Jira.JiraUsername)
+		}
+		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JQL", configKeyMaxLen), *cfg.Jira.Jql)
+		fmt.Fprintf(os.Stdout, "%s%d\n", ui.RightPadTrim("JIRA Time Delta Mins", configKeyMaxLen), cfg.Jira.JiraTimeDeltaMins)
 		os.Exit(0)
-	}
-
-	// validations
-
-	if *poCfg.Jira.JiraURL == "" {
-		die("jira-url cannot be empty")
-	}
-
-	if *poCfg.Jira.JiraToken == "" {
-		die("jira-token cannot be empty")
-	}
-
-	if *poCfg.Jira.Jql == "" {
-		die("jql cannot be empty")
 	}
 
 	db, err := setupDB(dbPathFull)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't set up punchout database. This is a fatal error\n")
-		os.Exit(1)
+		die("couldn't set up punchout database. This is a fatal error\n")
 	}
 
-	tp := jira.BearerAuthTransport{
-		Token: *poCfg.Jira.JiraToken,
+	var httpClient *http.Client
+	switch installationType {
+	case ui.OnPremiseInstallation:
+		tp := jiraOnPremise.BearerAuthTransport{
+			Token: *cfg.Jira.JiraToken,
+		}
+		httpClient = tp.Client()
+	case ui.CloudInstallation:
+		tp := jiraCloud.BasicAuthTransport{
+			Username: *cfg.Jira.JiraUsername,
+			APIToken: *cfg.Jira.JiraToken,
+		}
+		httpClient = tp.Client()
 	}
-	cl, err := jira.NewClient(*poCfg.Jira.JiraURL, tp.Client())
+
+	// Using the on-premise client regardless of the user's installation type
+	// The APIs between the two installation types seem to differ, but this
+	// seems to be alright for punchout's use case. If this situation changes,
+	// this will need to be refactored.
+	// https://github.com/andygrunwald/go-jira/issues/473
+	cl, err := jiraOnPremise.NewClient(*cfg.Jira.JiraURL, httpClient)
 	if err != nil {
-		panic(err)
+		die("couldn't create JIRA client: %s", err)
 	}
 
-	ui.RenderUI(db, cl, *poCfg.Jira.Jql, *poCfg.Jira.JiraTimeDeltaMins)
-
+	ui.RenderUI(db, cl, installationType, *cfg.Jira.Jql, cfg.Jira.JiraTimeDeltaMins)
 }
