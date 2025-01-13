@@ -2,6 +2,7 @@ package ui
 
 import (
 	"database/sql"
+	"errors"
 	"os/exec"
 	"runtime"
 	"time"
@@ -23,7 +24,7 @@ LIMIT 1
 		var trackStatus trackingStatus
 		var activeIssue string
 		err := row.Scan(&activeIssue)
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			trackStatus = trackingInactive
 		} else if err != nil {
 			return trackingToggledMsg{err: err}
@@ -155,7 +156,7 @@ func deleteLogEntry(db *sql.DB, id int) tea.Cmd {
 
 func updateSyncStatusForEntry(db *sql.DB, entry worklogEntry, index int) tea.Cmd {
 	return func() tea.Msg {
-		err := updateSyncStatus(db, entry.Id)
+		err := updateSyncStatus(db, entry.ID)
 		return logEntrySyncUpdated{
 			entry: entry,
 			index: index,

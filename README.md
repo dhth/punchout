@@ -145,6 +145,7 @@ Issue List View
   <ctrl+s>                                Add manual worklog entry
   <ctrl+t>                                Go to currently tracked item
   <ctrl+x>                                Discard currently active recording
+  <ctrl+b>                                Open issue in browser
 
 Worklog List View
 

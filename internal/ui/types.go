@@ -33,7 +33,7 @@ func (issue Issue) Description() string {
 func (issue Issue) FilterValue() string { return issue.issueKey }
 
 type worklogEntry struct {
-	Id             int
+	ID             int
 	IssueKey       string
 	BeginTS        time.Time
 	EndTS          time.Time
@@ -45,7 +45,7 @@ type worklogEntry struct {
 }
 
 type syncedWorklogEntry struct {
-	Id       int
+	ID       int
 	IssueKey string
 	BeginTS  time.Time
 	EndTS    time.Time
@@ -93,9 +93,9 @@ func (entry worklogEntry) Description() string {
 	}
 
 	return fmt.Sprintf("%s%s%s%s",
-		RightPadTrim(entry.IssueKey, int(listWidth/4)),
-		RightPadTrim(durationMsg, int(listWidth/4)),
-		RightPadTrim(fmt.Sprintf("(%s)", timeSpentStr), int(listWidth/4)),
+		RightPadTrim(entry.IssueKey, listWidth/4),
+		RightPadTrim(durationMsg, listWidth/4),
+		RightPadTrim(fmt.Sprintf("(%s)", timeSpentStr), listWidth/4),
 		syncedStatus,
 	)
 }
@@ -109,8 +109,8 @@ func (entry syncedWorklogEntry) Description() string {
 	durationMsg := humanize.Time(entry.EndTS)
 	timeSpentStr := humanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
 	return fmt.Sprintf("%s%s%s",
-		RightPadTrim(entry.IssueKey, int(listWidth/4)),
-		RightPadTrim(durationMsg, int(listWidth/4)),
+		RightPadTrim(entry.IssueKey, listWidth/4),
+		RightPadTrim(durationMsg, listWidth/4),
 		fmt.Sprintf("(%s)", timeSpentStr),
 	)
 }

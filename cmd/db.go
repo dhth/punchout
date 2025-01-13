@@ -3,11 +3,10 @@ package cmd
 import "database/sql"
 
 const (
-	PUNCHOUT_DB_VERSION = "1"
+	DBVersion = "1"
 )
 
 func setupDB(dbpath string) (*sql.DB, error) {
-
 	db, err := sql.Open("sqlite", dbpath)
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)

@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInstallationType, jql string, jiraTimeDeltaMins int, debug bool) model {
+func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInstallationType, jql string, jiraTimeDeltaMins int, debug bool) Model {
 	var stackItems []list.Item
 	var worklogListItems []list.Item
 	var syncedWorklogListItems []list.Item
@@ -33,7 +33,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 	trackingInputs[entryComment].CharLimit = 255
 	trackingInputs[entryComment].Width = 60
 
-	m := model{
+	m := Model{
 		db:                db,
 		jiraClient:        jiraClient,
 		installationType:  installationType,

@@ -20,7 +20,7 @@ type activeTaskLogDeletedMsg struct {
 }
 
 type manualEntryUpdated struct {
-	rowId    int
+	rowID    int
 	issueKey string
 	err      error
 }

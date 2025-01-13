@@ -29,12 +29,10 @@ func Trim(s string, length int) string {
 }
 
 func insertNewEntry(db *sql.DB, issueKey string, beginTs time.Time) error {
-
 	stmt, err := db.Prepare(`
     INSERT INTO issue_log (issue_key, begin_ts, active, synced)
     VALUES (?, ?, ?, ?);
 `)
-
 	if err != nil {
 		return err
 	}
@@ -69,11 +67,9 @@ AND active = 1;
 	}
 
 	return nil
-
 }
 
 func fetchEntries(db *sql.DB) ([]worklogEntry, error) {
-
 	var logEntries []worklogEntry
 
 	rows, err := db.Query(`
@@ -89,7 +85,7 @@ ORDER by end_ts DESC;
 
 	for rows.Next() {
 		var entry worklogEntry
-		err = rows.Scan(&entry.Id,
+		err = rows.Scan(&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
 			&entry.EndTS,
@@ -107,7 +103,6 @@ ORDER by end_ts DESC;
 }
 
 func fetchSyncedEntries(db *sql.DB) ([]syncedWorklogEntry, error) {
-
 	var logEntries []syncedWorklogEntry
 
 	rows, err := db.Query(`
@@ -123,7 +118,7 @@ ORDER by end_ts DESC LIMIT 30;
 
 	for rows.Next() {
 		var entry syncedWorklogEntry
-		err = rows.Scan(&entry.Id,
+		err = rows.Scan(&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
 			&entry.EndTS,
@@ -139,7 +134,6 @@ ORDER by end_ts DESC LIMIT 30;
 }
 
 func deleteEntry(db *sql.DB, id int) error {
-
 	stmt, err := db.Prepare(`
 DELETE from issue_log
 WHERE ID=?;
@@ -174,7 +168,6 @@ WHERE id = ?;
 	}
 
 	return nil
-
 }
 
 func humanizeDuration(durationInSecs int) string {

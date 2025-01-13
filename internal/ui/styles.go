@@ -32,6 +32,8 @@ const (
 	helpViewTitleColor      = "#83a598"
 	helpHeaderColor         = "#83a598"
 	helpSectionColor        = "#fabd2f"
+	fallbackIssueColor      = "#ada7ff"
+	fallbackAssigneeColor   = "#ccccff"
 )
 
 var (
@@ -117,17 +119,21 @@ var (
 	}
 
 	getIssueTypeStyle = func(issueType string) lipgloss.Style {
-		h := fnv.New32()
-		h.Write([]byte(issueType))
-		hash := h.Sum32()
-
-		color := issueTypeColors[int(hash)%len(issueTypeColors)]
-		return lipgloss.NewStyle().
+		baseStyle := lipgloss.NewStyle().
 			Foreground(lipgloss.Color(defaultBackgroundColor)).
 			Bold(true).
 			Align(lipgloss.Center).
-			Width(20).
-			Background(lipgloss.Color(color))
+			Width(20)
+
+		h := fnv.New32()
+		_, err := h.Write([]byte(issueType))
+		if err != nil {
+			return baseStyle.Background(lipgloss.Color(fallbackIssueColor))
+		}
+		hash := h.Sum32()
+
+		color := issueTypeColors[hash%uint32(len(issueTypeColors))]
+		return baseStyle.Background(lipgloss.Color(color))
 	}
 
 	assigneeColors = []string{
@@ -140,15 +146,17 @@ var (
 	}
 	assigneeStyle = func(assignee string) lipgloss.Style {
 		h := fnv.New32()
-		h.Write([]byte(assignee))
+		_, err := h.Write([]byte(assignee))
+		if err != nil {
+			lipgloss.NewStyle().
+				Foreground(lipgloss.Color(fallbackAssigneeColor))
+		}
 		hash := h.Sum32()
 
 		color := assigneeColors[int(hash)%len(assigneeColors)]
 
-		st := lipgloss.NewStyle().
+		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color(color))
-
-		return st
 	}
 
 	issueStatusStyle = lipgloss.NewStyle().
