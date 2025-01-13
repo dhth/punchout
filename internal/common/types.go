@@ -69,8 +69,8 @@ type WorklogEntry struct {
 	ID             int
 	IssueKey       string
 	BeginTS        time.Time
-	EndTS          time.Time
-	Comment        string
+	EndTS          *time.Time
+	Comment        *string
 	Active         bool
 	Synced         bool
 	SyncInProgress bool
@@ -86,7 +86,11 @@ type SyncedWorklogEntry struct {
 }
 
 func (entry *WorklogEntry) NeedsComment() bool {
-	return strings.TrimSpace(entry.Comment) == ""
+	if entry.Comment == nil {
+		return true
+	}
+
+	return strings.TrimSpace(*entry.Comment) == ""
 }
 
 func (entry WorklogEntry) SecsSpent() int {
@@ -98,7 +102,7 @@ func (entry WorklogEntry) Title() string {
 		return "[NO COMMENT]"
 	}
 
-	return entry.Comment
+	return *entry.Comment
 }
 
 func (entry WorklogEntry) Description() string {
@@ -113,7 +117,7 @@ func (entry WorklogEntry) Description() string {
 
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
-	if startOfToday.Sub(entry.EndTS) > 0 {
+	if entry.EndTS != nil && startOfToday.Sub(*entry.EndTS) > 0 {
 		if entry.BeginTS.Format(dateFormat) == entry.EndTS.Format(dateFormat) {
 			durationMsg = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(dayAndTimeFormat), entry.EndTS.Format(timeOnlyFormat))
 		} else {

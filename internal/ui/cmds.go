@@ -16,9 +16,8 @@ import (
 )
 
 var (
-	errNoTaskIsActive           = errors.New("no task is active")
-	errCouldntStopActiveTask    = errors.New("couldn't stop active task")
-	errCouldntStartTrackingTask = errors.New("couldn't start tracking task")
+	errWorklogsEndTSIsEmpty   = errors.New("worklog's end timestamp is empty")
+	errWorklogsCommentIsEmpty = errors.New("worklog's comment is empty")
 )
 
 func toggleTracking(db *sql.DB, selectedIssue string, beginTs, endTs time.Time, comment string) tea.Cmd {
@@ -63,27 +62,14 @@ LIMIT 1
 
 func quickSwitchActiveIssue(db *sql.DB, selectedIssue string, currentTime time.Time) tea.Cmd {
 	return func() tea.Msg {
-		row := db.QueryRow(`
-SELECT issue_key
-from issue_log
-WHERE active=1
-ORDER BY begin_ts DESC
-LIMIT 1
-`)
-		var activeIssue string
-		err := row.Scan(&activeIssue)
-		if errors.Is(err, sql.ErrNoRows) {
-			return activeIssueSwitchedMsg{"", selectedIssue, currentTime, errNoTaskIsActive}
+		activeIssue, err := pers.GetActiveIssue(db)
+		if err != nil {
+			return activeIssueSwitchedMsg{"", selectedIssue, currentTime, err}
 		}
 
-		err = pers.StopCurrentlyActiveEntry(db, activeIssue, currentTime)
+		err = pers.QuickSwitchActiveIssue(db, activeIssue, selectedIssue, currentTime)
 		if err != nil {
-			return activeIssueSwitchedMsg{activeIssue, selectedIssue, currentTime, errCouldntStopActiveTask}
-		}
-
-		err = pers.InsertNewEntry(db, selectedIssue, currentTime)
-		if err != nil {
-			return activeIssueSwitchedMsg{activeIssue, selectedIssue, currentTime, errCouldntStartTrackingTask}
+			return activeIssueSwitchedMsg{activeIssue, selectedIssue, currentTime, err}
 		}
 
 		return activeIssueSwitchedMsg{activeIssue, selectedIssue, currentTime, nil}
@@ -242,7 +228,15 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 
 func syncWorklogWithJIRA(cl *jira.Client, entry common.WorklogEntry, index int, timeDeltaMins int) tea.Cmd {
 	return func() tea.Msg {
-		err := addWLtoJira(cl, entry, timeDeltaMins)
+		if entry.EndTS == nil {
+			return wlAddedOnJIRA{index, entry, errWorklogsEndTSIsEmpty}
+		}
+
+		if entry.Comment == nil {
+			return wlAddedOnJIRA{index, entry, errWorklogsCommentIsEmpty}
+		}
+
+		err := addWLtoJira(cl, entry.IssueKey, entry.BeginTS, *entry.EndTS, *entry.Comment, timeDeltaMins)
 		return wlAddedOnJIRA{index, entry, err}
 	}
 }

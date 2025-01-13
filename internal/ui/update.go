@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	c "github.com/dhth/punchout/internal/common"
+	pers "github.com/dhth/punchout/internal/persistence"
 )
 
 const useHighPerformanceRenderer = false
@@ -312,14 +313,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if ok {
 					m.activeView = manualWorklogEntryView
 					m.worklogSaveType = worklogUpdate
-					m.trackingFocussedField = entryBeginTS
+					if wl.NeedsComment() {
+						m.trackingFocussedField = entryComment
+					} else {
+						m.trackingFocussedField = entryBeginTS
+					}
 
 					beginTSStr := wl.BeginTS.Format(timeFormat)
 					endTSStr := wl.EndTS.Format(timeFormat)
 
 					m.trackingInputs[entryBeginTS].SetValue(beginTSStr)
 					m.trackingInputs[entryEndTS].SetValue(endTSStr)
-					m.trackingInputs[entryComment].SetValue(wl.Comment)
+					var comment string
+					if wl.Comment != nil {
+						comment = *wl.Comment
+					}
+					m.trackingInputs[entryComment].SetValue(comment)
 
 					for i := range m.trackingInputs {
 						m.trackingInputs[i].Blur()
@@ -327,6 +336,41 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.trackingInputs[m.trackingFocussedField].Focus()
 				}
 			}
+
+		case "u":
+			if m.activeView != worklogView {
+				break
+			}
+
+			wl, ok := m.worklogList.SelectedItem().(c.WorklogEntry)
+			if !ok {
+				m.message = "something went wrong"
+				break
+			}
+
+			m.activeView = manualWorklogEntryView
+			m.worklogSaveType = worklogUpdate
+			if wl.NeedsComment() {
+				m.trackingFocussedField = entryComment
+			} else {
+				m.trackingFocussedField = entryBeginTS
+			}
+
+			beginTSStr := wl.BeginTS.Format(timeFormat)
+			endTSStr := wl.EndTS.Format(timeFormat)
+
+			m.trackingInputs[entryBeginTS].SetValue(beginTSStr)
+			m.trackingInputs[entryEndTS].SetValue(endTSStr)
+			var comment string
+			if wl.Comment != nil {
+				comment = *wl.Comment
+			}
+			m.trackingInputs[entryComment].SetValue(comment)
+
+			for i := range m.trackingInputs {
+				m.trackingInputs[i].Blur()
+			}
+			m.trackingInputs[m.trackingFocussedField].Focus()
 		case "ctrl+d":
 			switch m.activeView {
 			case worklogView:
@@ -620,15 +664,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case wlAddedOnJIRA:
 		if msg.err != nil {
 			msg.entry.Error = msg.err
-			m.worklogList.SetItem(msg.index, msg.entry)
 			m.messages = append(m.messages, msg.err.Error())
 		} else {
 			msg.entry.Synced = true
 			msg.entry.SyncInProgress = false
-			m.worklogList.SetItem(msg.index, msg.entry)
 			cmds = append(cmds, updateSyncStatusForEntry(m.db, msg.entry, msg.index))
-
 		}
+		m.worklogList.SetItem(msg.index, msg.entry)
 	case trackingToggledMsg:
 		if msg.err != nil {
 			message := msg.err.Error()
@@ -664,7 +706,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			message := msg.err.Error()
 			m.message = message
 			m.messages = append(m.messages, message)
-			if errors.Is(msg.err, errNoTaskIsActive) || errors.Is(msg.err, errCouldntStartTrackingTask) {
+			if errors.Is(msg.err, pers.ErrNoTaskIsActive) || errors.Is(msg.err, pers.ErrCouldntStartTrackingTask) {
 				m.trackingActive = false
 			}
 		} else {

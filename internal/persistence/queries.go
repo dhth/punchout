@@ -2,10 +2,62 @@ package persistence
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	c "github.com/dhth/punchout/internal/common"
 )
+
+var (
+	ErrNoTaskIsActive           = errors.New("no task is active")
+	ErrCouldntStopActiveTask    = errors.New("couldn't stop active task")
+	ErrCouldntStartTrackingTask = errors.New("couldn't start tracking task")
+)
+
+func getNumActiveIssues(db *sql.DB) (int, error) {
+	row := db.QueryRow(`
+SELECT COUNT(*)
+from issue_log
+WHERE active=1
+`)
+	var numActiveIssues int
+	err := row.Scan(&numActiveIssues)
+	return numActiveIssues, err
+}
+
+func getWorklogEntriesForIssue(db *sql.DB, issueKey string) ([]c.WorklogEntry, error) {
+	var logEntries []c.WorklogEntry
+
+	rows, err := db.Query(`
+SELECT ID, issue_key, begin_ts, end_ts, comment, active, synced
+FROM issue_log
+WHERE issue_key=?
+ORDER by end_ts DESC;
+`, issueKey)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var entry c.WorklogEntry
+		err = rows.Scan(&entry.ID,
+			&entry.IssueKey,
+			&entry.BeginTS,
+			&entry.EndTS,
+			&entry.Comment,
+			&entry.Active,
+			&entry.Synced,
+		)
+		if err != nil {
+			return nil, err
+		}
+		logEntries = append(logEntries, entry)
+
+	}
+	return logEntries, nil
+}
 
 func InsertNewEntry(db *sql.DB, issueKey string, beginTs time.Time) error {
 	stmt, err := db.Prepare(`
@@ -184,4 +236,31 @@ WHERE active=true;
 	_, err = stmt.Exec()
 
 	return err
+}
+
+func GetActiveIssue(db *sql.DB) (string, error) {
+	row := db.QueryRow(`
+SELECT issue_key
+from issue_log
+WHERE active=1
+ORDER BY begin_ts DESC
+LIMIT 1
+`)
+	var activeIssue string
+	err := row.Scan(&activeIssue)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", ErrNoTaskIsActive
+	} else if err != nil {
+		return "", err
+	}
+	return activeIssue, nil
+}
+
+func QuickSwitchActiveIssue(db *sql.DB, currentIssue, selectedIssue string, currentTime time.Time) error {
+	err := StopCurrentlyActiveEntry(db, currentIssue, currentTime)
+	if err != nil {
+		return ErrCouldntStopActiveTask
+	}
+
+	return InsertNewEntry(db, selectedIssue, currentTime)
 }
