@@ -59,34 +59,34 @@ func (m Model) View() string {
 		formHeadingText := "Saving worklog entry. Enter/update the following details:"
 		content = fmt.Sprintf(
 			`
-    %s
+  %s
 
-    %s
+  %s
 
-    %s
+  %s
 
-    %s    %s
+  %s    %s
 
-    %s
+  %s
 
-    %s    %s
+  %s    %s
 
-    %s
+  %s
 
-    %s
+  %s
 
 
-    %s
+  %s
 `,
 			formContextStyle.Render(formHeadingText),
 			formHelpStyle.Render("Use tab/shift-tab to move between sections; esc to go back."),
-			formFieldNameStyle.Render("Begin Time  (format: 2006/01/02 15:04)"),
+			formFieldNameStyle.Render("Begin Time* (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryBeginTS].View(),
 			formHelpStyle.Render("(k/j/K/J/h/l moves time, when correct)"),
-			formFieldNameStyle.Render("End Time  (format: 2006/01/02 15:04)"),
+			formFieldNameStyle.Render("End Time* (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryEndTS].View(),
 			formHelpStyle.Render("(k/j/K/J/h/l moves time, when correct)"),
-			formFieldNameStyle.Render(RightPadTrim("Comment:", 16)),
+			formFieldNameStyle.Render("Comment (you can add this later as well)"),
 			m.trackingInputs[entryComment].View(),
 			formContextStyle.Render("Press enter to submit"),
 		)
@@ -104,34 +104,34 @@ func (m Model) View() string {
 
 		content = fmt.Sprintf(
 			`
-    %s
+  %s
 
-    %s
+  %s
 
-    %s
+  %s
 
-    %s    %s
+  %s    %s
 
-    %s
+  %s
 
-    %s    %s
+  %s    %s
 
-    %s
+  %s
 
-    %s
+  %s
 
 
-    %s
+  %s
 `,
 			formContextStyle.Render(formHeadingText),
 			formHelpStyle.Render("Use tab/shift-tab to move between sections; esc to go back."),
-			formFieldNameStyle.Render("Begin Time  (format: 2006/01/02 15:04)"),
+			formFieldNameStyle.Render("Begin Time* (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryBeginTS].View(),
 			formHelpStyle.Render("(k/j/K/J moves time, when correct)"),
-			formFieldNameStyle.Render("End Time  (format: 2006/01/02 15:04)"),
+			formFieldNameStyle.Render("End Time* (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryEndTS].View(),
 			formHelpStyle.Render("(k/j/K/J moves time, when correct)"),
-			formFieldNameStyle.Render(RightPadTrim("Comment:", 16)),
+			formFieldNameStyle.Render("Comment"),
 			m.trackingInputs[entryComment].View(),
 			formContextStyle.Render("Press enter to submit"),
 		)

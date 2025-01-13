@@ -47,11 +47,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.activeIssueEndTS = endTS.Local()
 
-				if m.trackingInputs[entryComment].Value() == "" {
-					m.message = "Comment cannot be empty"
-					return m, tea.Batch(cmds...)
-				}
-
 				if m.activeIssueEndTS.Sub(m.activeIssueBeginTS).Seconds() <= 0 {
 					m.message = "time spent needs to be greater than zero"
 					return m, tea.Batch(cmds...)
@@ -83,11 +78,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, tea.Batch(cmds...)
 				}
 				endTS = endTS.Local()
-
-				if m.trackingInputs[entryComment].Value() == "" {
-					m.message = "Comment cannot be empty"
-					return m, tea.Batch(cmds...)
-				}
 
 				if endTS.Sub(beginTS).Seconds() <= 0 {
 					m.message = "time spent needs to be greater than zero"
@@ -352,6 +342,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.activeView == issueListView && m.trackingActive {
 				cmds = append(cmds, deleteActiveIssueLog(m.db))
 			}
+		case "S":
+			if m.activeView != issueListView {
+				break
+			}
+
+			if !m.trackingActive {
+				m.message = "nothing is being tracked right now"
+				break
+			}
+
 		case "s":
 			if !m.issuesFetched {
 				break
@@ -400,14 +400,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 			case worklogView:
+				toSyncNum := 0
 				for i, entry := range m.worklogList.Items() {
 					if wl, ok := entry.(worklogEntry); ok {
-						if !wl.Synced {
+						if !wl.Synced && !wl.needsComment() {
 							wl.SyncInProgress = true
 							m.worklogList.SetItem(i, wl)
 							cmds = append(cmds, syncWorklogWithJIRA(m.jiraClient, wl, i, m.jiraTimeDeltaMins))
+							toSyncNum++
 						}
 					}
+				}
+				if toSyncNum == 0 {
+					m.message = "nothing to sync"
 				}
 			}
 		case "?":

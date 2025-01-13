@@ -20,6 +20,7 @@ const (
 	trackingBeganColor      = "#fabd2f"
 	issueStatusColor        = "#665c54"
 	toolNameColor           = "#b8bb26"
+	needsCommentColor       = "#fb4934"
 	syncedColor             = "#b8bb26"
 	syncingColor            = "#fabd2f"
 	notSyncedColor          = "#928374"
@@ -47,11 +48,14 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color(helpMsgColor))
 
-	baseListStyle = lipgloss.NewStyle().PaddingTop(1).PaddingRight(2).PaddingLeft(1).PaddingBottom(1)
+	baseListStyle = lipgloss.NewStyle().
+			PaddingTop(1).
+			PaddingRight(2).
+			PaddingBottom(1)
+
 	viewPortStyle = lipgloss.NewStyle().
 			PaddingTop(1).
 			PaddingRight(2).
-			PaddingLeft(1).
 			PaddingBottom(1)
 
 	listStyle = baseListStyle
@@ -64,7 +68,10 @@ var (
 	statusStyle = baseStyle.
 			Bold(true).
 			Align(lipgloss.Center).
-			Width(14)
+			Width(18)
+
+	needsCommentStyle = statusStyle.
+				Background(lipgloss.Color(needsCommentColor))
 
 	syncedStyle = statusStyle.
 			Background(lipgloss.Color(syncedColor))

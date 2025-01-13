@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -52,11 +53,19 @@ type syncedWorklogEntry struct {
 	Comment  string
 }
 
+func (entry *worklogEntry) needsComment() bool {
+	return strings.TrimSpace(entry.Comment) == ""
+}
+
 func (entry worklogEntry) SecsSpent() int {
 	return int(entry.EndTS.Sub(entry.BeginTS).Seconds())
 }
 
 func (entry worklogEntry) Title() string {
+	if entry.needsComment() {
+		return "[NO COMMENT]"
+	}
+
 	return entry.Comment
 }
 
@@ -84,7 +93,9 @@ func (entry worklogEntry) Description() string {
 
 	timeSpentStr := humanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
 
-	if entry.Synced {
+	if entry.needsComment() {
+		syncedStatus = needsCommentStyle.Render("needs comment")
+	} else if entry.Synced {
 		syncedStatus = syncedStyle.Render("synced")
 	} else if entry.SyncInProgress {
 		syncedStatus = syncingStyle.Render("syncing")
