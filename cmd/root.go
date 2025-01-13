@@ -12,6 +12,8 @@ import (
 
 	jiraCloud "github.com/andygrunwald/go-jira/v2/cloud"
 	jiraOnPremise "github.com/andygrunwald/go-jira/v2/onpremise"
+	c "github.com/dhth/punchout/internal/common"
+	pers "github.com/dhth/punchout/internal/persistence"
 	"github.com/dhth/punchout/internal/ui"
 )
 
@@ -20,7 +22,7 @@ const (
 )
 
 var (
-	dbFileName           = fmt.Sprintf("punchout.v%s.db", DBVersion)
+	dbFileName           = fmt.Sprintf("punchout.v%s.db", pers.DBVersion)
 	jiraInstallationType = flag.String("jira-installation-type", "", "JIRA installation type; allowed values: [cloud, onpremise]")
 	jiraURL              = flag.String("jira-url", "", "URL of the JIRA server")
 	jiraToken            = flag.String("jira-token", "", "jira token (PAT for on-premise installation, API token for cloud installation)")
@@ -35,10 +37,11 @@ var (
 	errCouldntGetConfigDir     = errors.New("couldn't get your default config directory")
 	errConfigFilePathEmpty     = errors.New("config file path cannot be empty")
 	errDBPathEmpty             = errors.New("db file path cannot be empty")
+	errCouldntInitializeDB     = errors.New("couldn't initialize database")
 	errTimeDeltaIncorrect      = errors.New("couldn't convert time delta to a number")
 	errCouldntParseConfigFile  = errors.New("couldn't parse config file")
 	errInvalidInstallationType = fmt.Errorf("invalid value for jira installation type (allowed values: [%s, %s])", jiraInstallationTypeOnPremise, jiraInstallationTypeCloud)
-	errCouldntSetUpDB          = errors.New("couldn't set up punchout database")
+	errCouldntCreateDB         = errors.New("couldn't create punchout database")
 	errCouldntCreateJiraClient = errors.New("couldn't create JIRA client")
 )
 
@@ -156,22 +159,27 @@ func Execute() error {
 	configKeyMaxLen := 40
 	if *listConfig {
 		fmt.Fprint(os.Stdout, "Config:\n\n")
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("Config File Path", configKeyMaxLen), configPathFull)
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("DB File Path", configKeyMaxLen), dbPathFull)
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA Installation Type", configKeyMaxLen), cfg.Jira.InstallationType)
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA URL", configKeyMaxLen), *cfg.Jira.JiraURL)
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA Token", configKeyMaxLen), *cfg.Jira.JiraToken)
+		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("Config File Path", configKeyMaxLen), configPathFull)
+		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("DB File Path", configKeyMaxLen), dbPathFull)
+		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("JIRA Installation Type", configKeyMaxLen), cfg.Jira.InstallationType)
+		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("JIRA URL", configKeyMaxLen), *cfg.Jira.JiraURL)
+		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("JIRA Token", configKeyMaxLen), *cfg.Jira.JiraToken)
 		if installationType == ui.CloudInstallation {
-			fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JIRA Username", configKeyMaxLen), *cfg.Jira.JiraUsername)
+			fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("JIRA Username", configKeyMaxLen), *cfg.Jira.JiraUsername)
 		}
-		fmt.Fprintf(os.Stdout, "%s%s\n", ui.RightPadTrim("JQL", configKeyMaxLen), *cfg.Jira.JQL)
-		fmt.Fprintf(os.Stdout, "%s%d\n", ui.RightPadTrim("JIRA Time Delta Mins", configKeyMaxLen), cfg.Jira.JiraTimeDeltaMins)
+		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("JQL", configKeyMaxLen), *cfg.Jira.JQL)
+		fmt.Fprintf(os.Stdout, "%s%d\n", c.RightPadTrim("JIRA Time Delta Mins", configKeyMaxLen), cfg.Jira.JiraTimeDeltaMins)
 		return nil
 	}
 
-	db, err := setupDB(dbPathFull)
+	db, err := pers.GetDB(dbPathFull)
 	if err != nil {
-		return fmt.Errorf("%w: %s", errCouldntSetUpDB, err.Error())
+		return fmt.Errorf("%w: %s", errCouldntCreateDB, err.Error())
+	}
+
+	err = pers.InitDB(db)
+	if err != nil {
+		return fmt.Errorf("%w: %s", errCouldntInitializeDB, err.Error())
 	}
 
 	var httpClient *http.Client

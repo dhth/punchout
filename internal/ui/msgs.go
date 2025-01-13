@@ -1,6 +1,10 @@
 package ui
 
-import "time"
+import (
+	"time"
+
+	c "github.com/dhth/punchout/internal/common"
+)
 
 type hideHelpMsg struct{}
 
@@ -39,12 +43,12 @@ type fetchActiveMsg struct {
 }
 
 type logEntriesFetchedMsg struct {
-	entries []worklogEntry
+	entries []c.WorklogEntry
 	err     error
 }
 
 type syncedLogEntriesFetchedMsg struct {
-	entries []syncedWorklogEntry
+	entries []c.SyncedWorklogEntry
 	err     error
 }
 
@@ -53,20 +57,20 @@ type logEntriesDeletedMsg struct {
 }
 
 type logEntrySyncUpdated struct {
-	entry worklogEntry
+	entry c.WorklogEntry
 	index int
 	err   error
 }
 
 type issuesFetchedFromJIRAMsg struct {
-	issues             []Issue
+	issues             []c.Issue
 	responseStatusCode int
 	err                error
 }
 
 type wlAddedOnJIRA struct {
 	index int
-	entry worklogEntry
+	entry c.WorklogEntry
 	err   error
 }
 

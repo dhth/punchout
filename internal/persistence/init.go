@@ -1,4 +1,4 @@
-package cmd
+package persistence
 
 import "database/sql"
 
@@ -6,15 +6,8 @@ const (
 	DBVersion = "1"
 )
 
-func setupDB(dbpath string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite", dbpath)
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(1)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err = db.Exec(`
+func InitDB(db *sql.DB) error {
+	_, err := db.Exec(`
 CREATE TABLE IF NOT EXISTS issue_log (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
     issue_key TEXT NOT NULL,
@@ -33,13 +26,14 @@ BEGIN
         THEN RAISE(ABORT, 'Only one row with active=1 is allowed')
     END;
 END;
-`); err != nil {
-		return nil, err
+`)
+	if err != nil {
+		return err
 	}
 
-	_, _ = db.Exec(`
+	_, err = db.Exec(`
 DELETE from issue_log 
 WHERE end_ts < DATE('now', '-60 days');
 `)
-	return db, nil
+	return err
 }

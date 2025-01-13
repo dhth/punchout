@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
+	c "github.com/dhth/punchout/internal/common"
 )
 
 var listWidth = 140
@@ -15,7 +16,7 @@ func (m Model) View() string {
 	var statusBar string
 	var helpMsg string
 	if m.message != "" {
-		statusBar = Trim(m.message, 120)
+		statusBar = c.Trim(m.message, 120)
 	}
 	var activeMsg string
 	if m.issuesFetched {
@@ -23,7 +24,7 @@ func (m Model) View() string {
 			var issueSummaryMsg, trackingSinceMsg string
 			issue, ok := m.issueMap[m.activeIssue]
 			if ok {
-				issueSummaryMsg = fmt.Sprintf("(%s)", Trim(issue.summary, 50))
+				issueSummaryMsg = fmt.Sprintf("(%s)", c.Trim(issue.Summary, 50))
 				if m.activeView != askForCommentView {
 					trackingSinceMsg = fmt.Sprintf("(since %s)", m.activeIssueBeginTS.Format(timeOnlyFormat))
 				}
@@ -160,7 +161,7 @@ func (m Model) View() string {
 		if m.unsyncedWLCount == 1 {
 			entryWord = "entry"
 		}
-		unsyncedTimeMsg := humanizeDuration(m.unsyncedWLSecsSpent)
+		unsyncedTimeMsg := c.HumanizeDuration(m.unsyncedWLSecsSpent)
 		unsyncedMsg = unsyncedCountStyle.Render(fmt.Sprintf("%d unsynced %s (%s)", m.unsyncedWLCount, entryWord, unsyncedTimeMsg))
 	}
 	footerStr := fmt.Sprintf("%s%s%s%s",

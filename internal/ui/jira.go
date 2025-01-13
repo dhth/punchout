@@ -6,6 +6,7 @@ import (
 	"time"
 
 	jira "github.com/andygrunwald/go-jira/v2/onpremise"
+	c "github.com/dhth/punchout/internal/common"
 )
 
 var errJIRARepliedWithEmptyWorklog = errors.New("JIRA replied with an empty worklog; something is probably wrong")
@@ -15,7 +16,7 @@ func getIssues(cl *jira.Client, jql string) ([]jira.Issue, int, error) {
 	return issues, resp.StatusCode, err
 }
 
-func addWLtoJira(cl *jira.Client, entry worklogEntry, timeDeltaMins int) error {
+func addWLtoJira(cl *jira.Client, entry c.WorklogEntry, timeDeltaMins int) error {
 	start := entry.BeginTS
 
 	if timeDeltaMins != 0 {

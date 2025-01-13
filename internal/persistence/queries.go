@@ -1,34 +1,13 @@
-package ui
+package persistence
 
 import (
 	"database/sql"
-	"fmt"
-	"math"
-	"strings"
 	"time"
+
+	c "github.com/dhth/punchout/internal/common"
 )
 
-func RightPadTrim(s string, length int) string {
-	if len(s) >= length {
-		if length > 3 {
-			return s[:length-3] + "..."
-		}
-		return s[:length]
-	}
-	return s + strings.Repeat(" ", length-len(s))
-}
-
-func Trim(s string, length int) string {
-	if len(s) >= length {
-		if length > 3 {
-			return s[:length-3] + "..."
-		}
-		return s[:length]
-	}
-	return s
-}
-
-func insertNewEntry(db *sql.DB, issueKey string, beginTs time.Time) error {
+func InsertNewEntry(db *sql.DB, issueKey string, beginTs time.Time) error {
 	stmt, err := db.Prepare(`
     INSERT INTO issue_log (issue_key, begin_ts, active, synced)
     VALUES (?, ?, ?, ?);
@@ -46,7 +25,7 @@ func insertNewEntry(db *sql.DB, issueKey string, beginTs time.Time) error {
 	return nil
 }
 
-func updateLastEntry(db *sql.DB, issueKey, comment string, beginTs, endTs time.Time) error {
+func UpdateLastEntry(db *sql.DB, issueKey, comment string, beginTs, endTs time.Time) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
 SET active = 0,
@@ -69,7 +48,7 @@ AND active = 1;
 	return nil
 }
 
-func stopCurrentlyActiveEntry(db *sql.DB, issueKey string, endTs time.Time) error {
+func StopCurrentlyActiveEntry(db *sql.DB, issueKey string, endTs time.Time) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
 SET active = 0,
@@ -91,8 +70,8 @@ AND active = 1;
 	return nil
 }
 
-func fetchEntries(db *sql.DB) ([]worklogEntry, error) {
-	var logEntries []worklogEntry
+func FetchEntries(db *sql.DB) ([]c.WorklogEntry, error) {
+	var logEntries []c.WorklogEntry
 
 	rows, err := db.Query(`
 SELECT ID, issue_key, begin_ts, end_ts, comment, active, synced
@@ -106,7 +85,7 @@ ORDER by end_ts DESC;
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry worklogEntry
+		var entry c.WorklogEntry
 		err = rows.Scan(&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
@@ -124,8 +103,8 @@ ORDER by end_ts DESC;
 	return logEntries, nil
 }
 
-func fetchSyncedEntries(db *sql.DB) ([]syncedWorklogEntry, error) {
-	var logEntries []syncedWorklogEntry
+func FetchSyncedEntries(db *sql.DB) ([]c.SyncedWorklogEntry, error) {
+	var logEntries []c.SyncedWorklogEntry
 
 	rows, err := db.Query(`
 SELECT ID, issue_key, begin_ts, end_ts, comment
@@ -139,7 +118,7 @@ ORDER by end_ts DESC LIMIT 30;
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry syncedWorklogEntry
+		var entry c.SyncedWorklogEntry
 		err = rows.Scan(&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
@@ -155,7 +134,7 @@ ORDER by end_ts DESC LIMIT 30;
 	return logEntries, nil
 }
 
-func deleteEntry(db *sql.DB, id int) error {
+func DeleteEntry(db *sql.DB, id int) error {
 	stmt, err := db.Prepare(`
 DELETE from issue_log
 WHERE ID=?;
@@ -173,7 +152,7 @@ WHERE ID=?;
 	return nil
 }
 
-func updateSyncStatus(db *sql.DB, id int) error {
+func UpdateSyncStatus(db *sql.DB, id int) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
 SET synced = 1
@@ -192,22 +171,17 @@ WHERE id = ?;
 	return nil
 }
 
-func humanizeDuration(durationInSecs int) string {
-	duration := time.Duration(durationInSecs) * time.Second
-
-	if duration.Seconds() < 60 {
-		return fmt.Sprintf("%ds", int(duration.Seconds()))
+func DeleteActiveLogInDB(db *sql.DB) error {
+	stmt, err := db.Prepare(`
+DELETE FROM issue_log
+WHERE active=true;
+`)
+	if err != nil {
+		return err
 	}
+	defer stmt.Close()
 
-	if duration.Minutes() < 60 {
-		return fmt.Sprintf("%dm", int(duration.Minutes()))
-	}
+	_, err = stmt.Exec()
 
-	modMins := int(math.Mod(duration.Minutes(), 60))
-
-	if modMins == 0 {
-		return fmt.Sprintf("%dh", int(duration.Hours()))
-	}
-
-	return fmt.Sprintf("%dh %dm", int(duration.Hours()), modMins)
+	return err
 }

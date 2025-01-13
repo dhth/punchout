@@ -1,4 +1,4 @@
-package ui
+package common
 
 import (
 	"fmt"
@@ -8,32 +8,64 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
+var listWidth = 140
+
+const (
+	timeFormat       = "2006/01/02 15:04"
+	dayAndTimeFormat = "Mon, 15:04"
+	dateFormat       = "2006/01/02"
+	timeOnlyFormat   = "15:04"
+)
+
 type Issue struct {
-	issueKey        string
-	issueType       string
-	summary         string
-	assignee        string
-	status          string
-	aggSecondsSpent int
-	trackingActive  bool
-	desc            string
+	IssueKey        string
+	IssueType       string
+	Summary         string
+	Assignee        string
+	Status          string
+	AggSecondsSpent int
+	TrackingActive  bool
+	Desc            string
+}
+
+func (issue *Issue) SetDesc() {
+	// TODO: The padding here is a bit of a mess; make it more readable
+	var assignee string
+	var status string
+	var totalSecsSpent string
+
+	issueType := getIssueTypeStyle(issue.IssueType).Render(issue.IssueType)
+
+	if issue.Assignee != "" {
+		assignee = assigneeStyle(issue.Assignee).Render(RightPadTrim(issue.Assignee, listWidth/4))
+	} else {
+		assignee = assigneeStyle(issue.Assignee).Render(RightPadTrim("", listWidth/4))
+	}
+
+	status = issueStatusStyle.Render(RightPadTrim(issue.Status, listWidth/4))
+
+	if issue.AggSecondsSpent > 0 {
+		totalSecsSpent = aggTimeSpentStyle.Render(HumanizeDuration(issue.AggSecondsSpent))
+	}
+
+	issue.Desc = fmt.Sprintf("%s%s%s%s%s", RightPadTrim(issue.IssueKey, listWidth/4), status, assignee, issueType, totalSecsSpent)
 }
 
 func (issue Issue) Title() string {
 	var trackingIndicator string
-	if issue.trackingActive {
+	if issue.TrackingActive {
 		trackingIndicator = "⏲ "
 	}
-	return trackingIndicator + RightPadTrim(issue.summary, int(float64(listWidth)*0.8))
+	return trackingIndicator + RightPadTrim(issue.Summary, int(float64(listWidth)*0.8))
 }
 
 func (issue Issue) Description() string {
-	return issue.desc
+	return issue.Desc
 }
 
-func (issue Issue) FilterValue() string { return issue.issueKey }
+func (issue Issue) FilterValue() string { return issue.IssueKey }
 
-type worklogEntry struct {
+type WorklogEntry struct {
 	ID             int
 	IssueKey       string
 	BeginTS        time.Time
@@ -45,7 +77,7 @@ type worklogEntry struct {
 	Error          error
 }
 
-type syncedWorklogEntry struct {
+type SyncedWorklogEntry struct {
 	ID       int
 	IssueKey string
 	BeginTS  time.Time
@@ -53,23 +85,23 @@ type syncedWorklogEntry struct {
 	Comment  string
 }
 
-func (entry *worklogEntry) needsComment() bool {
+func (entry *WorklogEntry) NeedsComment() bool {
 	return strings.TrimSpace(entry.Comment) == ""
 }
 
-func (entry worklogEntry) SecsSpent() int {
+func (entry WorklogEntry) SecsSpent() int {
 	return int(entry.EndTS.Sub(entry.BeginTS).Seconds())
 }
 
-func (entry worklogEntry) Title() string {
-	if entry.needsComment() {
+func (entry WorklogEntry) Title() string {
+	if entry.NeedsComment() {
 		return "[NO COMMENT]"
 	}
 
 	return entry.Comment
 }
 
-func (entry worklogEntry) Description() string {
+func (entry WorklogEntry) Description() string {
 	if entry.Error != nil {
 		return "error: " + entry.Error.Error()
 	}
@@ -91,9 +123,9 @@ func (entry worklogEntry) Description() string {
 		durationMsg = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(timeOnlyFormat), entry.EndTS.Format(timeOnlyFormat))
 	}
 
-	timeSpentStr := humanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
+	timeSpentStr := HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
 
-	if entry.needsComment() {
+	if entry.NeedsComment() {
 		syncedStatus = needsCommentStyle.Render("needs comment")
 	} else if entry.Synced {
 		syncedStatus = syncedStyle.Render("synced")
@@ -110,19 +142,19 @@ func (entry worklogEntry) Description() string {
 		syncedStatus,
 	)
 }
-func (entry worklogEntry) FilterValue() string { return entry.IssueKey }
+func (entry WorklogEntry) FilterValue() string { return entry.IssueKey }
 
-func (entry syncedWorklogEntry) Title() string {
+func (entry SyncedWorklogEntry) Title() string {
 	return entry.Comment
 }
 
-func (entry syncedWorklogEntry) Description() string {
+func (entry SyncedWorklogEntry) Description() string {
 	durationMsg := humanize.Time(entry.EndTS)
-	timeSpentStr := humanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
+	timeSpentStr := HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
 	return fmt.Sprintf("%s%s%s",
 		RightPadTrim(entry.IssueKey, listWidth/4),
 		RightPadTrim(durationMsg, listWidth/4),
 		fmt.Sprintf("(%s)", timeSpentStr),
 	)
 }
-func (entry syncedWorklogEntry) FilterValue() string { return entry.IssueKey }
+func (entry SyncedWorklogEntry) FilterValue() string { return entry.IssueKey }

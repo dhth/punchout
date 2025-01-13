@@ -9,6 +9,9 @@ import (
 
 	jira "github.com/andygrunwald/go-jira/v2/onpremise"
 	tea "github.com/charmbracelet/bubbletea"
+	common "github.com/dhth/punchout/internal/common"
+	pers "github.com/dhth/punchout/internal/persistence"
+
 	_ "modernc.org/sqlite"
 )
 
@@ -40,7 +43,7 @@ LIMIT 1
 
 		switch trackStatus {
 		case trackingInactive:
-			err = insertNewEntry(db, selectedIssue, beginTs)
+			err = pers.InsertNewEntry(db, selectedIssue, beginTs)
 			if err != nil {
 				return trackingToggledMsg{err: err}
 			} else {
@@ -48,7 +51,7 @@ LIMIT 1
 			}
 
 		default:
-			err := updateLastEntry(db, activeIssue, comment, beginTs, endTs)
+			err := pers.UpdateLastEntry(db, activeIssue, comment, beginTs, endTs)
 			if err != nil {
 				return trackingToggledMsg{err: err}
 			} else {
@@ -73,12 +76,12 @@ LIMIT 1
 			return activeIssueSwitchedMsg{"", selectedIssue, currentTime, errNoTaskIsActive}
 		}
 
-		err = stopCurrentlyActiveEntry(db, activeIssue, currentTime)
+		err = pers.StopCurrentlyActiveEntry(db, activeIssue, currentTime)
 		if err != nil {
 			return activeIssueSwitchedMsg{activeIssue, selectedIssue, currentTime, errCouldntStopActiveTask}
 		}
 
-		err = insertNewEntry(db, selectedIssue, currentTime)
+		err = pers.InsertNewEntry(db, selectedIssue, currentTime)
 		if err != nil {
 			return activeIssueSwitchedMsg{activeIssue, selectedIssue, currentTime, errCouldntStartTrackingTask}
 		}
@@ -109,7 +112,7 @@ VALUES (?, ?, ?, ?, ?, ?);
 
 func deleteActiveIssueLog(db *sql.DB) tea.Cmd {
 	return func() tea.Msg {
-		err := deleteActiveLogInDB(db)
+		err := pers.DeleteActiveLogInDB(db)
 		return activeTaskLogDeletedMsg{err}
 	}
 }
@@ -162,7 +165,7 @@ LIMIT 1
 
 func fetchLogEntries(db *sql.DB) tea.Cmd {
 	return func() tea.Msg {
-		entries, err := fetchEntries(db)
+		entries, err := pers.FetchEntries(db)
 		return logEntriesFetchedMsg{
 			entries: entries,
 			err:     err,
@@ -172,7 +175,7 @@ func fetchLogEntries(db *sql.DB) tea.Cmd {
 
 func fetchSyncedLogEntries(db *sql.DB) tea.Cmd {
 	return func() tea.Msg {
-		entries, err := fetchSyncedEntries(db)
+		entries, err := pers.FetchSyncedEntries(db)
 		return syncedLogEntriesFetchedMsg{
 			entries: entries,
 			err:     err,
@@ -182,16 +185,16 @@ func fetchSyncedLogEntries(db *sql.DB) tea.Cmd {
 
 func deleteLogEntry(db *sql.DB, id int) tea.Cmd {
 	return func() tea.Msg {
-		err := deleteEntry(db, id)
+		err := pers.DeleteEntry(db, id)
 		return logEntriesDeletedMsg{
 			err: err,
 		}
 	}
 }
 
-func updateSyncStatusForEntry(db *sql.DB, entry worklogEntry, index int) tea.Cmd {
+func updateSyncStatusForEntry(db *sql.DB, entry common.WorklogEntry, index int) tea.Cmd {
 	return func() tea.Msg {
-		err := updateSyncStatus(db, entry.ID)
+		err := pers.UpdateSyncStatus(db, entry.ID)
 		return logEntrySyncUpdated{
 			entry: entry,
 			index: index,
@@ -203,7 +206,7 @@ func updateSyncStatusForEntry(db *sql.DB, entry worklogEntry, index int) tea.Cmd
 func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 	return func() tea.Msg {
 		jIssues, statusCode, err := getIssues(cl, jql)
-		var issues []Issue
+		var issues []common.Issue
 		if err != nil {
 			return issuesFetchedFromJIRAMsg{issues, statusCode, err}
 		}
@@ -223,21 +226,21 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 					status = issue.Fields.Status.Name
 				}
 			}
-			issues = append(issues, Issue{
-				issueKey:        issue.Key,
-				issueType:       issue.Fields.Type.Name,
-				summary:         issue.Fields.Summary,
-				assignee:        assignee,
-				status:          status,
-				aggSecondsSpent: totalSecsSpent,
-				trackingActive:  false,
+			issues = append(issues, common.Issue{
+				IssueKey:        issue.Key,
+				IssueType:       issue.Fields.Type.Name,
+				Summary:         issue.Fields.Summary,
+				Assignee:        assignee,
+				Status:          status,
+				AggSecondsSpent: totalSecsSpent,
+				TrackingActive:  false,
 			})
 		}
 		return issuesFetchedFromJIRAMsg{issues, statusCode, nil}
 	}
 }
 
-func syncWorklogWithJIRA(cl *jira.Client, entry worklogEntry, index int, timeDeltaMins int) tea.Cmd {
+func syncWorklogWithJIRA(cl *jira.Client, entry common.WorklogEntry, index int, timeDeltaMins int) tea.Cmd {
 	return func() tea.Msg {
 		err := addWLtoJira(cl, entry, timeDeltaMins)
 		return wlAddedOnJIRA{index, entry, err}
