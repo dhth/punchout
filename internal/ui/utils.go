@@ -69,6 +69,28 @@ AND active = 1;
 	return nil
 }
 
+func stopCurrentlyActiveEntry(db *sql.DB, issueKey string, endTs time.Time) error {
+	stmt, err := db.Prepare(`
+UPDATE issue_log
+SET active = 0,
+    end_ts = ?,
+    comment = ''
+WHERE issue_key = ?
+AND active = 1;
+`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(endTs, issueKey)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func fetchEntries(db *sql.DB) ([]worklogEntry, error) {
 	var logEntries []worklogEntry
 

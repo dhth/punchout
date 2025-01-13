@@ -54,7 +54,10 @@ var helpText = fmt.Sprintf(`
 	helpSectionStyle.Render(`
     s                                       Toggle recording time on the currently selected issue,
                                                 will open up a form to record a comment on the second
-                                            "s" keypress
+                                                "s" keypress
+    S                                       Quick switch recording; will save a worklog entry without
+                                                a comment for the currently active issue, and start
+                                                recording time for another issue
     <ctrl+s>                                Add manual worklog entry
     <ctrl+t>                                Go to currently tracked item
     <ctrl+x>                                Discard currently active recording

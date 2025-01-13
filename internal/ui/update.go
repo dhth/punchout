@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -347,10 +348,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			if !m.trackingActive {
-				m.message = "nothing is being tracked right now"
+			issue, ok := m.issueList.SelectedItem().(*Issue)
+			if !ok {
+				m.message = "Something went wrong"
 				break
 			}
+
+			if issue.issueKey == m.activeIssue {
+				break
+			}
+
+			if !m.trackingActive {
+				m.changesLocked = true
+				m.activeIssueBeginTS = time.Now()
+				cmds = append(cmds, toggleTracking(m.db,
+					issue.issueKey,
+					m.activeIssueBeginTS,
+					m.activeIssueEndTS,
+					"",
+				))
+				break
+			}
+
+			cmds = append(cmds, quickSwitchActiveIssue(m.db, issue.issueKey, time.Now()))
 
 		case "s":
 			if !m.issuesFetched {
@@ -633,6 +653,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.trackingActive = true
 			}
 			m.activeIssue = msg.activeIssue
+		}
+	case activeIssueSwitchedMsg:
+		if msg.err != nil {
+			message := msg.err.Error()
+			m.message = message
+			m.messages = append(m.messages, message)
+			if errors.Is(msg.err, errNoTaskIsActive) || errors.Is(msg.err, errCouldntStartTrackingTask) {
+				m.trackingActive = false
+			}
+		} else {
+			var lastActiveIssue *Issue
+			if msg.lastActiveIssue != "" {
+				lastActiveIssue = m.issueMap[msg.lastActiveIssue]
+				if lastActiveIssue != nil {
+					lastActiveIssue.trackingActive = false
+				}
+			}
+
+			var currentActiveIssue *Issue
+			if msg.currentActiveIssue != "" {
+				currentActiveIssue = m.issueMap[msg.currentActiveIssue]
+			} else {
+				currentActiveIssue = m.issueMap[m.activeIssue]
+			}
+
+			if currentActiveIssue != nil {
+				currentActiveIssue.trackingActive = true
+			}
+			cmds = append(cmds, fetchLogEntries(m.db))
+			m.activeIssue = msg.currentActiveIssue
+			m.activeIssueBeginTS = msg.beginTs
 		}
 	case hideHelpMsg:
 		m.showHelpIndicator = false

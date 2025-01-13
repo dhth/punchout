@@ -10,6 +10,13 @@ type trackingToggledMsg struct {
 	err         error
 }
 
+type activeIssueSwitchedMsg struct {
+	lastActiveIssue    string
+	currentActiveIssue string
+	beginTs            time.Time
+	err                error
+}
+
 type manualEntryInserted struct {
 	issueKey string
 	err      error

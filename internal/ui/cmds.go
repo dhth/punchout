@@ -12,6 +12,12 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+var (
+	errNoTaskIsActive           = errors.New("no task is active")
+	errCouldntStopActiveTask    = errors.New("couldn't stop active task")
+	errCouldntStartTrackingTask = errors.New("couldn't start tracking task")
+)
+
 func toggleTracking(db *sql.DB, selectedIssue string, beginTs, endTs time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
 		row := db.QueryRow(`
@@ -49,6 +55,35 @@ LIMIT 1
 				return trackingToggledMsg{activeIssue: "", finished: true}
 			}
 		}
+	}
+}
+
+func quickSwitchActiveIssue(db *sql.DB, selectedIssue string, currentTime time.Time) tea.Cmd {
+	return func() tea.Msg {
+		row := db.QueryRow(`
+SELECT issue_key
+from issue_log
+WHERE active=1
+ORDER BY begin_ts DESC
+LIMIT 1
+`)
+		var activeIssue string
+		err := row.Scan(&activeIssue)
+		if errors.Is(err, sql.ErrNoRows) {
+			return activeIssueSwitchedMsg{"", selectedIssue, currentTime, errNoTaskIsActive}
+		}
+
+		err = stopCurrentlyActiveEntry(db, activeIssue, currentTime)
+		if err != nil {
+			return activeIssueSwitchedMsg{activeIssue, selectedIssue, currentTime, errCouldntStopActiveTask}
+		}
+
+		err = insertNewEntry(db, selectedIssue, currentTime)
+		if err != nil {
+			return activeIssueSwitchedMsg{activeIssue, selectedIssue, currentTime, errCouldntStartTrackingTask}
+		}
+
+		return activeIssueSwitchedMsg{activeIssue, selectedIssue, currentTime, nil}
 	}
 }
 
