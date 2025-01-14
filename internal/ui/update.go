@@ -356,10 +356,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.worklogSaveType = worklogInsert
 					m.trackingFocussedField = entryBeginTS
 					currentTime := time.Now()
-					dateString := currentTime.Format("2006/01/02")
 					currentTimeStr := currentTime.Format(timeFormat)
 
-					m.trackingInputs[entryBeginTS].SetValue(dateString + " ")
+					m.trackingInputs[entryBeginTS].SetValue(currentTimeStr)
 					m.trackingInputs[entryEndTS].SetValue(currentTimeStr)
 
 					for i := range m.trackingInputs {
