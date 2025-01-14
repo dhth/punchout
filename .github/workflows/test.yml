@@ -1,4 +1,4 @@
-name: e2e-tests
+name: test
 
 on:
   push:
@@ -14,6 +14,18 @@ env:
 
 jobs:
   test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Run tests
+        run: go test ./... -v
+
+  live:
+    needs: [test]
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -26,7 +38,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - name: Install
         run: go install .
-      - name: Run tests
+      - name: Run live tests
         run: |
           cd tests
           ./test.sh

@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
+	c "github.com/dhth/punchout/internal/common"
 )
 
 func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInstallationType, jql string, jiraTimeDeltaMins int, debug bool) Model {
@@ -39,7 +40,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 		installationType:  installationType,
 		jql:               jql,
 		issueList:         list.New(stackItems, newItemDelegate(lipgloss.Color(issueListColor)), listWidth, 0),
-		issueMap:          make(map[string]*Issue),
+		issueMap:          make(map[string]*c.Issue),
 		issueIndexMap:     make(map[string]int),
 		worklogList:       list.New(worklogListItems, newItemDelegate(lipgloss.Color(worklogListColor)), listWidth, 0),
 		syncedWorklogList: list.New(syncedWorklogListItems, newItemDelegate(syncedWorklogListColor), listWidth, 0),
@@ -52,7 +53,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 	m.issueList.SetStatusBarItemName("issue", "issues")
 	m.issueList.DisableQuitKeybindings()
 	m.issueList.SetShowHelp(false)
-	m.issueList.Styles.Title = m.issueList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor)).
+	m.issueList.Styles.Title = m.issueList.Styles.Title.Foreground(lipgloss.Color(c.DefaultBackgroundColor)).
 		Background(lipgloss.Color(issueListUnfetchedColor)).
 		Bold(true)
 
@@ -61,7 +62,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 	m.worklogList.SetFilteringEnabled(false)
 	m.worklogList.DisableQuitKeybindings()
 	m.worklogList.SetShowHelp(false)
-	m.worklogList.Styles.Title = m.worklogList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor)).
+	m.worklogList.Styles.Title = m.worklogList.Styles.Title.Foreground(lipgloss.Color(c.DefaultBackgroundColor)).
 		Background(lipgloss.Color(worklogListColor)).
 		Bold(true)
 
@@ -70,7 +71,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 	m.syncedWorklogList.SetFilteringEnabled(false)
 	m.syncedWorklogList.DisableQuitKeybindings()
 	m.syncedWorklogList.SetShowHelp(false)
-	m.syncedWorklogList.Styles.Title = m.syncedWorklogList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor)).
+	m.syncedWorklogList.Styles.Title = m.syncedWorklogList.Styles.Title.Foreground(lipgloss.Color(c.DefaultBackgroundColor)).
 		Background(lipgloss.Color(syncedWorklogListColor)).
 		Bold(true)
 

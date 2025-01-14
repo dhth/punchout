@@ -12,6 +12,7 @@ linters:
     - prealloc
     - predeclared
     - revive
+    - rowserrcheck
     - sqlclosecheck
     - staticcheck
     - testifylint
@@ -24,6 +25,7 @@ linters-settings:
   revive:
     rules:
       # defaults
+      - name: blank-imports
       - name: context-as-argument
         arguments:
           - allowTypesBefore: "*testing.T"

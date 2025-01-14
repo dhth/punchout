@@ -15,22 +15,22 @@ func getIssues(cl *jira.Client, jql string) ([]jira.Issue, int, error) {
 	return issues, resp.StatusCode, err
 }
 
-func addWLtoJira(cl *jira.Client, entry worklogEntry, timeDeltaMins int) error {
-	start := entry.BeginTS
+func addWLtoJira(cl *jira.Client, issueKey string, beginTS, endTS time.Time, comment string, timeDeltaMins int) error {
+	start := beginTS
 
 	if timeDeltaMins != 0 {
 		start = start.Add(time.Minute * time.Duration(timeDeltaMins))
 	}
 
-	timeSpentSecs := int(entry.EndTS.Sub(entry.BeginTS).Seconds())
+	timeSpentSecs := int(endTS.Sub(beginTS).Seconds())
 	wl := jira.WorklogRecord{
-		IssueID:          entry.IssueKey,
+		IssueID:          issueKey,
 		Started:          (*jira.Time)(&start),
 		TimeSpentSeconds: timeSpentSecs,
-		Comment:          entry.Comment,
+		Comment:          comment,
 	}
 	cwl, _, err := cl.Issue.AddWorklogRecord(context.Background(),
-		entry.IssueKey,
+		issueKey,
 		&wl,
 	)
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
+	c "github.com/dhth/punchout/internal/common"
 )
 
 var listWidth = 140
@@ -15,7 +16,7 @@ func (m Model) View() string {
 	var statusBar string
 	var helpMsg string
 	if m.message != "" {
-		statusBar = Trim(m.message, 120)
+		statusBar = c.Trim(m.message, 120)
 	}
 	var activeMsg string
 	if m.issuesFetched {
@@ -23,7 +24,7 @@ func (m Model) View() string {
 			var issueSummaryMsg, trackingSinceMsg string
 			issue, ok := m.issueMap[m.activeIssue]
 			if ok {
-				issueSummaryMsg = fmt.Sprintf("(%s)", Trim(issue.summary, 50))
+				issueSummaryMsg = fmt.Sprintf("(%s)", c.Trim(issue.Summary, 50))
 				if m.activeView != askForCommentView {
 					trackingSinceMsg = fmt.Sprintf("(since %s)", m.activeIssueBeginTS.Format(timeOnlyFormat))
 				}
@@ -59,34 +60,34 @@ func (m Model) View() string {
 		formHeadingText := "Saving worklog entry. Enter/update the following details:"
 		content = fmt.Sprintf(
 			`
-    %s
+  %s
 
-    %s
+  %s
 
-    %s
+  %s
 
-    %s    %s
+  %s    %s
 
-    %s
+  %s
 
-    %s    %s
+  %s    %s
 
-    %s
+  %s
 
-    %s
+  %s
 
 
-    %s
+  %s
 `,
 			formContextStyle.Render(formHeadingText),
 			formHelpStyle.Render("Use tab/shift-tab to move between sections; esc to go back."),
-			formFieldNameStyle.Render("Begin Time  (format: 2006/01/02 15:04)"),
+			formFieldNameStyle.Render("Begin Time* (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryBeginTS].View(),
 			formHelpStyle.Render("(k/j/K/J/h/l moves time, when correct)"),
-			formFieldNameStyle.Render("End Time  (format: 2006/01/02 15:04)"),
+			formFieldNameStyle.Render("End Time* (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryEndTS].View(),
 			formHelpStyle.Render("(k/j/K/J/h/l moves time, when correct)"),
-			formFieldNameStyle.Render(RightPadTrim("Comment:", 16)),
+			formFieldNameStyle.Render("Comment (you can add this later as well)"),
 			m.trackingInputs[entryComment].View(),
 			formContextStyle.Render("Press enter to submit"),
 		)
@@ -104,34 +105,34 @@ func (m Model) View() string {
 
 		content = fmt.Sprintf(
 			`
-    %s
+  %s
 
-    %s
+  %s
 
-    %s
+  %s
 
-    %s    %s
+  %s    %s
 
-    %s
+  %s
 
-    %s    %s
+  %s    %s
 
-    %s
+  %s
 
-    %s
+  %s
 
 
-    %s
+  %s
 `,
 			formContextStyle.Render(formHeadingText),
 			formHelpStyle.Render("Use tab/shift-tab to move between sections; esc to go back."),
-			formFieldNameStyle.Render("Begin Time  (format: 2006/01/02 15:04)"),
+			formFieldNameStyle.Render("Begin Time* (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryBeginTS].View(),
 			formHelpStyle.Render("(k/j/K/J moves time, when correct)"),
-			formFieldNameStyle.Render("End Time  (format: 2006/01/02 15:04)"),
+			formFieldNameStyle.Render("End Time* (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryEndTS].View(),
 			formHelpStyle.Render("(k/j/K/J moves time, when correct)"),
-			formFieldNameStyle.Render(RightPadTrim("Comment:", 16)),
+			formFieldNameStyle.Render("Comment"),
 			m.trackingInputs[entryComment].View(),
 			formContextStyle.Render("Press enter to submit"),
 		)
@@ -160,7 +161,7 @@ func (m Model) View() string {
 		if m.unsyncedWLCount == 1 {
 			entryWord = "entry"
 		}
-		unsyncedTimeMsg := humanizeDuration(m.unsyncedWLSecsSpent)
+		unsyncedTimeMsg := c.HumanizeDuration(m.unsyncedWLSecsSpent)
 		unsyncedMsg = unsyncedCountStyle.Render(fmt.Sprintf("%d unsynced %s (%s)", m.unsyncedWLCount, entryWord, unsyncedTimeMsg))
 	}
 	footerStr := fmt.Sprintf("%s%s%s%s",
