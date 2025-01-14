@@ -19,6 +19,12 @@ func (m Model) View() string {
 		statusBar = c.Trim(m.message, 120)
 	}
 	var activeMsg string
+
+	var fallbackCommentMsg string
+	if m.fallbackComment != nil {
+		fallbackCommentMsg = " (a fallback is configured)"
+	}
+
 	if m.issuesFetched {
 		if m.activeIssue != "" {
 			var issueSummaryMsg, trackingSinceMsg string
@@ -41,9 +47,9 @@ func (m Model) View() string {
 			// first time help
 			if m.activeView == issueListView && len(m.syncedWorklogList.Items()) == 0 && m.unsyncedWLCount == 0 {
 				if m.trackingActive {
-					helpMsg += " " + initialHelpMsgStyle.Render("Press s to stop tracking time")
+					helpMsg += initialHelpMsgStyle.Render("Press s to stop tracking time")
 				} else {
-					helpMsg += " " + initialHelpMsgStyle.Render("Press s to start tracking time")
+					helpMsg += initialHelpMsgStyle.Render("Press s to start tracking time")
 				}
 			}
 		}
@@ -87,7 +93,7 @@ func (m Model) View() string {
 			formFieldNameStyle.Render("End Time* (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryEndTS].View(),
 			formHelpStyle.Render("(k/j/K/J/h/l moves time, when correct)"),
-			formFieldNameStyle.Render("Comment (you can add this later as well)"),
+			formFieldNameStyle.Render(fmt.Sprintf("Comment%s", fallbackCommentMsg)),
 			m.trackingInputs[entryComment].View(),
 			formContextStyle.Render("Press enter to submit"),
 		)
@@ -132,7 +138,7 @@ func (m Model) View() string {
 			formFieldNameStyle.Render("End Time* (format: 2006/01/02 15:04)"),
 			m.trackingInputs[entryEndTS].View(),
 			formHelpStyle.Render("(k/j/K/J moves time, when correct)"),
-			formFieldNameStyle.Render("Comment"),
+			formFieldNameStyle.Render(fmt.Sprintf("Comment%s", fallbackCommentMsg)),
 			m.trackingInputs[entryComment].View(),
 			formContextStyle.Render("Press enter to submit"),
 		)
@@ -152,7 +158,7 @@ func (m Model) View() string {
 		Background(lipgloss.Color("#7c6f64"))
 
 	if m.showHelpIndicator {
-		helpMsg += " " + helpMsgStyle.Render("Press ? for help")
+		helpMsg += helpMsgStyle.Render("Press ? for help")
 	}
 
 	var unsyncedMsg string
@@ -164,6 +170,7 @@ func (m Model) View() string {
 		unsyncedTimeMsg := c.HumanizeDuration(m.unsyncedWLSecsSpent)
 		unsyncedMsg = unsyncedCountStyle.Render(fmt.Sprintf("%d unsynced %s (%s)", m.unsyncedWLCount, entryWord, unsyncedTimeMsg))
 	}
+
 	footerStr := fmt.Sprintf("%s%s%s%s",
 		modeStyle.Render("punchout"),
 		helpMsg,

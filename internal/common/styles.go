@@ -10,6 +10,7 @@ const (
 	DefaultBackgroundColor = "#282828"
 	issueStatusColor       = "#665c54"
 	needsCommentColor      = "#fb4934"
+	FallbackCommentColor   = "#83a598"
 	syncedColor            = "#b8bb26"
 	syncingColor           = "#fabd2f"
 	notSyncedColor         = "#928374"
@@ -27,10 +28,12 @@ var (
 	statusStyle = BaseStyle.
 			Bold(true).
 			Align(lipgloss.Center).
-			Width(18)
+			Width(14)
 
-	needsCommentStyle = statusStyle.
-				Background(lipgloss.Color(needsCommentColor))
+	usingFallbackCommentStyle = statusStyle.
+					Width(20).
+					MarginLeft(2).
+					Background(lipgloss.Color(FallbackCommentColor))
 
 	syncedStyle = statusStyle.
 			Background(lipgloss.Color(syncedColor))

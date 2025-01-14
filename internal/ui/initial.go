@@ -10,7 +10,7 @@ import (
 	c "github.com/dhth/punchout/internal/common"
 )
 
-func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInstallationType, jql string, jiraTimeDeltaMins int, debug bool) Model {
+func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInstallationType, jql string, jiraTimeDeltaMins int, fallbackComment *string, debug bool) Model {
 	var stackItems []list.Item
 	var worklogListItems []list.Item
 	var syncedWorklogListItems []list.Item
@@ -39,6 +39,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 		jiraClient:        jiraClient,
 		installationType:  installationType,
 		jql:               jql,
+		fallbackComment:   fallbackComment,
 		issueList:         list.New(stackItems, newItemDelegate(lipgloss.Color(issueListColor)), listWidth, 0),
 		issueMap:          make(map[string]*c.Issue),
 		issueIndexMap:     make(map[string]int),

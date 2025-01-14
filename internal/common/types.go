@@ -66,15 +66,16 @@ func (issue Issue) Description() string {
 func (issue Issue) FilterValue() string { return issue.IssueKey }
 
 type WorklogEntry struct {
-	ID             int
-	IssueKey       string
-	BeginTS        time.Time
-	EndTS          *time.Time
-	Comment        *string
-	Active         bool
-	Synced         bool
-	SyncInProgress bool
-	Error          error
+	ID              int
+	IssueKey        string
+	BeginTS         time.Time
+	EndTS           *time.Time
+	Comment         *string
+	FallbackComment *string
+	Active          bool
+	Synced          bool
+	SyncInProgress  bool
+	Error           error
 }
 
 type SyncedWorklogEntry struct {
@@ -111,6 +112,7 @@ func (entry WorklogEntry) Description() string {
 	}
 
 	var syncedStatus string
+	var fallbackCommentStatus string
 	var durationMsg string
 
 	now := time.Now()
@@ -129,9 +131,7 @@ func (entry WorklogEntry) Description() string {
 
 	timeSpentStr := HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
 
-	if entry.NeedsComment() {
-		syncedStatus = needsCommentStyle.Render("needs comment")
-	} else if entry.Synced {
+	if entry.Synced {
 		syncedStatus = syncedStyle.Render("synced")
 	} else if entry.SyncInProgress {
 		syncedStatus = syncingStyle.Render("syncing")
@@ -139,11 +139,16 @@ func (entry WorklogEntry) Description() string {
 		syncedStatus = notSyncedStyle.Render("not synced")
 	}
 
-	return fmt.Sprintf("%s%s%s%s",
+	if entry.NeedsComment() && entry.FallbackComment != nil {
+		fallbackCommentStatus = usingFallbackCommentStyle.Render("fallback comment")
+	}
+
+	return fmt.Sprintf("%s%s%s%s%s",
 		RightPadTrim(entry.IssueKey, listWidth/4),
 		RightPadTrim(durationMsg, listWidth/4),
-		RightPadTrim(fmt.Sprintf("(%s)", timeSpentStr), listWidth/4),
+		RightPadTrim(fmt.Sprintf("(%s)", timeSpentStr), listWidth/6),
 		syncedStatus,
+		fallbackCommentStatus,
 	)
 }
 func (entry WorklogEntry) FilterValue() string { return entry.IssueKey }

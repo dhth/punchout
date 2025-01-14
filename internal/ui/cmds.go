@@ -15,10 +15,7 @@ import (
 	_ "modernc.org/sqlite" // sqlite driver
 )
 
-var (
-	errWorklogsEndTSIsEmpty   = errors.New("worklog's end timestamp is empty")
-	errWorklogsCommentIsEmpty = errors.New("worklog's comment is empty")
-)
+var errWorklogsEndTSIsEmpty = errors.New("worklog's end timestamp is empty")
 
 func toggleTracking(db *sql.DB, selectedIssue string, beginTs, endTs time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
@@ -178,9 +175,19 @@ func deleteLogEntry(db *sql.DB, id int) tea.Cmd {
 	}
 }
 
-func updateSyncStatusForEntry(db *sql.DB, entry common.WorklogEntry, index int) tea.Cmd {
+func updateSyncStatusForEntry(db *sql.DB, entry common.WorklogEntry, index int, fallbackCommentUsed bool) tea.Cmd {
 	return func() tea.Msg {
-		err := pers.UpdateSyncStatus(db, entry.ID)
+		var err error
+		var comment string
+		if entry.Comment != nil {
+			comment = *entry.Comment
+		}
+		if fallbackCommentUsed {
+			err = pers.UpdateSyncStatusAndComment(db, entry.ID, comment)
+		} else {
+			err = pers.UpdateSyncStatus(db, entry.ID)
+		}
+
 		return logEntrySyncUpdated{
 			entry: entry,
 			index: index,
@@ -226,18 +233,33 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 	}
 }
 
-func syncWorklogWithJIRA(cl *jira.Client, entry common.WorklogEntry, index int, timeDeltaMins int) tea.Cmd {
+func syncWorklogWithJIRA(cl *jira.Client, entry common.WorklogEntry, fallbackComment *string, index int, timeDeltaMins int) tea.Cmd {
 	return func() tea.Msg {
+		var fallbackCmtUsed bool
 		if entry.EndTS == nil {
-			return wlAddedOnJIRA{index, entry, errWorklogsEndTSIsEmpty}
+			return wlAddedOnJIRA{index, entry, fallbackCmtUsed, errWorklogsEndTSIsEmpty}
 		}
 
-		if entry.Comment == nil {
-			return wlAddedOnJIRA{index, entry, errWorklogsCommentIsEmpty}
-		}
+		// if entry.Comment == nil && fallbackComment == nil {
+		// 	return wlAddedOnJIRA{index, entry, fallbackCmtUsed, errWorklogsCommentIsEmpty}
+		// }
 
-		err := addWLtoJira(cl, entry.IssueKey, entry.BeginTS, *entry.EndTS, *entry.Comment, timeDeltaMins)
-		return wlAddedOnJIRA{index, entry, err}
+		var comment string
+		if entry.NeedsComment() && fallbackComment != nil {
+			comment = *fallbackComment
+			fallbackCmtUsed = true
+		} else {
+			comment = *entry.Comment
+		}
+		// if !entry.NeedsComment() {
+		// 	comment = *entry.Comment
+		// } else {
+		// 	comment = *fallbackComment
+		// 	fallbackCmtUsed = true
+		// }
+
+		err := addWLtoJira(cl, entry.IssueKey, entry.BeginTS, *entry.EndTS, comment, timeDeltaMins)
+		return wlAddedOnJIRA{index, entry, fallbackCmtUsed, err}
 	}
 }
 

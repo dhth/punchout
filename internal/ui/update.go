@@ -468,10 +468,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				toSyncNum := 0
 				for i, entry := range m.worklogList.Items() {
 					if wl, ok := entry.(c.WorklogEntry); ok {
-						if !wl.Synced && !wl.NeedsComment() {
+						// needsComment := wl.NeedsComment()
+						// a worklog entry must be enqueued for syncing to jira if
+						// - it's not already synced
+						// - (it has a comment) or (it doesn't have a comment, but there's a fallback comment configured)
+						if !wl.Synced {
+							// && (!needsComment || (needsComment && m.fallbackComment != nil)) {
 							wl.SyncInProgress = true
 							m.worklogList.SetItem(i, wl)
-							cmds = append(cmds, syncWorklogWithJIRA(m.jiraClient, wl, i, m.jiraTimeDeltaMins))
+							cmds = append(cmds, syncWorklogWithJIRA(m.jiraClient, wl, m.fallbackComment, i, m.jiraTimeDeltaMins))
 							toSyncNum++
 						}
 					}
@@ -586,6 +591,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var secsSpent int
 			for _, e := range msg.entries {
 				secsSpent += e.SecsSpent()
+				e.FallbackComment = m.fallbackComment
 				items = append(items, list.Item(e))
 			}
 			m.worklogList.SetItems(items)
@@ -668,7 +674,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			msg.entry.Synced = true
 			msg.entry.SyncInProgress = false
-			cmds = append(cmds, updateSyncStatusForEntry(m.db, msg.entry, msg.index))
+			if msg.fallbackCommentUsed {
+				msg.entry.Comment = m.fallbackComment
+			}
+			cmds = append(cmds, updateSyncStatusForEntry(m.db, msg.entry, msg.index, msg.fallbackCommentUsed))
 		}
 		m.worklogList.SetItem(msg.index, msg.entry)
 	case trackingToggledMsg:

@@ -235,6 +235,26 @@ WHERE id = ?;
 	return nil
 }
 
+func UpdateSyncStatusAndComment(db *sql.DB, id int, comment string) error {
+	stmt, err := db.Prepare(`
+UPDATE issue_log
+SET synced = 1,
+    comment = ?
+WHERE id = ?;
+`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(comment, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func DeleteActiveLogInDB(db *sql.DB) error {
 	stmt, err := db.Prepare(`
 DELETE FROM issue_log

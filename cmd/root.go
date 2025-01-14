@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 
 	jiraCloud "github.com/andygrunwald/go-jira/v2/cloud"
 	jiraOnPremise "github.com/andygrunwald/go-jira/v2/onpremise"
@@ -28,6 +29,7 @@ var (
 	jiraToken            = flag.String("jira-token", "", "jira token (PAT for on-premise installation, API token for cloud installation)")
 	jiraUsername         = flag.String("jira-username", "", "username for authentication")
 	jql                  = flag.String("jql", "", "JQL to use to query issues")
+	fallbackComment      = flag.String("fallback-comment", "", "Fallback comment to use for worklog entries")
 	jiraTimeDeltaMinsStr = flag.String("jira-time-delta-mins", "", "Time delta (in minutes) between your timezone and the timezone of the server; can be +/-")
 	listConfig           = flag.Bool("list-config", false, "print the config that punchout will use")
 )
@@ -128,6 +130,10 @@ func Execute() error {
 		cfg.Jira.JiraTimeDeltaMins = jiraTimeDeltaMins
 	}
 
+	if *fallbackComment != "" {
+		cfg.Jira.FallbackComment = fallbackComment
+	}
+
 	// validations
 	var installationType ui.JiraInstallationType
 	switch cfg.Jira.InstallationType {
@@ -154,6 +160,10 @@ func Execute() error {
 
 	if installationType == ui.CloudInstallation && (cfg.Jira.JiraUsername == nil || *cfg.Jira.JiraUsername == "") {
 		return fmt.Errorf("jira-username cannot be empty for cloud installation")
+	}
+
+	if cfg.Jira.FallbackComment != nil && strings.TrimSpace(*cfg.Jira.FallbackComment) == "" {
+		return fmt.Errorf("fallback-comment cannot be empty")
 	}
 
 	configKeyMaxLen := 40
@@ -207,5 +217,5 @@ func Execute() error {
 		return fmt.Errorf("%w: %s", errCouldntCreateJiraClient, err.Error())
 	}
 
-	return ui.RenderUI(db, cl, installationType, *cfg.Jira.JQL, cfg.Jira.JiraTimeDeltaMins)
+	return ui.RenderUI(db, cl, installationType, *cfg.Jira.JQL, cfg.Jira.JiraTimeDeltaMins, cfg.Jira.FallbackComment)
 }

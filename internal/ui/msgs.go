@@ -69,9 +69,10 @@ type issuesFetchedFromJIRAMsg struct {
 }
 
 type wlAddedOnJIRA struct {
-	index int
-	entry c.WorklogEntry
-	err   error
+	index               int
+	entry               c.WorklogEntry
+	fallbackCommentUsed bool
+	err                 error
 }
 
 type urlOpenedinBrowserMsg struct {

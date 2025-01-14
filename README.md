@@ -57,6 +57,9 @@ jql = "assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DES
 # I need this, since the JIRA on-premise server I use runs 5 hours behind
 # the actual time, for whatever reason 🤷
 jira_time_delta_mins = 300
+
+# this comment will be used for worklogs when you don't provide one; optional"
+fallback_comment = "comment"
 ```
 
 ### Basic usage

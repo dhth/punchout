@@ -29,7 +29,7 @@ const (
 
 var (
 	helpMsgStyle = lipgloss.NewStyle().
-			PaddingLeft(1).
+			PaddingLeft(2).
 			Bold(true).
 			Foreground(lipgloss.Color(helpMsgColor))
 
