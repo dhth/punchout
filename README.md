@@ -152,7 +152,7 @@ Issue List View
 
 Worklog List View
 
-  <ctrl+s>                                Update worklog entry
+  <ctrl+s>/u                              Update worklog entry
   <ctrl+d>                                Delete worklog entry
   s                                       Sync all visible entries to JIRA
   <ctrl+r>                                Refresh list

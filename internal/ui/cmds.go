@@ -12,7 +12,7 @@ import (
 	common "github.com/dhth/punchout/internal/common"
 	pers "github.com/dhth/punchout/internal/persistence"
 
-	_ "modernc.org/sqlite"
+	_ "modernc.org/sqlite" // sqlite driver
 )
 
 var (

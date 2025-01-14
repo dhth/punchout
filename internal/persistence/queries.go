@@ -54,8 +54,12 @@ ORDER by end_ts DESC;
 			return nil, err
 		}
 		logEntries = append(logEntries, entry)
-
 	}
+
+	if iterErr := rows.Err(); iterErr != nil {
+		return nil, iterErr
+	}
+
 	return logEntries, nil
 }
 
@@ -150,8 +154,12 @@ ORDER by end_ts DESC;
 			return nil, err
 		}
 		logEntries = append(logEntries, entry)
-
 	}
+
+	if iterErr := rows.Err(); iterErr != nil {
+		return nil, iterErr
+	}
+
 	return logEntries, nil
 }
 
@@ -181,8 +189,12 @@ ORDER by end_ts DESC LIMIT 30;
 			return nil, err
 		}
 		logEntries = append(logEntries, entry)
-
 	}
+
+	if iterErr := rows.Err(); iterErr != nil {
+		return nil, iterErr
+	}
+
 	return logEntries, nil
 }
 

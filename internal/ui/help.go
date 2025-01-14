@@ -65,7 +65,7 @@ var helpText = fmt.Sprintf(`
 `),
 	helpHeaderStyle.Render("Worklog List View"),
 	helpSectionStyle.Render(`
-    <ctrl+s>                                Update worklog entry
+    <ctrl+s>/u                              Update worklog entry
     <ctrl+d>                                Delete worklog entry
     s                                       Sync all visible entries to JIRA
     <ctrl+r>                                Refresh list
