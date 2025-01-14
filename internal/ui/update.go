@@ -345,6 +345,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.trackingInputs[entryBeginTS].SetValue(beginTSStr)
 					if m.activeIssueComment != nil {
 						m.trackingInputs[entryComment].SetValue(*m.activeIssueComment)
+					} else {
+						m.trackingInputs[entryComment].SetValue("")
 					}
 
 					for i := range m.trackingInputs {
@@ -512,6 +514,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.trackingInputs[entryEndTS].SetValue(currentTimeStr)
 							if m.activeIssueComment != nil {
 								m.trackingInputs[entryComment].SetValue(*m.activeIssueComment)
+							} else {
+								m.trackingInputs[entryComment].SetValue("")
 							}
 
 							for i := range m.trackingInputs {
@@ -528,12 +532,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				toSyncNum := 0
 				for i, entry := range m.worklogList.Items() {
 					if wl, ok := entry.(c.WorklogEntry); ok {
-						// needsComment := wl.NeedsComment()
-						// a worklog entry must be enqueued for syncing to jira if
-						// - it's not already synced
-						// - (it has a comment) or (it doesn't have a comment, but there's a fallback comment configured)
 						if !wl.Synced {
-							// && (!needsComment || (needsComment && m.fallbackComment != nil)) {
 							wl.SyncInProgress = true
 							m.worklogList.SetItem(i, wl)
 							cmds = append(cmds, syncWorklogWithJIRA(m.jiraClient, wl, m.fallbackComment, i, m.jiraTimeDeltaMins))
@@ -726,6 +725,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.lastChange = updateChange
 			m.trackingActive = false
+			m.activeIssueComment = nil
 			m.activeIssue = ""
 		}
 	case wlAddedOnJIRA:
@@ -750,15 +750,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.activeIssueBeginTS = msg.beginTS
-		if msg.comment != nil {
-			m.activeIssueComment = msg.comment
-		}
+		m.activeIssueComment = msg.comment
 	case trackingToggledMsg:
 		if msg.err != nil {
 			message := msg.err.Error()
 			m.message = message
 			m.messages = append(m.messages, message)
 			m.trackingActive = false
+			m.activeIssueComment = nil
 		} else {
 			var activeIssue *c.Issue
 			if msg.activeIssue != "" {
@@ -791,6 +790,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.messages = append(m.messages, message)
 			if errors.Is(msg.err, pers.ErrNoTaskIsActive) || errors.Is(msg.err, pers.ErrCouldntStartTrackingTask) {
 				m.trackingActive = false
+				m.activeIssueComment = nil
 			}
 		} else {
 			var lastActiveIssue *c.Issue
@@ -811,9 +811,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if currentActiveIssue != nil {
 				currentActiveIssue.TrackingActive = true
 			}
-			cmds = append(cmds, fetchLogEntries(m.db))
 			m.activeIssue = msg.currentActiveIssue
 			m.activeIssueBeginTS = msg.beginTs
+			m.activeIssueComment = nil
 		}
 	case hideHelpMsg:
 		m.showHelpIndicator = false
