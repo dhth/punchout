@@ -58,7 +58,8 @@ var helpText = fmt.Sprintf(`
     S                                       Quick switch recording; will save a worklog entry without
                                                 a comment for the currently active issue, and start
                                                 recording time for another issue
-    <ctrl+s>                                Add manual worklog entry
+    <ctrl+s>                                Update active worklog entry (when tracking active), or add
+                                                manual worklog entry (when not tracking)
     <ctrl+t>                                Go to currently tracked item
     <ctrl+x>                                Discard currently active recording
     <ctrl+b>                                Open issue in browser

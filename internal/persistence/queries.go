@@ -108,8 +108,7 @@ func StopCurrentlyActiveEntry(db *sql.DB, issueKey string, endTs time.Time) erro
 	stmt, err := db.Prepare(`
 UPDATE issue_log
 SET active = 0,
-    end_ts = ?,
-    comment = ''
+    end_ts = ?
 WHERE issue_key = ?
 AND active = 1;
 `)
@@ -295,4 +294,43 @@ func QuickSwitchActiveIssue(db *sql.DB, currentIssue, selectedIssue string, curr
 	}
 
 	return InsertNewEntry(db, selectedIssue, currentTime)
+}
+
+func UpdateActiveWLBeginTs(db *sql.DB, beginTs time.Time) error {
+	stmt, err := db.Prepare(`
+UPDATE issue_log
+    SET begin_ts=?
+WHERE active is true;
+`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(beginTs.UTC(), true)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func UpdateActiveWL(db *sql.DB, beginTs time.Time, comment string) error {
+	stmt, err := db.Prepare(`
+UPDATE issue_log
+    SET begin_ts=?,
+    comment=?
+WHERE active is true;
+`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(beginTs.UTC(), comment, true)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

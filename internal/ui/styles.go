@@ -50,6 +50,15 @@ var (
 			Bold(true).
 			Background(lipgloss.Color(toolNameColor))
 
+	baseHeadingStyle = lipgloss.NewStyle().
+				Bold(true).
+				PaddingLeft(1).
+				PaddingRight(1).
+				Foreground(lipgloss.Color(c.DefaultBackgroundColor))
+
+	workLogEntryHeadingStyle = baseHeadingStyle.
+					Background(lipgloss.Color(worklogListColor))
+
 	formContextStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color(formContextColor))
 

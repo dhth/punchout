@@ -73,6 +73,19 @@ func quickSwitchActiveIssue(db *sql.DB, selectedIssue string, currentTime time.T
 	}
 }
 
+func updateActiveWL(db *sql.DB, beginTS time.Time, comment *string) tea.Cmd {
+	return func() tea.Msg {
+		var err error
+		if comment == nil {
+			err = pers.UpdateActiveWLBeginTs(db, beginTS)
+		} else {
+			err = pers.UpdateActiveWL(db, beginTS, *comment)
+		}
+
+		return activeWLUpdatedMsg{beginTS, comment, err}
+	}
+}
+
 func insertManualEntry(db *sql.DB, issueKey string, beginTS time.Time, endTS time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
 		stmt, err := db.Prepare(`
@@ -126,7 +139,7 @@ WHERE ID = ?;
 func fetchActiveStatus(db *sql.DB, interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
 		row := db.QueryRow(`
-SELECT issue_key, begin_ts
+SELECT issue_key, begin_ts, comment
 from issue_log
 WHERE active=1
 ORDER BY begin_ts DESC
@@ -134,7 +147,8 @@ LIMIT 1
 `)
 		var activeIssue string
 		var beginTs time.Time
-		err := row.Scan(&activeIssue, &beginTs)
+		var comment *string
+		err := row.Scan(&activeIssue, &beginTs, &comment)
 		if err == sql.ErrNoRows {
 			return fetchActiveMsg{activeIssue: activeIssue}
 		}
@@ -142,7 +156,7 @@ LIMIT 1
 			return fetchActiveMsg{err: err}
 		}
 
-		return fetchActiveMsg{activeIssue: activeIssue, beginTs: beginTs}
+		return fetchActiveMsg{activeIssue: activeIssue, beginTs: beginTs, comment: comment}
 	})
 }
 
@@ -240,10 +254,6 @@ func syncWorklogWithJIRA(cl *jira.Client, entry common.WorklogEntry, fallbackCom
 			return wlAddedOnJIRA{index, entry, fallbackCmtUsed, errWorklogsEndTSIsEmpty}
 		}
 
-		// if entry.Comment == nil && fallbackComment == nil {
-		// 	return wlAddedOnJIRA{index, entry, fallbackCmtUsed, errWorklogsCommentIsEmpty}
-		// }
-
 		var comment string
 		if entry.NeedsComment() && fallbackComment != nil {
 			comment = *fallbackComment
@@ -251,12 +261,6 @@ func syncWorklogWithJIRA(cl *jira.Client, entry common.WorklogEntry, fallbackCom
 		} else {
 			comment = *entry.Comment
 		}
-		// if !entry.NeedsComment() {
-		// 	comment = *entry.Comment
-		// } else {
-		// 	comment = *fallbackComment
-		// 	fallbackCmtUsed = true
-		// }
 
 		err := addWLtoJira(cl, entry.IssueKey, entry.BeginTS, *entry.EndTS, comment, timeDeltaMins)
 		return wlAddedOnJIRA{index, entry, fallbackCmtUsed, err}

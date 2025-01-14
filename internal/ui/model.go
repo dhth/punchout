@@ -39,6 +39,7 @@ const (
 	issueListView stateView = iota
 	worklogView
 	syncedWorklogView
+	editActiveWLView
 	askForCommentView
 	manualWorklogEntryView
 	helpView
@@ -84,6 +85,7 @@ type Model struct {
 	syncedWorklogList     list.Model
 	activeIssueBeginTS    time.Time
 	activeIssueEndTS      time.Time
+	activeIssueComment    *string
 	trackingInputs        []textinput.Model
 	trackingFocussedField trackingFocussedField
 	helpVP                viewport.Model
