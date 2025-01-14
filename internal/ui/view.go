@@ -19,6 +19,7 @@ func (m Model) View() string {
 		statusBar = c.Trim(m.message, 120)
 	}
 	var activeMsg string
+	var fallbackCommentMsg string
 	if m.issuesFetched {
 		if m.activeIssue != "" {
 			var issueSummaryMsg, trackingSinceMsg string
@@ -164,9 +165,15 @@ func (m Model) View() string {
 		unsyncedTimeMsg := c.HumanizeDuration(m.unsyncedWLSecsSpent)
 		unsyncedMsg = unsyncedCountStyle.Render(fmt.Sprintf("%d unsynced %s (%s)", m.unsyncedWLCount, entryWord, unsyncedTimeMsg))
 	}
-	footerStr := fmt.Sprintf("%s%s%s%s",
+
+	if m.fallbackComment != nil {
+		fallbackCommentMsg = fallbackCommentConfiguredStyle.Render("[F]")
+	}
+
+	footerStr := fmt.Sprintf("%s%s%s%s%s",
 		modeStyle.Render("punchout"),
 		helpMsg,
+		fallbackCommentMsg,
 		unsyncedMsg,
 		activeMsg,
 	)

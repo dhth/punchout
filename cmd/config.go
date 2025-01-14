@@ -16,6 +16,7 @@ type JiraConfig struct {
 	JiraTimeDeltaMins int     `toml:"jira_time_delta_mins"`
 	JiraToken         *string `toml:"jira_token"`
 	JiraUsername      *string `toml:"jira_username"`
+	FallbackComment   *string `toml:"fallback_comment"`
 }
 
 type POConfig struct {

@@ -76,6 +76,10 @@ var (
 				PaddingLeft(1).
 				Foreground(lipgloss.Color(trackingBeganColor))
 
+	fallbackCommentConfiguredStyle = trackingStyle.
+					PaddingLeft(2).
+					Foreground(lipgloss.Color(c.FallbackCommentColor))
+
 	unsyncedCountStyle = lipgloss.NewStyle().
 				PaddingLeft(2).
 				Bold(true).

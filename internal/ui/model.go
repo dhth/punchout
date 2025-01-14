@@ -73,6 +73,7 @@ type Model struct {
 	jiraClient            *jira.Client
 	installationType      JiraInstallationType
 	jql                   string
+	fallbackComment       *string
 	issueList             list.Model
 	issueMap              map[string]*c.Issue
 	issueIndexMap         map[string]int
