@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -34,6 +35,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "enter":
 			switch m.activeView {
+			case editActiveWLView:
+				beginTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryBeginTS].Value(), time.Local)
+				if err != nil {
+					m.message = err.Error()
+					return m, tea.Batch(cmds...)
+				}
+				commentValue := m.trackingInputs[entryComment].Value()
+
+				var comment *string
+				if strings.TrimSpace(commentValue) != "" {
+					comment = &commentValue
+				}
+				cmds = append(cmds, updateActiveWL(m.db, beginTS, comment))
+				m.trackingInputs[entryBeginTS].SetValue("")
+				m.activeView = issueListView
+
+				return m, tea.Batch(cmds...)
+
 			case askForCommentView:
 
 				beginTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryBeginTS].Value(), time.Local)
@@ -120,6 +139,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "esc":
 			switch m.activeView {
+			case editActiveWLView:
+				m.activeView = issueListView
 			case askForCommentView:
 				m.activeView = issueListView
 				m.trackingInputs[entryComment].SetValue("")
@@ -144,6 +165,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, fetchSyncedLogEntries(m.db))
 			case syncedWorklogView:
 				m.activeView = issueListView
+			case editActiveWLView:
+				switch m.trackingFocussedField {
+				case entryBeginTS:
+					m.trackingFocussedField = entryComment
+				case entryComment:
+					m.trackingFocussedField = entryBeginTS
+				}
+				for i := range m.trackingInputs {
+					m.trackingInputs[i].Blur()
+				}
+				m.trackingInputs[m.trackingFocussedField].Focus()
 			case askForCommentView, manualWorklogEntryView:
 				switch m.trackingFocussedField {
 				case entryBeginTS:
@@ -168,6 +200,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case issueListView:
 				m.activeView = syncedWorklogView
 				cmds = append(cmds, fetchSyncedLogEntries(m.db))
+			case editActiveWLView:
+				switch m.trackingFocussedField {
+				case entryBeginTS:
+					m.trackingFocussedField = entryComment
+				case entryComment:
+					m.trackingFocussedField = entryBeginTS
+				}
+				for i := range m.trackingInputs {
+					m.trackingInputs[i].Blur()
+				}
+				m.trackingInputs[m.trackingFocussedField].Focus()
 			case askForCommentView, manualWorklogEntryView:
 				switch m.trackingFocussedField {
 				case entryBeginTS:
@@ -216,7 +259,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch m.activeView {
-	case askForCommentView, manualWorklogEntryView:
+	case editActiveWLView, askForCommentView, manualWorklogEntryView:
 		for i := range m.trackingInputs {
 			m.trackingInputs[i], cmd = m.trackingInputs[i].Update(msg)
 			cmds = append(cmds, cmd)
@@ -293,21 +336,38 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			if m.activeView == issueListView && !m.trackingActive {
-				m.activeView = manualWorklogEntryView
-				m.worklogSaveType = worklogInsert
-				m.trackingFocussedField = entryBeginTS
-				currentTime := time.Now()
-				dateString := currentTime.Format("2006/01/02")
-				currentTimeStr := currentTime.Format(timeFormat)
+			if m.activeView == issueListView {
+				switch m.trackingActive {
+				case true:
+					m.activeView = editActiveWLView
+					m.trackingFocussedField = entryBeginTS
+					beginTSStr := m.activeIssueBeginTS.Format(timeFormat)
+					m.trackingInputs[entryBeginTS].SetValue(beginTSStr)
+					if m.activeIssueComment != nil {
+						m.trackingInputs[entryComment].SetValue(*m.activeIssueComment)
+					} else {
+						m.trackingInputs[entryComment].SetValue("")
+					}
 
-				m.trackingInputs[entryBeginTS].SetValue(dateString + " ")
-				m.trackingInputs[entryEndTS].SetValue(currentTimeStr)
+					for i := range m.trackingInputs {
+						m.trackingInputs[i].Blur()
+					}
+					m.trackingInputs[m.trackingFocussedField].Focus()
+				case false:
+					m.activeView = manualWorklogEntryView
+					m.worklogSaveType = worklogInsert
+					m.trackingFocussedField = entryBeginTS
+					currentTime := time.Now()
+					currentTimeStr := currentTime.Format(timeFormat)
 
-				for i := range m.trackingInputs {
-					m.trackingInputs[i].Blur()
+					m.trackingInputs[entryBeginTS].SetValue(currentTimeStr)
+					m.trackingInputs[entryEndTS].SetValue(currentTimeStr)
+
+					for i := range m.trackingInputs {
+						m.trackingInputs[i].Blur()
+					}
+					m.trackingInputs[m.trackingFocussedField].Focus()
 				}
-				m.trackingInputs[m.trackingFocussedField].Focus()
 			} else if m.activeView == worklogView {
 				wl, ok := m.worklogList.SelectedItem().(c.WorklogEntry)
 				if ok {
@@ -446,13 +506,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								"",
 							))
 						} else if m.lastChange == insertChange {
-
 							currentTime := time.Now()
 							beginTimeStr := m.activeIssueBeginTS.Format(timeFormat)
 							currentTimeStr := currentTime.Format(timeFormat)
 
 							m.trackingInputs[entryBeginTS].SetValue(beginTimeStr)
 							m.trackingInputs[entryEndTS].SetValue(currentTimeStr)
+							if m.activeIssueComment != nil {
+								m.trackingInputs[entryComment].SetValue(*m.activeIssueComment)
+							} else {
+								m.trackingInputs[entryComment].SetValue("")
+							}
 
 							for i := range m.trackingInputs {
 								m.trackingInputs[i].Blur()
@@ -468,12 +532,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				toSyncNum := 0
 				for i, entry := range m.worklogList.Items() {
 					if wl, ok := entry.(c.WorklogEntry); ok {
-						// needsComment := wl.NeedsComment()
-						// a worklog entry must be enqueued for syncing to jira if
-						// - it's not already synced
-						// - (it has a comment) or (it doesn't have a comment, but there's a fallback comment configured)
 						if !wl.Synced {
-							// && (!needsComment || (needsComment && m.fallbackComment != nil)) {
 							wl.SyncInProgress = true
 							m.worklogList.SetItem(i, wl)
 							cmds = append(cmds, syncWorklogWithJIRA(m.jiraClient, wl, m.fallbackComment, i, m.jiraTimeDeltaMins))
@@ -635,6 +694,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.lastChange = insertChange
 				activeIssue, ok := m.issueMap[m.activeIssue]
 				m.activeIssueBeginTS = msg.beginTs
+				m.activeIssueComment = msg.comment
 				if ok {
 					activeIssue.TrackingActive = true
 
@@ -665,6 +725,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.lastChange = updateChange
 			m.trackingActive = false
+			m.activeIssueComment = nil
 			m.activeIssue = ""
 		}
 	case wlAddedOnJIRA:
@@ -680,12 +741,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, updateSyncStatusForEntry(m.db, msg.entry, msg.index, msg.fallbackCommentUsed))
 		}
 		m.worklogList.SetItem(msg.index, msg.entry)
+	case activeWLUpdatedMsg:
+		if msg.err != nil {
+			message := msg.err.Error()
+			m.message = message
+			m.messages = append(m.messages, message)
+			break
+		}
+
+		m.activeIssueBeginTS = msg.beginTS
+		m.activeIssueComment = msg.comment
 	case trackingToggledMsg:
 		if msg.err != nil {
 			message := msg.err.Error()
 			m.message = message
 			m.messages = append(m.messages, message)
 			m.trackingActive = false
+			m.activeIssueComment = nil
 		} else {
 			var activeIssue *c.Issue
 			if msg.activeIssue != "" {
@@ -700,6 +772,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					activeIssue.TrackingActive = false
 				}
 				m.trackingActive = false
+				m.activeIssueComment = nil
 				cmds = append(cmds, fetchLogEntries(m.db))
 			} else {
 				m.lastChange = insertChange
@@ -717,6 +790,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.messages = append(m.messages, message)
 			if errors.Is(msg.err, pers.ErrNoTaskIsActive) || errors.Is(msg.err, pers.ErrCouldntStartTrackingTask) {
 				m.trackingActive = false
+				m.activeIssueComment = nil
 			}
 		} else {
 			var lastActiveIssue *c.Issue
@@ -737,9 +811,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if currentActiveIssue != nil {
 				currentActiveIssue.TrackingActive = true
 			}
-			cmds = append(cmds, fetchLogEntries(m.db))
 			m.activeIssue = msg.currentActiveIssue
 			m.activeIssueBeginTS = msg.beginTs
+			m.activeIssueComment = nil
 		}
 	case hideHelpMsg:
 		m.showHelpIndicator = false
@@ -768,7 +842,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) shiftTime(direction timeShiftDirection, duration timeShiftDuration) error {
-	if m.activeView == askForCommentView || m.activeView == manualWorklogEntryView {
+	if m.activeView == editActiveWLView || m.activeView == askForCommentView || m.activeView == manualWorklogEntryView {
 		if m.trackingFocussedField == entryBeginTS || m.trackingFocussedField == entryEndTS {
 			ts, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[m.trackingFocussedField].Value(), time.Local)
 			if err != nil {

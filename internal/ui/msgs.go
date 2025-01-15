@@ -21,6 +21,12 @@ type activeIssueSwitchedMsg struct {
 	err                error
 }
 
+type activeWLUpdatedMsg struct {
+	beginTS time.Time
+	comment *string
+	err     error
+}
+
 type manualEntryInserted struct {
 	issueKey string
 	err      error
@@ -39,6 +45,7 @@ type manualEntryUpdated struct {
 type fetchActiveMsg struct {
 	activeIssue string
 	beginTs     time.Time
+	comment     *string
 	err         error
 }
 

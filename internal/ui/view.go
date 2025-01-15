@@ -55,6 +55,14 @@ func (m Model) View() string {
 		}
 	}
 
+	formHeadingText := "Enter/update the following details:"
+	formHelp := "Use tab/shift-tab to move between sections; esc to go back."
+	formBeginTimeHelp := "Begin Time* (format: 2006/01/02 15:04)"
+	formEndTimeHelp := "End Time* (format: 2006/01/02 15:04)"
+	formTimeShiftHelp := "(k/j/K/J moves time, when correct)"
+	formCommentHelp := fmt.Sprintf("Comment%s", fallbackCommentMsg)
+	formSubmitHelp := "Press enter to submit"
+
 	switch m.activeView {
 	case issueListView:
 		content = listStyle.Render(m.issueList.View())
@@ -62,10 +70,44 @@ func (m Model) View() string {
 		content = listStyle.Render(m.worklogList.View())
 	case syncedWorklogView:
 		content = listStyle.Render(m.syncedWorklogList.View())
-	case askForCommentView:
-		formHeadingText := "Saving worklog entry. Enter/update the following details:"
+	case editActiveWLView:
 		content = fmt.Sprintf(
 			`
+  %s
+
+  %s
+
+  %s
+
+  %s
+
+  %s    %s
+
+  %s
+
+  %s
+
+
+  %s
+`,
+			workLogEntryHeadingStyle.Render("Edit Active Worklog"),
+			formContextStyle.Render(formHeadingText),
+			formHelpStyle.Render(formHelp),
+			formFieldNameStyle.Render(formBeginTimeHelp),
+			m.trackingInputs[entryBeginTS].View(),
+			formHelpStyle.Render(formTimeShiftHelp),
+			formFieldNameStyle.Render(formCommentHelp),
+			m.trackingInputs[entryComment].View(),
+			formContextStyle.Render(formSubmitHelp),
+		)
+		for i := 0; i < m.terminalHeight-20; i++ {
+			content += "\n"
+		}
+	case askForCommentView:
+		content = fmt.Sprintf(
+			`
+  %s
+
   %s
 
   %s
@@ -85,32 +127,35 @@ func (m Model) View() string {
 
   %s
 `,
+			workLogEntryHeadingStyle.Render("Save Worklog"),
 			formContextStyle.Render(formHeadingText),
-			formHelpStyle.Render("Use tab/shift-tab to move between sections; esc to go back."),
-			formFieldNameStyle.Render("Begin Time* (format: 2006/01/02 15:04)"),
+			formHelpStyle.Render(formHelp),
+			formFieldNameStyle.Render(formBeginTimeHelp),
 			m.trackingInputs[entryBeginTS].View(),
-			formHelpStyle.Render("(k/j/K/J/h/l moves time, when correct)"),
-			formFieldNameStyle.Render("End Time* (format: 2006/01/02 15:04)"),
+			formHelpStyle.Render(formTimeShiftHelp),
+			formFieldNameStyle.Render(formEndTimeHelp),
 			m.trackingInputs[entryEndTS].View(),
-			formHelpStyle.Render("(k/j/K/J/h/l moves time, when correct)"),
-			formFieldNameStyle.Render(fmt.Sprintf("Comment%s", fallbackCommentMsg)),
+			formHelpStyle.Render(formTimeShiftHelp),
+			formFieldNameStyle.Render(formCommentHelp),
 			m.trackingInputs[entryComment].View(),
-			formContextStyle.Render("Press enter to submit"),
+			formContextStyle.Render(formSubmitHelp),
 		)
-		for i := 0; i < m.terminalHeight-22; i++ {
+		for i := 0; i < m.terminalHeight-24; i++ {
 			content += "\n"
 		}
 	case manualWorklogEntryView:
-		var formHeadingText string
+		var formHeading string
 		switch m.worklogSaveType {
 		case worklogInsert:
-			formHeadingText = "Adding a manual entry. Enter the following details:"
+			formHeading = "Save Worklog (manual)"
 		case worklogUpdate:
-			formHeadingText = "Updating worklog entry. Enter the following details:"
+			formHeading = "Update Worklog"
 		}
 
 		content = fmt.Sprintf(
 			`
+  %s
+
   %s
 
   %s
@@ -130,19 +175,20 @@ func (m Model) View() string {
 
   %s
 `,
+			workLogEntryHeadingStyle.Render(formHeading),
 			formContextStyle.Render(formHeadingText),
-			formHelpStyle.Render("Use tab/shift-tab to move between sections; esc to go back."),
-			formFieldNameStyle.Render("Begin Time* (format: 2006/01/02 15:04)"),
+			formHelpStyle.Render(formHelp),
+			formFieldNameStyle.Render(formBeginTimeHelp),
 			m.trackingInputs[entryBeginTS].View(),
-			formHelpStyle.Render("(k/j/K/J moves time, when correct)"),
-			formFieldNameStyle.Render("End Time* (format: 2006/01/02 15:04)"),
+			formHelpStyle.Render(formTimeShiftHelp),
+			formFieldNameStyle.Render(formEndTimeHelp),
 			m.trackingInputs[entryEndTS].View(),
-			formHelpStyle.Render("(k/j/K/J moves time, when correct)"),
-			formFieldNameStyle.Render(fmt.Sprintf("Comment%s", fallbackCommentMsg)),
+			formHelpStyle.Render(formTimeShiftHelp),
+			formFieldNameStyle.Render(formCommentHelp),
 			m.trackingInputs[entryComment].View(),
-			formContextStyle.Render("Press enter to submit"),
+			formContextStyle.Render(formSubmitHelp),
 		)
-		for i := 0; i < m.terminalHeight-22; i++ {
+		for i := 0; i < m.terminalHeight-24; i++ {
 			content += "\n"
 		}
 	case helpView:
