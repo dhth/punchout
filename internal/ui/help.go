@@ -40,7 +40,9 @@ var helpText = fmt.Sprintf(`
     3                                       Switch to Synced Worklog List View
     <tab>                                   Go to next view/form entry
     <shift+tab>                             Go to previous view/form entry
-      ?                                     Show help view
+    q/<ctrl+c>                              Go back/reset filtering/quit
+    <esc>                                   Cancel form/quit
+    ?                                       Show help view
 `),
 	helpHeaderStyle.Render("General List Controls"),
 	helpSectionStyle.Render(`

@@ -45,7 +45,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Batch(cmds...)
 			}
 		case "esc":
-			m.handleEscape()
+			quit := m.handleEscape()
+			if quit {
+				return m, tea.Quit
+			}
 		case "tab":
 			viewSwitchCmd := m.getCmdToGoForwardsInViews()
 			if viewSwitchCmd != nil {

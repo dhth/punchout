@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for JIRA Cloud installation
 - Allow shifting timestamps for worklog entries using h/j/k/l/J/K
 - Show time spent on unsynced worklog entries
+
+### Changed
+
+- Save UTC timestamps in the database
+- Allow going back views instead of quitting directly
 - Improved error handling
 - Upgrade to go 1.23.4
 - Dependency upgrades

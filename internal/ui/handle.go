@@ -117,8 +117,18 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 	return cmd
 }
 
-func (m *Model) handleEscape() {
+func (m *Model) handleEscape() bool {
+	var quit bool
+
 	switch m.activeView {
+	case issueListView:
+		quit = true
+	case wLView:
+		quit = true
+	case syncedWLView:
+		quit = true
+	case helpView:
+		quit = true
 	case editActiveWLView:
 		m.activeView = issueListView
 	case saveActiveWLView:
@@ -135,6 +145,8 @@ func (m *Model) handleEscape() {
 			m.trackingInputs[i].SetValue("")
 		}
 	}
+
+	return quit
 }
 
 func (m *Model) getCmdToGoForwardsInViews() tea.Cmd {
@@ -232,8 +244,10 @@ func (m *Model) handleRequestToGoBackOrQuit() bool {
 		if fs == list.Filtering || fs == list.FilterApplied {
 			m.worklogList.ResetFilter()
 		} else {
-			quit = true
+			m.activeView = issueListView
 		}
+	case syncedWLView:
+		m.activeView = wLView
 	case helpView:
 		m.activeView = m.lastView
 	default:
