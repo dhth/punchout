@@ -32,26 +32,26 @@ LIMIT 1
 		if errors.Is(err, sql.ErrNoRows) {
 			trackStatus = trackingInactive
 		} else if err != nil {
-			return trackingToggledMsg{err: err}
+			return trackingToggledInDB{err: err}
 		} else {
 			trackStatus = trackingActive
 		}
 
 		switch trackStatus {
 		case trackingInactive:
-			err = pers.InsertNewEntry(db, selectedIssue, beginTs)
+			err = pers.InsertNewWLInDB(db, selectedIssue, beginTs)
 			if err != nil {
-				return trackingToggledMsg{err: err}
+				return trackingToggledInDB{err: err}
 			} else {
-				return trackingToggledMsg{activeIssue: selectedIssue}
+				return trackingToggledInDB{activeIssue: selectedIssue}
 			}
 
 		default:
-			err := pers.UpdateLastEntry(db, activeIssue, comment, beginTs, endTs)
+			err := pers.UpdateActiveWLInDB(db, activeIssue, comment, beginTs, endTs)
 			if err != nil {
-				return trackingToggledMsg{err: err}
+				return trackingToggledInDB{err: err}
 			} else {
-				return trackingToggledMsg{activeIssue: "", finished: true}
+				return trackingToggledInDB{activeIssue: "", finished: true}
 			}
 		}
 	}
@@ -59,17 +59,17 @@ LIMIT 1
 
 func quickSwitchActiveIssue(db *sql.DB, selectedIssue string, currentTime time.Time) tea.Cmd {
 	return func() tea.Msg {
-		activeIssue, err := pers.GetActiveIssue(db)
+		activeIssue, err := pers.GetActiveIssueFromDB(db)
 		if err != nil {
-			return activeIssueSwitchedMsg{"", selectedIssue, currentTime, err}
+			return activeWLSwitchedInDB{"", selectedIssue, currentTime, err}
 		}
 
-		err = pers.QuickSwitchActiveIssue(db, activeIssue, selectedIssue, currentTime)
+		err = pers.QuickSwitchActiveWLInDB(db, activeIssue, selectedIssue, currentTime)
 		if err != nil {
-			return activeIssueSwitchedMsg{activeIssue, selectedIssue, currentTime, err}
+			return activeWLSwitchedInDB{activeIssue, selectedIssue, currentTime, err}
 		}
 
-		return activeIssueSwitchedMsg{activeIssue, selectedIssue, currentTime, nil}
+		return activeWLSwitchedInDB{activeIssue, selectedIssue, currentTime, nil}
 	}
 }
 
@@ -77,12 +77,12 @@ func updateActiveWL(db *sql.DB, beginTS time.Time, comment *string) tea.Cmd {
 	return func() tea.Msg {
 		var err error
 		if comment == nil {
-			err = pers.UpdateActiveWLBeginTs(db, beginTS)
+			err = pers.UpdateActiveWLBeginTSInDB(db, beginTS)
 		} else {
-			err = pers.UpdateActiveWL(db, beginTS, *comment)
+			err = pers.UpdateActiveWLBeginTSAndCommentInDB(db, beginTS, *comment)
 		}
 
-		return activeWLUpdatedMsg{beginTS, comment, err}
+		return activeWLUpdatedInDB{beginTS, comment, err}
 	}
 }
 
@@ -93,23 +93,23 @@ INSERT INTO issue_log (issue_key, begin_ts, end_ts, comment, active, synced)
 VALUES (?, ?, ?, ?, ?, ?);
 `)
 		if err != nil {
-			return manualEntryInserted{issueKey, err}
+			return manualWLInsertedInDB{issueKey, err}
 		}
 		defer stmt.Close()
 
 		_, err = stmt.Exec(issueKey, beginTS, endTS, comment, false, false)
 		if err != nil {
-			return manualEntryInserted{issueKey, err}
+			return manualWLInsertedInDB{issueKey, err}
 		}
 
-		return manualEntryInserted{issueKey, nil}
+		return manualWLInsertedInDB{issueKey, nil}
 	}
 }
 
 func deleteActiveIssueLog(db *sql.DB) tea.Cmd {
 	return func() tea.Msg {
 		err := pers.DeleteActiveLogInDB(db)
-		return activeTaskLogDeletedMsg{err}
+		return activeWLDeletedFromDB{err}
 	}
 }
 
@@ -123,16 +123,16 @@ SET begin_ts = ?,
 WHERE ID = ?;
 `)
 		if err != nil {
-			return manualEntryUpdated{rowID, issueKey, err}
+			return wLUpdatedInDB{rowID, issueKey, err}
 		}
 		defer stmt.Close()
 
 		_, err = stmt.Exec(beginTS, endTS, comment, rowID)
 		if err != nil {
-			return manualEntryUpdated{rowID, issueKey, err}
+			return wLUpdatedInDB{rowID, issueKey, err}
 		}
 
-		return manualEntryUpdated{rowID, issueKey, nil}
+		return wLUpdatedInDB{rowID, issueKey, nil}
 	}
 }
 
@@ -150,30 +150,30 @@ LIMIT 1
 		var comment *string
 		err := row.Scan(&activeIssue, &beginTs, &comment)
 		if err == sql.ErrNoRows {
-			return fetchActiveMsg{activeIssue: activeIssue}
+			return activeWLFetchedFromDB{activeIssue: activeIssue}
 		}
 		if err != nil {
-			return fetchActiveMsg{err: err}
+			return activeWLFetchedFromDB{err: err}
 		}
 
-		return fetchActiveMsg{activeIssue: activeIssue, beginTs: beginTs, comment: comment}
+		return activeWLFetchedFromDB{activeIssue: activeIssue, beginTs: beginTs, comment: comment}
 	})
 }
 
-func fetchLogEntries(db *sql.DB) tea.Cmd {
+func fetchWorkLogs(db *sql.DB) tea.Cmd {
 	return func() tea.Msg {
-		entries, err := pers.FetchEntries(db)
-		return logEntriesFetchedMsg{
+		entries, err := pers.FetchWLsFromDB(db)
+		return wLEntriesFetchedFromDB{
 			entries: entries,
 			err:     err,
 		}
 	}
 }
 
-func fetchSyncedLogEntries(db *sql.DB) tea.Cmd {
+func fetchSyncedWorkLogs(db *sql.DB) tea.Cmd {
 	return func() tea.Msg {
-		entries, err := pers.FetchSyncedEntries(db)
-		return syncedLogEntriesFetchedMsg{
+		entries, err := pers.FetchSyncedWLsFromDB(db)
+		return syncedWLEntriesFetchedFromDB{
 			entries: entries,
 			err:     err,
 		}
@@ -182,8 +182,8 @@ func fetchSyncedLogEntries(db *sql.DB) tea.Cmd {
 
 func deleteLogEntry(db *sql.DB, id int) tea.Cmd {
 	return func() tea.Msg {
-		err := pers.DeleteEntry(db, id)
-		return logEntriesDeletedMsg{
+		err := pers.DeleteWLInDB(db, id)
+		return wLDeletedFromDB{
 			err: err,
 		}
 	}
@@ -197,12 +197,12 @@ func updateSyncStatusForEntry(db *sql.DB, entry common.WorklogEntry, index int, 
 			comment = *entry.Comment
 		}
 		if fallbackCommentUsed {
-			err = pers.UpdateSyncStatusAndComment(db, entry.ID, comment)
+			err = pers.UpdateSyncStatusAndCommentForWLInDB(db, entry.ID, comment)
 		} else {
-			err = pers.UpdateSyncStatus(db, entry.ID)
+			err = pers.UpdateSyncStatusForWLInDB(db, entry.ID)
 		}
 
-		return logEntrySyncUpdated{
+		return wLSyncUpdatedInDB{
 			entry: entry,
 			index: index,
 			err:   err,
@@ -215,7 +215,7 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 		jIssues, statusCode, err := getIssues(cl, jql)
 		var issues []common.Issue
 		if err != nil {
-			return issuesFetchedFromJIRAMsg{issues, statusCode, err}
+			return issuesFetchedFromJIRA{issues, statusCode, err}
 		}
 
 		for _, issue := range jIssues {
@@ -243,7 +243,7 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 				TrackingActive:  false,
 			})
 		}
-		return issuesFetchedFromJIRAMsg{issues, statusCode, nil}
+		return issuesFetchedFromJIRA{issues, statusCode, nil}
 	}
 }
 
@@ -251,19 +251,19 @@ func syncWorklogWithJIRA(cl *jira.Client, entry common.WorklogEntry, fallbackCom
 	return func() tea.Msg {
 		var fallbackCmtUsed bool
 		if entry.EndTS == nil {
-			return wlAddedOnJIRA{index, entry, fallbackCmtUsed, errWorklogsEndTSIsEmpty}
+			return wLSyncedToJIRA{index, entry, fallbackCmtUsed, errWorklogsEndTSIsEmpty}
 		}
 
 		var comment string
 		if entry.NeedsComment() && fallbackComment != nil {
 			comment = *fallbackComment
 			fallbackCmtUsed = true
-		} else {
+		} else if entry.Comment != nil {
 			comment = *entry.Comment
 		}
 
-		err := addWLtoJira(cl, entry.IssueKey, entry.BeginTS, *entry.EndTS, comment, timeDeltaMins)
-		return wlAddedOnJIRA{index, entry, fallbackCmtUsed, err}
+		err := syncWLToJIRA(cl, entry.IssueKey, entry.BeginTS, *entry.EndTS, comment, timeDeltaMins)
+		return wLSyncedToJIRA{index, entry, fallbackCmtUsed, err}
 	}
 }
 

@@ -14,7 +14,7 @@ var (
 	ErrCouldntStartTrackingTask = errors.New("couldn't start tracking task")
 )
 
-func getNumActiveIssues(db *sql.DB) (int, error) {
+func getNumActiveIssuesFromDB(db *sql.DB) (int, error) {
 	row := db.QueryRow(`
 SELECT COUNT(*)
 from issue_log
@@ -25,7 +25,7 @@ WHERE active=1
 	return numActiveIssues, err
 }
 
-func getWorklogEntriesForIssue(db *sql.DB, issueKey string) ([]c.WorklogEntry, error) {
+func getWorkLogsForIssueFromDB(db *sql.DB, issueKey string) ([]c.WorklogEntry, error) {
 	var logEntries []c.WorklogEntry
 
 	rows, err := db.Query(`
@@ -63,7 +63,7 @@ ORDER by end_ts DESC;
 	return logEntries, nil
 }
 
-func InsertNewEntry(db *sql.DB, issueKey string, beginTs time.Time) error {
+func InsertNewWLInDB(db *sql.DB, issueKey string, beginTs time.Time) error {
 	stmt, err := db.Prepare(`
     INSERT INTO issue_log (issue_key, begin_ts, active, synced)
     VALUES (?, ?, ?, ?);
@@ -81,7 +81,7 @@ func InsertNewEntry(db *sql.DB, issueKey string, beginTs time.Time) error {
 	return nil
 }
 
-func UpdateLastEntry(db *sql.DB, issueKey, comment string, beginTs, endTs time.Time) error {
+func UpdateActiveWLInDB(db *sql.DB, issueKey, comment string, beginTs, endTs time.Time) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
 SET active = 0,
@@ -104,7 +104,7 @@ AND active = 1;
 	return nil
 }
 
-func StopCurrentlyActiveEntry(db *sql.DB, issueKey string, endTs time.Time) error {
+func StopCurrentlyActiveWLInDB(db *sql.DB, issueKey string, endTs time.Time) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
 SET active = 0,
@@ -125,7 +125,7 @@ AND active = 1;
 	return nil
 }
 
-func FetchEntries(db *sql.DB) ([]c.WorklogEntry, error) {
+func FetchWLsFromDB(db *sql.DB) ([]c.WorklogEntry, error) {
 	var logEntries []c.WorklogEntry
 
 	rows, err := db.Query(`
@@ -162,7 +162,7 @@ ORDER by end_ts DESC;
 	return logEntries, nil
 }
 
-func FetchSyncedEntries(db *sql.DB) ([]c.SyncedWorklogEntry, error) {
+func FetchSyncedWLsFromDB(db *sql.DB) ([]c.SyncedWorklogEntry, error) {
 	var logEntries []c.SyncedWorklogEntry
 
 	rows, err := db.Query(`
@@ -197,7 +197,7 @@ ORDER by end_ts DESC LIMIT 30;
 	return logEntries, nil
 }
 
-func DeleteEntry(db *sql.DB, id int) error {
+func DeleteWLInDB(db *sql.DB, id int) error {
 	stmt, err := db.Prepare(`
 DELETE from issue_log
 WHERE ID=?;
@@ -215,7 +215,7 @@ WHERE ID=?;
 	return nil
 }
 
-func UpdateSyncStatus(db *sql.DB, id int) error {
+func UpdateSyncStatusForWLInDB(db *sql.DB, id int) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
 SET synced = 1
@@ -234,7 +234,7 @@ WHERE id = ?;
 	return nil
 }
 
-func UpdateSyncStatusAndComment(db *sql.DB, id int, comment string) error {
+func UpdateSyncStatusAndCommentForWLInDB(db *sql.DB, id int, comment string) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
 SET synced = 1,
@@ -269,7 +269,7 @@ WHERE active=true;
 	return err
 }
 
-func GetActiveIssue(db *sql.DB) (string, error) {
+func GetActiveIssueFromDB(db *sql.DB) (string, error) {
 	row := db.QueryRow(`
 SELECT issue_key
 from issue_log
@@ -287,16 +287,16 @@ LIMIT 1
 	return activeIssue, nil
 }
 
-func QuickSwitchActiveIssue(db *sql.DB, currentIssue, selectedIssue string, currentTime time.Time) error {
-	err := StopCurrentlyActiveEntry(db, currentIssue, currentTime)
+func QuickSwitchActiveWLInDB(db *sql.DB, currentIssue, selectedIssue string, currentTime time.Time) error {
+	err := StopCurrentlyActiveWLInDB(db, currentIssue, currentTime)
 	if err != nil {
 		return ErrCouldntStopActiveTask
 	}
 
-	return InsertNewEntry(db, selectedIssue, currentTime)
+	return InsertNewWLInDB(db, selectedIssue, currentTime)
 }
 
-func UpdateActiveWLBeginTs(db *sql.DB, beginTs time.Time) error {
+func UpdateActiveWLBeginTSInDB(db *sql.DB, beginTs time.Time) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
     SET begin_ts=?
@@ -307,7 +307,7 @@ WHERE active is true;
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(beginTs.UTC(), true)
+	_, err = stmt.Exec(beginTs, true)
 	if err != nil {
 		return err
 	}
@@ -315,7 +315,7 @@ WHERE active is true;
 	return nil
 }
 
-func UpdateActiveWL(db *sql.DB, beginTs time.Time, comment string) error {
+func UpdateActiveWLBeginTSAndCommentInDB(db *sql.DB, beginTs time.Time, comment string) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
     SET begin_ts=?,
@@ -327,7 +327,7 @@ WHERE active is true;
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(beginTs.UTC(), comment, true)
+	_, err = stmt.Exec(beginTs, comment, true)
 	if err != nil {
 		return err
 	}

@@ -15,7 +15,7 @@ func getIssues(cl *jira.Client, jql string) ([]jira.Issue, int, error) {
 	return issues, resp.StatusCode, err
 }
 
-func addWLtoJira(cl *jira.Client, issueKey string, beginTS, endTS time.Time, comment string, timeDeltaMins int) error {
+func syncWLToJIRA(cl *jira.Client, issueKey string, beginTS, endTS time.Time, comment string, timeDeltaMins int) error {
 	start := beginTS
 
 	if timeDeltaMins != 0 {
