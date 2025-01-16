@@ -9,7 +9,8 @@ import (
 )
 
 func RenderUI(db *sql.DB, jiraClient *jira.Client, installationType JiraInstallationType, jql string, jiraTimeDeltaMins int, fallbackComment *string) error {
-	if len(os.Getenv("DEBUG_LOG")) > 0 {
+	debug := os.Getenv("DEBUG") == "1"
+	if debug {
 		f, err := tea.LogToFile("debug.log", "debug")
 		if err != nil {
 			return err
@@ -17,7 +18,6 @@ func RenderUI(db *sql.DB, jiraClient *jira.Client, installationType JiraInstalla
 		defer f.Close()
 	}
 
-	debug := os.Getenv("DEBUG") == "true"
 	p := tea.NewProgram(InitialModel(db, jiraClient, installationType, jql, jiraTimeDeltaMins, fallbackComment, debug), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		return err

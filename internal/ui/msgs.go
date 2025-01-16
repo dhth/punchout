@@ -8,74 +8,74 @@ import (
 
 type hideHelpMsg struct{}
 
-type trackingToggledMsg struct {
+type trackingToggledInDB struct {
 	activeIssue string
 	finished    bool
 	err         error
 }
 
-type activeIssueSwitchedMsg struct {
+type activeWLSwitchedInDB struct {
 	lastActiveIssue    string
 	currentActiveIssue string
 	beginTs            time.Time
 	err                error
 }
 
-type activeWLUpdatedMsg struct {
+type activeWLUpdatedInDB struct {
 	beginTS time.Time
 	comment *string
 	err     error
 }
 
-type manualEntryInserted struct {
+type manualWLInsertedInDB struct {
 	issueKey string
 	err      error
 }
 
-type activeTaskLogDeletedMsg struct {
+type activeWLDeletedFromDB struct {
 	err error
 }
 
-type manualEntryUpdated struct {
+type wLUpdatedInDB struct {
 	rowID    int
 	issueKey string
 	err      error
 }
 
-type fetchActiveMsg struct {
+type activeWLFetchedFromDB struct {
 	activeIssue string
 	beginTs     time.Time
 	comment     *string
 	err         error
 }
 
-type logEntriesFetchedMsg struct {
+type wLEntriesFetchedFromDB struct {
 	entries []c.WorklogEntry
 	err     error
 }
 
-type syncedLogEntriesFetchedMsg struct {
+type syncedWLEntriesFetchedFromDB struct {
 	entries []c.SyncedWorklogEntry
 	err     error
 }
 
-type logEntriesDeletedMsg struct {
+type wLDeletedFromDB struct {
 	err error
 }
 
-type logEntrySyncUpdated struct {
+type wLSyncUpdatedInDB struct {
 	entry c.WorklogEntry
 	index int
 	err   error
 }
 
-type issuesFetchedFromJIRAMsg struct {
+type issuesFetchedFromJIRA struct {
 	issues             []c.Issue
 	responseStatusCode int
 	err                error
 }
 
-type wlAddedOnJIRA struct {
+type wLSyncedToJIRA struct {
 	index               int
 	entry               c.WorklogEntry
 	fallbackCommentUsed bool

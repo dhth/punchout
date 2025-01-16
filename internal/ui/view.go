@@ -31,7 +31,7 @@ func (m Model) View() string {
 			issue, ok := m.issueMap[m.activeIssue]
 			if ok {
 				issueSummaryMsg = fmt.Sprintf("(%s)", c.Trim(issue.Summary, 50))
-				if m.activeView != askForCommentView {
+				if m.activeView != saveActiveWLView {
 					trackingSinceMsg = fmt.Sprintf("(since %s)", m.activeIssueBeginTS.Format(timeOnlyFormat))
 				}
 			}
@@ -66,9 +66,9 @@ func (m Model) View() string {
 	switch m.activeView {
 	case issueListView:
 		content = listStyle.Render(m.issueList.View())
-	case worklogView:
+	case wLView:
 		content = listStyle.Render(m.worklogList.View())
-	case syncedWorklogView:
+	case syncedWLView:
 		content = listStyle.Render(m.syncedWorklogList.View())
 	case editActiveWLView:
 		content = fmt.Sprintf(
@@ -103,7 +103,7 @@ func (m Model) View() string {
 		for i := 0; i < m.terminalHeight-20; i++ {
 			content += "\n"
 		}
-	case askForCommentView:
+	case saveActiveWLView:
 		content = fmt.Sprintf(
 			`
   %s
@@ -143,7 +143,7 @@ func (m Model) View() string {
 		for i := 0; i < m.terminalHeight-24; i++ {
 			content += "\n"
 		}
-	case manualWorklogEntryView:
+	case wlEntryView:
 		var formHeading string
 		switch m.worklogSaveType {
 		case worklogInsert:

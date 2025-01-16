@@ -83,10 +83,18 @@ type SyncedWorklogEntry struct {
 	IssueKey string
 	BeginTS  time.Time
 	EndTS    time.Time
-	Comment  string
+	Comment  *string
 }
 
 func (entry *WorklogEntry) NeedsComment() bool {
+	if entry.Comment == nil {
+		return true
+	}
+
+	return strings.TrimSpace(*entry.Comment) == ""
+}
+
+func (entry *SyncedWorklogEntry) NeedsComment() bool {
 	if entry.Comment == nil {
 		return true
 	}
@@ -154,7 +162,11 @@ func (entry WorklogEntry) Description() string {
 func (entry WorklogEntry) FilterValue() string { return entry.IssueKey }
 
 func (entry SyncedWorklogEntry) Title() string {
-	return entry.Comment
+	if entry.NeedsComment() {
+		return "[NO COMMENT]"
+	}
+
+	return *entry.Comment
 }
 
 func (entry SyncedWorklogEntry) Description() string {

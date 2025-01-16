@@ -37,11 +37,11 @@ type stateView uint
 
 const (
 	issueListView stateView = iota
-	worklogView
-	syncedWorklogView
+	wLView
+	syncedWLView
 	editActiveWLView
-	askForCommentView
-	manualWorklogEntryView
+	saveActiveWLView
+	wlEntryView // for saving manual worklog, or for updating a saved worklog
 	helpView
 )
 
@@ -107,7 +107,7 @@ func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		hideHelp(time.Minute*1),
 		fetchJIRAIssues(m.jiraClient, m.jql),
-		fetchLogEntries(m.db),
-		fetchSyncedLogEntries(m.db),
+		fetchWorkLogs(m.db),
+		fetchSyncedWorkLogs(m.db),
 	)
 }

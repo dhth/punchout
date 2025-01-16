@@ -33,17 +33,17 @@ VALUES (?, ?, ?, ?);
 		require.NoError(t, err, "couldn't insert active worklog")
 
 		// WHEN
-		err = QuickSwitchActiveIssue(db, activeIssueKey, newActiveIssueKey, now)
+		err = QuickSwitchActiveWLInDB(db, activeIssueKey, newActiveIssueKey, now)
 		require.NoError(t, err, "quick switching returned an error")
 
 		// THEN
-		numActiveIssues, err := getNumActiveIssues(db)
+		numActiveIssues, err := getNumActiveIssuesFromDB(db)
 		require.NoError(t, err, "couldn't get number of active issues")
-		gotNewActive, err := GetActiveIssue(db)
+		gotNewActive, err := GetActiveIssueFromDB(db)
 		require.NoError(t, err, "couldn't get active issue")
-		wl1, err := getWorklogEntriesForIssue(db, activeIssueKey)
+		wl1, err := getWorkLogsForIssueFromDB(db, activeIssueKey)
 		require.NoError(t, err, "couldn't get worklog entries for active issue")
-		wl2, err := getWorklogEntriesForIssue(db, newActiveIssueKey)
+		wl2, err := getWorkLogsForIssueFromDB(db, newActiveIssueKey)
 		require.NoError(t, err, "couldn't get worklog entries for new issue")
 
 		assert.Equal(t, 1, numActiveIssues, "number of active issues is incorrect")
