@@ -53,6 +53,10 @@ ORDER by end_ts DESC;
 		if err != nil {
 			return nil, err
 		}
+		entry.BeginTS = entry.BeginTS.Local()
+		if entry.EndTS != nil {
+			*entry.EndTS = entry.EndTS.Local()
+		}
 		logEntries = append(logEntries, entry)
 	}
 
@@ -63,7 +67,7 @@ ORDER by end_ts DESC;
 	return logEntries, nil
 }
 
-func InsertNewWLInDB(db *sql.DB, issueKey string, beginTs time.Time) error {
+func InsertNewWLInDB(db *sql.DB, issueKey string, beginTS time.Time) error {
 	stmt, err := db.Prepare(`
     INSERT INTO issue_log (issue_key, begin_ts, active, synced)
     VALUES (?, ?, ?, ?);
@@ -73,7 +77,7 @@ func InsertNewWLInDB(db *sql.DB, issueKey string, beginTs time.Time) error {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(issueKey, beginTs, true, 0)
+	_, err = stmt.Exec(issueKey, beginTS.UTC(), true, 0)
 	if err != nil {
 		return err
 	}
@@ -81,7 +85,7 @@ func InsertNewWLInDB(db *sql.DB, issueKey string, beginTs time.Time) error {
 	return nil
 }
 
-func UpdateActiveWLInDB(db *sql.DB, issueKey, comment string, beginTs, endTs time.Time) error {
+func UpdateActiveWLInDB(db *sql.DB, issueKey, comment string, beginTS, endTS time.Time) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
 SET active = 0,
@@ -96,7 +100,7 @@ AND active = 1;
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(beginTs, endTs, comment, issueKey)
+	_, err = stmt.Exec(beginTS.UTC(), endTS.UTC(), comment, issueKey)
 	if err != nil {
 		return err
 	}
@@ -104,7 +108,7 @@ AND active = 1;
 	return nil
 }
 
-func StopCurrentlyActiveWLInDB(db *sql.DB, issueKey string, endTs time.Time) error {
+func StopCurrentlyActiveWLInDB(db *sql.DB, issueKey string, endTS time.Time) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
 SET active = 0,
@@ -117,7 +121,7 @@ AND active = 1;
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(endTs, issueKey)
+	_, err = stmt.Exec(endTS.UTC(), issueKey)
 	if err != nil {
 		return err
 	}
@@ -151,6 +155,10 @@ ORDER by end_ts DESC;
 		)
 		if err != nil {
 			return nil, err
+		}
+		entry.BeginTS = entry.BeginTS.Local()
+		if entry.EndTS != nil {
+			*entry.EndTS = entry.EndTS.Local()
 		}
 		logEntries = append(logEntries, entry)
 	}
@@ -187,6 +195,8 @@ ORDER by end_ts DESC LIMIT 30;
 		if err != nil {
 			return nil, err
 		}
+		entry.BeginTS = entry.BeginTS.Local()
+		entry.EndTS = entry.EndTS.Local()
 		logEntries = append(logEntries, entry)
 	}
 
@@ -296,7 +306,7 @@ func QuickSwitchActiveWLInDB(db *sql.DB, currentIssue, selectedIssue string, cur
 	return InsertNewWLInDB(db, selectedIssue, currentTime)
 }
 
-func UpdateActiveWLBeginTSInDB(db *sql.DB, beginTs time.Time) error {
+func UpdateActiveWLBeginTSInDB(db *sql.DB, beginTS time.Time) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
     SET begin_ts=?
@@ -307,7 +317,7 @@ WHERE active is true;
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(beginTs, true)
+	_, err = stmt.Exec(beginTS.UTC(), true)
 	if err != nil {
 		return err
 	}
@@ -315,7 +325,7 @@ WHERE active is true;
 	return nil
 }
 
-func UpdateActiveWLBeginTSAndCommentInDB(db *sql.DB, beginTs time.Time, comment string) error {
+func UpdateActiveWLBeginTSAndCommentInDB(db *sql.DB, beginTS time.Time, comment string) error {
 	stmt, err := db.Prepare(`
 UPDATE issue_log
     SET begin_ts=?,
@@ -327,7 +337,7 @@ WHERE active is true;
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(beginTs, comment, true)
+	_, err = stmt.Exec(beginTS.UTC(), comment, true)
 	if err != nil {
 		return err
 	}
