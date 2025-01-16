@@ -17,7 +17,7 @@ import (
 
 var errWorklogsEndTSIsEmpty = errors.New("worklog's end timestamp is empty")
 
-func toggleTracking(db *sql.DB, selectedIssue string, beginTs, endTs time.Time, comment string) tea.Cmd {
+func toggleTracking(db *sql.DB, selectedIssue string, beginTS, endTS time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
 		row := db.QueryRow(`
 SELECT issue_key
@@ -39,7 +39,7 @@ LIMIT 1
 
 		switch trackStatus {
 		case trackingInactive:
-			err = pers.InsertNewWLInDB(db, selectedIssue, beginTs)
+			err = pers.InsertNewWLInDB(db, selectedIssue, beginTS)
 			if err != nil {
 				return trackingToggledInDB{err: err}
 			} else {
@@ -47,7 +47,7 @@ LIMIT 1
 			}
 
 		default:
-			err := pers.UpdateActiveWLInDB(db, activeIssue, comment, beginTs, endTs)
+			err := pers.UpdateActiveWLInDB(db, activeIssue, comment, beginTS, endTS)
 			if err != nil {
 				return trackingToggledInDB{err: err}
 			} else {
@@ -127,7 +127,7 @@ WHERE ID = ?;
 		}
 		defer stmt.Close()
 
-		_, err = stmt.Exec(beginTS, endTS, comment, rowID)
+		_, err = stmt.Exec(beginTS.UTC(), endTS.UTC(), comment, rowID)
 		if err != nil {
 			return wLUpdatedInDB{rowID, issueKey, err}
 		}
@@ -146,9 +146,9 @@ ORDER BY begin_ts DESC
 LIMIT 1
 `)
 		var activeIssue string
-		var beginTs time.Time
+		var beginTS time.Time
 		var comment *string
-		err := row.Scan(&activeIssue, &beginTs, &comment)
+		err := row.Scan(&activeIssue, &beginTS, &comment)
 		if err == sql.ErrNoRows {
 			return activeWLFetchedFromDB{activeIssue: activeIssue}
 		}
@@ -156,7 +156,7 @@ LIMIT 1
 			return activeWLFetchedFromDB{err: err}
 		}
 
-		return activeWLFetchedFromDB{activeIssue: activeIssue, beginTs: beginTs, comment: comment}
+		return activeWLFetchedFromDB{activeIssue: activeIssue, beginTS: beginTS, comment: comment}
 	})
 }
 

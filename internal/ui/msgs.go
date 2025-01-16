@@ -17,7 +17,7 @@ type trackingToggledInDB struct {
 type activeWLSwitchedInDB struct {
 	lastActiveIssue    string
 	currentActiveIssue string
-	beginTs            time.Time
+	beginTS            time.Time
 	err                error
 }
 
@@ -44,7 +44,7 @@ type wLUpdatedInDB struct {
 
 type activeWLFetchedFromDB struct {
 	activeIssue string
-	beginTs     time.Time
+	beginTS     time.Time
 	comment     *string
 	err         error
 }

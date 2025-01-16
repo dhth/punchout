@@ -15,7 +15,7 @@ import (
 )
 
 func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
-	beginTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryBeginTS].Value(), time.Local)
+	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
 		m.message = err.Error()
 		return nil
@@ -32,14 +32,14 @@ func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
 }
 
 func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
-	beginTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryBeginTS].Value(), time.Local)
+	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
 		m.message = err.Error()
 		return nil
 	}
 	m.activeIssueBeginTS = beginTS.Local()
 
-	endTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryEndTS].Value(), time.Local)
+	endTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryEndTS].Value(), time.Local)
 	if err != nil {
 		m.message = err.Error()
 		return nil
@@ -66,20 +66,18 @@ func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 	)
 }
 
-func (m *Model) getCmdToSaveManualWL() tea.Cmd {
-	beginTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryBeginTS].Value(), time.Local)
+func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
+	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
 		m.message = err.Error()
 		return nil
 	}
-	beginTS = beginTS.Local()
 
-	endTS, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[entryEndTS].Value(), time.Local)
+	endTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryEndTS].Value(), time.Local)
 	if err != nil {
 		m.message = err.Error()
 		return nil
 	}
-	endTS = endTS.Local()
 
 	if endTS.Sub(beginTS).Seconds() <= 0 {
 		m.message = "time spent needs to be greater than zero"
@@ -410,7 +408,7 @@ func (m *Model) getCmdToStartTracking() tea.Cmd {
 	}
 
 	m.changesLocked = true
-	m.activeIssueBeginTS = time.Now()
+	m.activeIssueBeginTS = time.Now().Truncate(time.Second)
 	return toggleTracking(m.db,
 		issue.IssueKey,
 		m.activeIssueBeginTS,
@@ -622,7 +620,7 @@ func (m *Model) handleActiveWLFetchedFromDBMsg(msg activeWLFetchedFromDB) {
 	} else {
 		m.lastChange = insertChange
 		activeIssue, ok := m.issueMap[m.activeIssue]
-		m.activeIssueBeginTS = msg.beginTs
+		m.activeIssueBeginTS = msg.beginTS
 		m.activeIssueComment = msg.comment
 		if ok {
 			activeIssue.TrackingActive = true
@@ -762,14 +760,14 @@ func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
 		currentActiveIssue.TrackingActive = true
 	}
 	m.activeIssue = msg.currentActiveIssue
-	m.activeIssueBeginTS = msg.beginTs
+	m.activeIssueBeginTS = msg.beginTS
 	m.activeIssueComment = nil
 }
 
 func (m *Model) shiftTime(direction timeShiftDirection, duration timeShiftDuration) error {
 	if m.activeView == editActiveWLView || m.activeView == saveActiveWLView || m.activeView == wlEntryView {
 		if m.trackingFocussedField == entryBeginTS || m.trackingFocussedField == entryEndTS {
-			ts, err := time.ParseInLocation(string(timeFormat), m.trackingInputs[m.trackingFocussedField].Value(), time.Local)
+			ts, err := time.ParseInLocation(timeFormat, m.trackingInputs[m.trackingFocussedField].Value(), time.Local)
 			if err != nil {
 				return err
 			}

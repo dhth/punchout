@@ -35,7 +35,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				saveCmd = m.getCmdToSaveActiveWL()
 				ret = true
 			case wlEntryView:
-				saveCmd = m.getCmdToSaveManualWL()
+				saveCmd = m.getCmdToSaveOrUpdateWL()
 				ret = true
 			}
 			if saveCmd != nil {
@@ -141,7 +141,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case wLView:
 				m.handleRequestToUpdateSavedWL()
-
 			}
 
 		case "u":
