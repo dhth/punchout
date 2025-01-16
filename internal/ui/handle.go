@@ -343,38 +343,6 @@ func (m *Model) handleRequestToUpdateSavedWL() {
 	m.trackingInputs[m.trackingFocussedField].Focus()
 }
 
-func (m *Model) showUpdateSavedWorkLogView() {
-	wl, ok := m.worklogList.SelectedItem().(c.WorklogEntry)
-	if !ok {
-		m.message = "something went wrong"
-		return
-	}
-
-	m.activeView = wlEntryView
-	m.worklogSaveType = worklogUpdate
-	if wl.NeedsComment() {
-		m.trackingFocussedField = entryComment
-	} else {
-		m.trackingFocussedField = entryBeginTS
-	}
-
-	beginTSStr := wl.BeginTS.Format(timeFormat)
-	endTSStr := wl.EndTS.Format(timeFormat)
-
-	m.trackingInputs[entryBeginTS].SetValue(beginTSStr)
-	m.trackingInputs[entryEndTS].SetValue(endTSStr)
-	var comment string
-	if wl.Comment != nil {
-		comment = *wl.Comment
-	}
-	m.trackingInputs[entryComment].SetValue(comment)
-
-	for i := range m.trackingInputs {
-		m.trackingInputs[i].Blur()
-	}
-	m.trackingInputs[m.trackingFocussedField].Focus()
-}
-
 func (m *Model) getCmdToDeleteWL() tea.Cmd {
 	issue, ok := m.worklogList.SelectedItem().(c.WorklogEntry)
 	if !ok {

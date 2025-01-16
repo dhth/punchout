@@ -148,7 +148,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.activeView != wLView {
 				break
 			}
-			m.showUpdateSavedWorkLogView()
+			m.handleRequestToUpdateSavedWL()
 
 		case "ctrl+d":
 			switch m.activeView {
