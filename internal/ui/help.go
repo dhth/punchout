@@ -28,7 +28,7 @@ var helpText = fmt.Sprintf(`
     - Issues List View                      Shows you issues matching your JQL query
     - Worklog List View                     Shows you your worklog entries; you sync these entries
                                                 to JIRA from here
-    - Worklog Entry/Update  View            You enter/update a worklog entry from here
+    - Worklog Entry/Update View             You enter/update a worklog entry from here
     - Synced Worklog List View              You view the worklog entries synced to JIRA here
     - Help View (this one)
 `),
