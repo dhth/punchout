@@ -355,6 +355,29 @@ func (m *Model) handleRequestToUpdateSavedWL() {
 	m.trackingInputs[m.trackingFocussedField].Focus()
 }
 
+func (m *Model) handleRequestToSyncTimestamps() {
+	switch m.trackingFocussedField {
+	case entryBeginTS:
+		tsStrToSync := m.trackingInputs[entryEndTS].Value()
+		_, err := time.ParseInLocation(timeFormat, tsStrToSync, time.Local)
+		if err != nil {
+			m.message = fmt.Sprintf("end timestamp is invalid: %s", err.Error())
+			return
+		}
+		m.trackingInputs[entryBeginTS].SetValue(tsStrToSync)
+	case entryEndTS:
+		tsStrToSync := m.trackingInputs[entryBeginTS].Value()
+		_, err := time.ParseInLocation(timeFormat, tsStrToSync, time.Local)
+		if err != nil {
+			m.message = fmt.Sprintf("begin timestamp is invalid: %s", err.Error())
+			return
+		}
+		m.trackingInputs[entryEndTS].SetValue(tsStrToSync)
+	default:
+		m.message = "you need to have the cursor on either one of the two timestamps to sync them"
+	}
+}
+
 func (m *Model) getCmdToDeleteWL() tea.Cmd {
 	issue, ok := m.worklogList.SelectedItem().(c.WorklogEntry)
 	if !ok {

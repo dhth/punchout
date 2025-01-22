@@ -44,6 +44,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if ret {
 				return m, tea.Batch(cmds...)
 			}
+		case "ctrl+s":
+			switch m.activeView {
+			case saveActiveWLView, wlEntryView:
+				m.handleRequestToSyncTimestamps()
+			}
 		case "esc":
 			quit := m.handleEscape()
 			if quit {
