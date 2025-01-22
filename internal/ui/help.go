@@ -27,9 +27,9 @@ var helpText = fmt.Sprintf(`
   punchout has 5 panes:
     - Issues List View                      Shows you issues matching your JQL query
     - Worklog List View                     Shows you your worklog entries; you sync these entries
-                                            to JIRA from here
-    - Worklog Entry View                    You enter/update a worklog entry from here
-    - Synced Worklog Entry View             You view the worklog entries synced to JIRA
+                                                to JIRA from here
+    - Worklog Entry/Update  View            You enter/update a worklog entry from here
+    - Synced Worklog List View              You view the worklog entries synced to JIRA here
     - Help View (this one)
 `),
 	helpHeaderStyle.Render("Keyboard Shortcuts"),
@@ -73,7 +73,7 @@ var helpText = fmt.Sprintf(`
     s                                       Sync all visible entries to JIRA
     <ctrl+r>                                Refresh list
 `),
-	helpHeaderStyle.Render("Worklog Entry View"),
+	helpHeaderStyle.Render("Worklog Entry/Update View"),
 	helpSectionStyle.Render(`
     enter                                   Save worklog entry
     k                                       Move timestamp backwards by one minute
@@ -82,8 +82,10 @@ var helpText = fmt.Sprintf(`
     J                                       Move timestamp forwards by five minutes
     h                                       Move timestamp backwards by a day
     l                                       Move timestamp forwards by a day
+    ctrl+s                                  Sync timestamp under cursor with the other (when
+                                                applicable)
 `),
-	helpHeaderStyle.Render("Synced Worklog Entry View"),
+	helpHeaderStyle.Render("Synced Worklog List View"),
 	helpSectionStyle.Render(`
     <ctrl+r>                                Refresh list
 `),
