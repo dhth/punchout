@@ -1,5 +1,5 @@
-github.com/BurntSushi/toml v1.4.0 h1:kuoIxZQy2WRRk1pttg9asf+WVv6tWQuBNVmK8+nqPr0=
-github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
+github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg=
+github.com/BurntSushi/toml v1.5.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/andygrunwald/go-jira/v2 v2.0.0-20241214084218-48c5a07771b6 h1:Mm3N/GubdUqpzfuDy6Ray3/ZeZ5JfPU+AxqaY6/vViw=
 github.com/andygrunwald/go-jira/v2 v2.0.0-20241214084218-48c5a07771b6/go.mod h1:tg0lWhWgtLacF1lRO0GrzBH9d/gNqaktThbwtus6PcM=
 github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=
