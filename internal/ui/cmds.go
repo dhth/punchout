@@ -42,17 +42,15 @@ LIMIT 1
 			err = pers.InsertNewWLInDB(db, selectedIssue, beginTS)
 			if err != nil {
 				return trackingToggledInDB{err: err}
-			} else {
-				return trackingToggledInDB{activeIssue: selectedIssue}
 			}
+			return trackingToggledInDB{activeIssue: selectedIssue}
 
 		default:
 			err := pers.UpdateActiveWLInDB(db, activeIssue, comment, beginTS, endTS)
 			if err != nil {
 				return trackingToggledInDB{err: err}
-			} else {
-				return trackingToggledInDB{activeIssue: "", finished: true}
 			}
+			return trackingToggledInDB{activeIssue: "", finished: true}
 		}
 	}
 }
