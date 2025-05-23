@@ -1,7 +1,6 @@
 module github.com/dhth/punchout
 
 go 1.24.1
-
 require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/andygrunwald/go-jira/v2 v2.0.0-20250322171429-cfa118a2a9d4
@@ -10,7 +9,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/stretchr/testify v1.10.0
-	modernc.org/sqlite v1.36.2
+	modernc.org/sqlite v1.37.0
 )
 
 require (
@@ -45,7 +44,7 @@ require (
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/libc v1.61.13 // indirect
+	modernc.org/libc v1.62.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.9.1 // indirect
 )
