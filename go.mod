@@ -1,6 +1,7 @@
 module github.com/dhth/punchout
 
-go 1.24.1
+go 1.24.3
+
 require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/andygrunwald/go-jira/v2 v2.0.0-20250322171429-cfa118a2a9d4
