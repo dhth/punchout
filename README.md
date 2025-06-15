@@ -1,7 +1,12 @@
-# punchout
-
-✨ Overview
----
+<p align="center">
+  <h1 align="center">punchout</h1>
+  <p align="center">
+    <a href="https://github.com/dhth/punchout/actions/workflows/main.yml"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/dhth/punchout/main.yml?style=flat-square"></a>
+    <a href="https://github.com/dhth/punchout/actions/workflows/vulncheck.yml"><img alt="Vulnerability Check" src="https://img.shields.io/github/actions/workflow/status/dhth/punchout/vulncheck.yml?style=flat-square&label=vulncheck"></a>
+    <a href="https://github.com/dhth/punchout/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/release/dhth/punchout.svg?style=flat-square"></a>
+    <a href="https://github.com/dhth/punchout/releases/latest"><img alt="Commits since latest release" src="https://img.shields.io/github/commits-since/dhth/punchout/latest?style=flat-square"></a>
+  </p>
+</p>
 
 `punchout` takes the suck out of logging time on JIRA.
 
