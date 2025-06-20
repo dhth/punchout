@@ -518,7 +518,6 @@ func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
 
 	if !m.helpVPReady {
 		m.helpVP = viewport.New(w-5, m.terminalHeight-7)
-		m.helpVP.HighPerformanceRendering = false
 		m.helpVP.SetContent(helpText)
 		m.helpVPReady = true
 	} else {
