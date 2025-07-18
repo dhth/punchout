@@ -508,7 +508,6 @@ func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
 func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
 	w, h := listStyle.GetFrameSize()
 	m.terminalHeight = msg.Height
-
 	m.issueList.SetWidth(msg.Width - w)
 	m.worklogList.SetWidth(msg.Width - w)
 	m.syncedWorklogList.SetWidth(msg.Width - w)
@@ -516,14 +515,14 @@ func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
 	m.worklogList.SetHeight(msg.Height - h - 2)
 	m.syncedWorklogList.SetHeight(msg.Height - h - 2)
 
+	vw, vh := viewPortStyle.GetFrameSize()
 	if !m.helpVPReady {
-		m.helpVP = viewport.New(w-5, m.terminalHeight-7)
-		m.helpVP.HighPerformanceRendering = false
+		m.helpVP = viewport.New(msg.Width-vw, m.terminalHeight-vh-5)
 		m.helpVP.SetContent(helpText)
 		m.helpVPReady = true
 	} else {
-		m.helpVP.Height = m.terminalHeight - 7
-		m.helpVP.Width = w - 5
+		m.helpVP.Height = m.terminalHeight - vh - 5
+		m.helpVP.Width = msg.Width - vw
 	}
 }
 
