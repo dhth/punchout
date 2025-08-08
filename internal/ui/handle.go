@@ -46,8 +46,7 @@ func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 	}
 	m.activeIssueEndTS = endTS.Local()
 
-	if m.activeIssueEndTS.Sub(m.activeIssueBeginTS).Seconds() <= 0 {
-		m.message = "time spent needs to be greater than zero"
+	if !m.activeIssueEndTS.After(m.activeIssueBeginTS) {
 		return nil
 	}
 
@@ -79,8 +78,7 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 		return nil
 	}
 
-	if endTS.Sub(beginTS).Seconds() <= 0 {
-		m.message = "time spent needs to be greater than zero"
+	if !endTS.After(beginTS) {
 		return nil
 	}
 

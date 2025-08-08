@@ -9,7 +9,6 @@ import (
 const (
 	DefaultBackgroundColor = "#282828"
 	issueStatusColor       = "#665c54"
-	needsCommentColor      = "#fb4934"
 	FallbackCommentColor   = "#83a598"
 	syncedColor            = "#b8bb26"
 	syncingColor           = "#fabd2f"
