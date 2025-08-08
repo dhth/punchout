@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Worklog entry/update view: allow syncing worklog timestamps with each other
+- Allow syncing worklog timestamps with each other in workflow create/edit form
 - Show time duration being recorded in workflow create/edit form
 
 ## [v1.2.0] - Jan 16, 2025
