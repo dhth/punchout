@@ -25,6 +25,8 @@ const (
 	helpViewTitleColor      = "#83a598"
 	helpHeaderColor         = "#83a598"
 	helpSectionColor        = "#fabd2f"
+	wlDurationColor         = "#d3869b"
+	wlLongDurationColor     = "#fe8019"
 )
 
 var (
@@ -104,4 +106,13 @@ var (
 
 	helpSectionStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color(helpSectionColor))
+
+	wLDurationInfoStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color(wlDurationColor))
+
+	wLDurationErrStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color(failureColor))
+
+	wLDurationLongStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color(wlLongDurationColor))
 )

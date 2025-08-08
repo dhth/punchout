@@ -2,10 +2,13 @@ package ui
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	c "github.com/dhth/punchout/internal/common"
 )
+
+const wLWarningThresholdSecs = 8 * 60 * 60
 
 var listWidth = 140
 
@@ -61,7 +64,17 @@ func (m Model) View() string {
 	formEndTimeHelp := "End Time* (format: 2006/01/02 15:04)"
 	formTimeShiftHelp := "(k/j/K/J moves time, when correct)"
 	formCommentHelp := fmt.Sprintf("Comment%s", fallbackCommentMsg)
-	formSubmitHelp := "Press enter to submit"
+
+	var submitContext string
+	submitOk := true
+	if m.activeView == saveActiveWLView || m.activeView == wlEntryView {
+		submitContext, submitOk = getDurationContext(m.trackingInputs[entryBeginTS].Value(), m.trackingInputs[entryEndTS].Value())
+	}
+
+	var formSubmitHelp string
+	if submitOk {
+		formSubmitHelp = formContextStyle.Render("Press enter to submit")
+	}
 
 	switch m.activeView {
 	case issueListView:
@@ -85,8 +98,8 @@ func (m Model) View() string {
 
   %s
 
-  %s
 
+  %s
 
   %s
 `,
@@ -98,7 +111,7 @@ func (m Model) View() string {
 			formHelpStyle.Render(formTimeShiftHelp),
 			formFieldNameStyle.Render(formCommentHelp),
 			m.trackingInputs[entryComment].View(),
-			formContextStyle.Render(formSubmitHelp),
+			formSubmitHelp,
 		)
 		for i := 0; i < m.terminalHeight-20; i++ {
 			content += "\n"
@@ -126,6 +139,8 @@ func (m Model) View() string {
 
 
   %s
+
+  %s
 `,
 			workLogEntryHeadingStyle.Render("Save Worklog"),
 			formContextStyle.Render(formHeadingText),
@@ -138,9 +153,10 @@ func (m Model) View() string {
 			formHelpStyle.Render(formTimeShiftHelp),
 			formFieldNameStyle.Render(formCommentHelp),
 			m.trackingInputs[entryComment].View(),
-			formContextStyle.Render(formSubmitHelp),
+			submitContext,
+			formSubmitHelp,
 		)
-		for i := 0; i < m.terminalHeight-24; i++ {
+		for i := 0; i < m.terminalHeight-26; i++ {
 			content += "\n"
 		}
 	case wlEntryView:
@@ -174,6 +190,8 @@ func (m Model) View() string {
 
 
   %s
+
+  %s
 `,
 			workLogEntryHeadingStyle.Render(formHeading),
 			formContextStyle.Render(formHeadingText),
@@ -186,9 +204,10 @@ func (m Model) View() string {
 			formHelpStyle.Render(formTimeShiftHelp),
 			formFieldNameStyle.Render(formCommentHelp),
 			m.trackingInputs[entryComment].View(),
-			formContextStyle.Render(formSubmitHelp),
+			submitContext,
+			formSubmitHelp,
 		)
-		for i := 0; i < m.terminalHeight-24; i++ {
+		for i := 0; i < m.terminalHeight-26; i++ {
 			content += "\n"
 		}
 	case helpView:
@@ -230,4 +249,41 @@ func (m Model) View() string {
 		statusBar,
 		footer,
 	)
+}
+
+func getDurationContext(beginStr, endStr string) (string, bool) {
+	var zero string
+	if beginStr == "" || endStr == "" {
+		return zero, false
+	}
+
+	beginTS, err := time.ParseInLocation(timeFormat, beginStr, time.Local)
+	if err != nil {
+		return zero, false
+	}
+
+	endTS, err := time.ParseInLocation(timeFormat, endStr, time.Local)
+	if err != nil {
+		return zero, false
+	}
+
+	dur := endTS.Sub(beginTS)
+
+	if dur == 0 {
+		return wLDurationErrStyle.Render("You're recording no time"), false
+	}
+
+	if dur < 0 {
+		return wLDurationErrStyle.Render("End time is before start time"), false
+	}
+
+	totalSeconds := int(dur.Seconds())
+
+	humanized := c.HumanizeDuration(totalSeconds)
+	msg := fmt.Sprintf("You're recording %s", humanized)
+	if totalSeconds > wLWarningThresholdSecs {
+		return wLDurationLongStyle.Render(msg), true
+	}
+
+	return wLDurationInfoStyle.Render(msg), true
 }
