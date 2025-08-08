@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
@@ -11,6 +12,14 @@ import (
 const wLWarningThresholdSecs = 8 * 60 * 60
 
 var listWidth = 140
+
+type wlFormValidity uint
+
+const (
+	wlSubmitOk wlFormValidity = iota
+	wlSubmitWarn
+	wlSubmitErr
+)
 
 func (m Model) View() string {
 	var content string
@@ -65,14 +74,24 @@ func (m Model) View() string {
 	formTimeShiftHelp := "(k/j/K/J moves time, when correct)"
 	formCommentHelp := fmt.Sprintf("Comment%s", fallbackCommentMsg)
 
-	var submitContext string
-	submitOk := true
+	var submissionCtx string
+	var submissionValidity wlFormValidity
+	var durationCtx string
 	if m.activeView == saveActiveWLView || m.activeView == wlEntryView {
-		submitContext, submitOk = getDurationContext(m.trackingInputs[entryBeginTS].Value(), m.trackingInputs[entryEndTS].Value())
+		durationCtx, submissionValidity = getDurationValidityContext(m.trackingInputs[entryBeginTS].Value(), m.trackingInputs[entryEndTS].Value())
+
+		switch submissionValidity {
+		case wlSubmitOk:
+			submissionCtx = wLFormOkStyle.Render(durationCtx)
+		case wlSubmitWarn:
+			submissionCtx = wLFormWarnStyle.Render(durationCtx)
+		case wlSubmitErr:
+			submissionCtx = wLFormErrStyle.Render(durationCtx)
+		}
 	}
 
 	var formSubmitHelp string
-	if submitOk {
+	if submissionValidity != wlSubmitErr {
 		formSubmitHelp = formContextStyle.Render("Press enter to submit")
 	}
 
@@ -153,7 +172,7 @@ func (m Model) View() string {
 			formHelpStyle.Render(formTimeShiftHelp),
 			formFieldNameStyle.Render(formCommentHelp),
 			m.trackingInputs[entryComment].View(),
-			submitContext,
+			submissionCtx,
 			formSubmitHelp,
 		)
 		for i := 0; i < m.terminalHeight-26; i++ {
@@ -204,7 +223,7 @@ func (m Model) View() string {
 			formHelpStyle.Render(formTimeShiftHelp),
 			formFieldNameStyle.Render(formCommentHelp),
 			m.trackingInputs[entryComment].View(),
-			submitContext,
+			submissionCtx,
 			formSubmitHelp,
 		)
 		for i := 0; i < m.terminalHeight-26; i++ {
@@ -251,30 +270,33 @@ func (m Model) View() string {
 	)
 }
 
-func getDurationContext(beginStr, endStr string) (string, bool) {
-	var zero string
-	if beginStr == "" || endStr == "" {
-		return zero, false
+func getDurationValidityContext(beginStr, endStr string) (string, wlFormValidity) {
+	if strings.TrimSpace(beginStr) == "" {
+		return "Begin time is empty", wlSubmitErr
+	}
+
+	if strings.TrimSpace(endStr) == "" {
+		return "End time is empty", wlSubmitErr
 	}
 
 	beginTS, err := time.ParseInLocation(timeFormat, beginStr, time.Local)
 	if err != nil {
-		return zero, false
+		return "Begin time is invalid", wlSubmitErr
 	}
 
 	endTS, err := time.ParseInLocation(timeFormat, endStr, time.Local)
 	if err != nil {
-		return zero, false
+		return "End time is invalid", wlSubmitErr
 	}
 
 	dur := endTS.Sub(beginTS)
 
 	if dur == 0 {
-		return wLDurationErrStyle.Render("You're recording no time"), false
+		return "You're recording no time, change begin and/or end time", wlSubmitErr
 	}
 
 	if dur < 0 {
-		return wLDurationErrStyle.Render("End time is before start time"), false
+		return "End time is before start time", wlSubmitErr
 	}
 
 	totalSeconds := int(dur.Seconds())
@@ -282,8 +304,8 @@ func getDurationContext(beginStr, endStr string) (string, bool) {
 	humanized := c.HumanizeDuration(totalSeconds)
 	msg := fmt.Sprintf("You're recording %s", humanized)
 	if totalSeconds > wLWarningThresholdSecs {
-		return wLDurationLongStyle.Render(msg), true
+		return msg, wlSubmitWarn
 	}
 
-	return wLDurationInfoStyle.Render(msg), true
+	return msg, wlSubmitOk
 }

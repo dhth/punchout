@@ -107,12 +107,12 @@ var (
 	helpSectionStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color(helpSectionColor))
 
-	wLDurationInfoStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(wlDurationColor))
+	wLFormOkStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(wlDurationColor))
 
-	wLDurationErrStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(failureColor))
+	wLFormErrStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(failureColor))
 
-	wLDurationLongStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(wlLongDurationColor))
+	wLFormWarnStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(wlLongDurationColor))
 )
