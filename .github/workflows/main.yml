@@ -106,8 +106,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-      - name: Install
-        run: go install .
+      - name: Build
+        run: go build -v -o tests/punchout .
       - name: Run live tests
         run: |
           cd tests

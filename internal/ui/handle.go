@@ -14,6 +14,13 @@ import (
 	pers "github.com/dhth/punchout/internal/persistence"
 )
 
+const (
+	timeSpentLowerBoundMsg        = "time spent needs to be at least a minute"
+	fallbackCommentNotPresent     = "fallback_comment not set in config"
+	beginTsCannotBeInTheFutureMsg = "Begin timestamp cannot be in the future"
+	endTsCannotBeInTheFutureMsg   = "End timestamp cannot be in the future"
+)
+
 func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
 	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
@@ -46,7 +53,7 @@ func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 	}
 	m.activeIssueEndTS = endTS.Local()
 
-	if !m.activeIssueEndTS.After(m.activeIssueBeginTS) {
+	if !m.isDurationValid(m.activeIssueBeginTS, m.activeIssueEndTS) {
 		return nil
 	}
 
@@ -65,6 +72,22 @@ func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 	)
 }
 
+func (m *Model) getCmdToFinishActiveWLWithoutComment() tea.Cmd {
+	if m.fallbackComment == nil {
+		m.message = fallbackCommentNotPresent
+		return nil
+	}
+
+	now := time.Now().Truncate(time.Second)
+	if !m.isDurationValid(m.activeIssueBeginTS, now) {
+		return nil
+	}
+
+	m.activeIssueEndTS = now
+
+	return toggleTracking(m.db, m.activeIssue, m.activeIssueBeginTS, m.activeIssueEndTS, *m.fallbackComment)
+}
+
 func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
@@ -78,7 +101,7 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 		return nil
 	}
 
-	if !endTS.After(beginTS) {
+	if !m.isDurationValid(beginTS, endTS) {
 		return nil
 	}
 
@@ -812,4 +835,12 @@ func (m *Model) shiftTime(direction timeShiftDirection, duration timeShiftDurati
 		}
 	}
 	return nil
+}
+
+func (m *Model) isDurationValid(start, end time.Time) bool {
+	if end.Sub(start).Seconds() < 60 {
+		m.message = timeSpentLowerBoundMsg
+		return false
+	}
+	return true
 }

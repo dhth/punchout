@@ -57,6 +57,8 @@ var helpText = fmt.Sprintf(`
     s                                       Toggle recording time on the currently selected issue,
                                                 will open up a form to record a comment on the second
                                                 "s" keypress
+    f                                       Finish the currently active task log without a
+                                                comment (only if fallback_comment is set)
     S                                       Quick switch recording; will save a worklog entry without
                                                 a comment for the currently active issue, and start
                                                 recording time for another issue
