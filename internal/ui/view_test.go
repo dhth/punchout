@@ -3,6 +3,7 @@ package ui
 import (
 	"testing"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -100,6 +101,13 @@ func TestGetDurationValidityContext(t *testing.T) {
 			expectedCtx:      "You're recording no time, change begin and/or end time",
 			expectedValidity: wlSubmitErr,
 		},
+		{
+			name:             "exactly one minute",
+			beginTS:          "2025/08/08 00:00",
+			endTS:            "2025/08/08 00:01",
+			expectedCtx:      "You're recording 1m",
+			expectedValidity: wlSubmitOk,
+		},
 	}
 
 	for _, tt := range testCases {
@@ -110,4 +118,73 @@ func TestGetDurationValidityContext(t *testing.T) {
 			assert.Equal(t, tt.expectedValidity, gotOk)
 		})
 	}
+}
+
+func TestGetCmdToSaveActiveWLWithoutComment(t *testing.T) {
+	tests := []struct {
+		name            string
+		fallbackComment *string
+		beginTS         string
+		endTS           string
+		expectedMessage string
+		shouldReturnCmd bool
+	}{
+		{
+			name:            "no fallback comment configured",
+			fallbackComment: nil,
+			beginTS:         "2025/08/08 00:00",
+			endTS:           "2025/08/08 01:00",
+			expectedMessage: "Cannot save without comment: no fallback comment configured",
+			shouldReturnCmd: false,
+		},
+		{
+			name:            "fallback comment configured, valid duration",
+			fallbackComment: stringPtr("Fallback comment"),
+			beginTS:         "2025/08/08 00:00",
+			endTS:           "2025/08/08 01:00",
+			expectedMessage: "",
+			shouldReturnCmd: true,
+		},
+		{
+			name:            "fallback comment configured, invalid duration",
+			fallbackComment: stringPtr("Fallback comment"),
+			beginTS:         "2025/08/08 00:00",
+			endTS:           "2025/08/08 00:00",
+			expectedMessage: "Cannot save: duration is less than 1 minute",
+			shouldReturnCmd: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &Model{
+				fallbackComment: tt.fallbackComment,
+				trackingInputs:  make([]textinput.Model, 3),
+			}
+
+			// Initialize text inputs
+			for i := range m.trackingInputs {
+				m.trackingInputs[i] = textinput.New()
+			}
+
+			m.trackingInputs[entryBeginTS].SetValue(tt.beginTS)
+			m.trackingInputs[entryEndTS].SetValue(tt.endTS)
+
+			cmd := m.getCmdToSaveActiveWLWithoutComment()
+
+			if tt.shouldReturnCmd {
+				assert.NotNil(t, cmd, "Expected command to be returned")
+			} else {
+				assert.Nil(t, cmd, "Expected no command to be returned")
+			}
+
+			if tt.expectedMessage != "" {
+				assert.Equal(t, tt.expectedMessage, m.message)
+			}
+		})
+	}
+}
+
+func stringPtr(s string) *string {
+	return &s
 }

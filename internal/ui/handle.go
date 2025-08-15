@@ -65,6 +65,53 @@ func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 	)
 }
 
+func (m *Model) getCmdToSaveActiveWLWithoutComment() tea.Cmd {
+	// Check if fallback comment is configured
+	if m.fallbackComment == nil {
+		m.message = "Cannot save without comment: no fallback comment configured"
+		return nil
+	}
+
+	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
+	if err != nil {
+		m.message = err.Error()
+		return nil
+	}
+	m.activeIssueBeginTS = beginTS.Local()
+
+	endTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryEndTS].Value(), time.Local)
+	if err != nil {
+		m.message = err.Error()
+		return nil
+	}
+	m.activeIssueEndTS = endTS.Local()
+
+	// Validate duration using the same logic as the regular save
+	_, validity := getDurationValidityContext(
+		m.trackingInputs[entryBeginTS].Value(),
+		m.trackingInputs[entryEndTS].Value(),
+	)
+	if validity == wlSubmitErr {
+		m.message = "Cannot save: duration is less than 1 minute"
+		return nil
+	}
+
+	// Use empty comment to trigger fallback comment usage
+	comment := ""
+
+	m.activeView = issueListView
+	for i := range m.trackingInputs {
+		m.trackingInputs[i].SetValue("")
+	}
+
+	return toggleTracking(m.db,
+		m.activeIssue,
+		m.activeIssueBeginTS,
+		m.activeIssueEndTS,
+		comment,
+	)
+}
+
 func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
@@ -104,6 +151,68 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 					beginTS,
 					endTS,
 					m.trackingInputs[entryComment].Value(),
+				)
+				m.activeView = wLView
+			}
+		}
+	}
+	for i := range m.trackingInputs {
+		m.trackingInputs[i].SetValue("")
+	}
+	return cmd
+}
+
+func (m *Model) getCmdToSaveOrUpdateWLWithoutComment() tea.Cmd {
+	// Check if fallback comment is configured
+	if m.fallbackComment == nil {
+		m.message = "Cannot save without comment: no fallback comment configured"
+		return nil
+	}
+
+	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
+	if err != nil {
+		m.message = err.Error()
+		return nil
+	}
+
+	endTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryEndTS].Value(), time.Local)
+	if err != nil {
+		m.message = err.Error()
+		return nil
+	}
+
+	// Validate duration using the same logic
+	_, validity := getDurationValidityContext(
+		m.trackingInputs[entryBeginTS].Value(),
+		m.trackingInputs[entryEndTS].Value(),
+	)
+	if validity == wlSubmitErr {
+		m.message = "Cannot save: invalid time duration"
+		return nil
+	}
+
+	issue, ok := m.issueList.SelectedItem().(*c.Issue)
+
+	var cmd tea.Cmd
+	if ok {
+		switch m.worklogSaveType {
+		case worklogInsert:
+			cmd = insertManualEntry(m.db,
+				issue.IssueKey,
+				beginTS,
+				endTS,
+				"", // Use empty comment to trigger fallback
+			)
+			m.activeView = issueListView
+		case worklogUpdate:
+			wl, ok := m.worklogList.SelectedItem().(c.WorklogEntry)
+			if ok {
+				cmd = updateManualEntry(m.db,
+					wl.ID,
+					wl.IssueKey,
+					beginTS,
+					endTS,
+					"", // Use empty comment to trigger fallback
 				)
 				m.activeView = wLView
 			}

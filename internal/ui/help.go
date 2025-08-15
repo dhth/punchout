@@ -76,6 +76,7 @@ var helpText = fmt.Sprintf(`
 	helpHeaderStyle.Render("Worklog Entry/Update View"),
 	helpSectionStyle.Render(`
     enter                                   Save worklog entry
+    ctrl+enter                              Save worklog entry without comment (requires fallback comment)
     k                                       Move timestamp backwards by one minute
     j                                       Move timestamp forwards by one minute
     K                                       Move timestamp backwards by five minutes
