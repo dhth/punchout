@@ -299,10 +299,6 @@ func getDurationValidityContext(beginStr, endStr string) (string, wlFormValidity
 		return "End time is before start time", wlSubmitErr
 	}
 
-	if dur < time.Minute {
-		return "You're recording less than a minute, change begin and/or end time", wlSubmitErr
-	}
-
 	totalSeconds := int(dur.Seconds())
 
 	humanized := c.HumanizeDuration(totalSeconds)

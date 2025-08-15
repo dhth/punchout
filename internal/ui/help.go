@@ -57,6 +57,7 @@ var helpText = fmt.Sprintf(`
     s                                       Toggle recording time on the currently selected issue,
                                                 will open up a form to record a comment on the second
                                                 "s" keypress
+    f                                       Save current recording with fallback comment (when tracking)
     S                                       Quick switch recording; will save a worklog entry without
                                                 a comment for the currently active issue, and start
                                                 recording time for another issue
@@ -76,7 +77,6 @@ var helpText = fmt.Sprintf(`
 	helpHeaderStyle.Render("Worklog Entry/Update View"),
 	helpSectionStyle.Render(`
     enter                                   Save worklog entry
-    ctrl+enter                              Save worklog entry without comment (requires fallback comment)
     k                                       Move timestamp backwards by one minute
     j                                       Move timestamp forwards by one minute
     K                                       Move timestamp backwards by five minutes

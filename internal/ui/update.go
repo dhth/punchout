@@ -44,23 +44,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if ret {
 				return m, tea.Batch(cmds...)
 			}
-		case "ctrl+enter":
-			var saveCmd tea.Cmd
-			var ret bool
-			switch m.activeView {
-			case saveActiveWLView:
-				saveCmd = m.getCmdToSaveActiveWLWithoutComment()
-				ret = true
-			case wlEntryView:
-				saveCmd = m.getCmdToSaveOrUpdateWLWithoutComment()
-				ret = true
-			}
-			if saveCmd != nil {
-				cmds = append(cmds, saveCmd)
-			}
-			if ret {
-				return m, tea.Batch(cmds...)
-			}
 		case "ctrl+s":
 			switch m.activeView {
 			case saveActiveWLView, wlEntryView:
@@ -210,6 +193,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				syncCmds := m.getCmdToSyncWLToJIRA()
 				if len(syncCmds) > 0 {
 					cmds = append(cmds, syncCmds...)
+				}
+			}
+		case "f":
+			if !m.issuesFetched {
+				break
+			}
+
+			if m.activeView == issueListView && m.trackingActive {
+				handleCmd := m.getCmdToSaveActiveWLQuickly()
+				if handleCmd != nil {
+					cmds = append(cmds, handleCmd)
 				}
 			}
 		case "?":
