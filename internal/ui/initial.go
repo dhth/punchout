@@ -57,6 +57,8 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 	m.issueList.Styles.Title = m.issueList.Styles.Title.Foreground(lipgloss.Color(c.DefaultBackgroundColor)).
 		Background(lipgloss.Color(issueListUnfetchedColor)).
 		Bold(true)
+	m.issueList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
+	m.issueList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 
 	m.worklogList.Title = "Worklog Entries"
 	m.worklogList.SetStatusBarItemName("entry", "entries")
@@ -66,6 +68,8 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 	m.worklogList.Styles.Title = m.worklogList.Styles.Title.Foreground(lipgloss.Color(c.DefaultBackgroundColor)).
 		Background(lipgloss.Color(worklogListColor)).
 		Bold(true)
+	m.worklogList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
+	m.worklogList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 
 	m.syncedWorklogList.Title = "Synced Worklog Entries (from local db)"
 	m.syncedWorklogList.SetStatusBarItemName("entry", "entries")
@@ -75,6 +79,8 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 	m.syncedWorklogList.Styles.Title = m.syncedWorklogList.Styles.Title.Foreground(lipgloss.Color(c.DefaultBackgroundColor)).
 		Background(lipgloss.Color(syncedWorklogListColor)).
 		Bold(true)
+	m.syncedWorklogList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
+	m.syncedWorklogList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 
 	return m
 }

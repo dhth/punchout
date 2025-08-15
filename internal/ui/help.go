@@ -60,6 +60,7 @@ var helpText = fmt.Sprintf(`
     S                                       Quick switch recording; will save a worklog entry without
                                                 a comment for the currently active issue, and start
                                                 recording time for another issue
+    f                                       Quick finish the currently active worklog
     <ctrl+s>                                Update active worklog entry (when tracking active), or add
                                                 manual worklog entry (when not tracking)
     <ctrl+t>                                Go to currently tracked item

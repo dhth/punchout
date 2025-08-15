@@ -178,6 +178,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, quickSwitchCmd)
 			}
 
+		case "f":
+			if m.activeView != issueListView {
+				break
+			}
+
+			if !m.trackingActive {
+				m.message = "nothing is being tracked right now"
+				break
+			}
+
+			handleCmd := m.getCmdToQuickFinishActiveWL()
+			if handleCmd != nil {
+				cmds = append(cmds, handleCmd)
+			}
+
 		case "s":
 			if !m.issuesFetched {
 				break
