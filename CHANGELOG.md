@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Allow syncing worklog timestamps with each other in workflow create/edit form
 - Show time duration being recorded in workflow create/edit form
+- Add keymap (ctrl+enter) to save time log without comment when fallback comment is configured
+- Add minimum 1-minute time validation for worklog entries
 
 ## [v1.2.0] - Jan 16, 2025
 
