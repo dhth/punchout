@@ -1,0 +1,16 @@
+success: true
+exit_code: 0
+----- stdout -----
+Config:
+
+Config File Path                        config/good.toml
+DB File Path                            db.db
+JIRA Installation Type                  onpremise
+JIRA URL                                https://overridden.company.com
+JIRA Token                              overridden
+JQL                                     project = overridden AND sprint in openSprints ()
+JIRA Time Delta Mins                    60
+Fallback Comment                        overridden
+
+----- stderr -----
+
