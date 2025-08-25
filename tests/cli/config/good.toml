@@ -1,0 +1,6 @@
+[jira]
+jira_url = "https://jira.company.com"
+jira_token = "XXX"
+jql = "project = BLAH AND sprint in openSprints ()"
+jira_time_delta_mins = 300
+fallback_comment = "work"
