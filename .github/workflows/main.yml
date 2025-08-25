@@ -83,19 +83,6 @@ jobs:
   test:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: go test
-        run: go test -v ./...
-
-  live-tests:
-    needs: [changes, test]
-    if: ${{ needs.changes.outputs.code == 'true' }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -106,12 +93,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-      - name: Install
-        run: go install .
-      - name: Run live tests
-        run: |
-          cd tests
-          ./test.sh
+      - name: go test
+        run: go test -v ./...
 
   lint-yaml:
     needs: changes

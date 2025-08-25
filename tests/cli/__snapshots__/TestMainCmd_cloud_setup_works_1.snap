@@ -1,0 +1,17 @@
+success: true
+exit_code: 0
+----- stdout -----
+Config:
+
+Config File Path                        config/good.toml
+DB File Path                            db.db
+JIRA Installation Type                  cloud
+JIRA URL                                https://jira.company.com
+JIRA Token                              XXX
+JQL                                     project = BLAH AND sprint in openSprints ()
+JIRA Time Delta Mins                    300
+JIRA Username                           example@example.com
+Fallback Comment                        work
+
+----- stderr -----
+

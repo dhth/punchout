@@ -13,7 +13,6 @@ import (
 
 	jiraCloud "github.com/andygrunwald/go-jira/v2/cloud"
 	jiraOnPremise "github.com/andygrunwald/go-jira/v2/onpremise"
-	c "github.com/dhth/punchout/internal/common"
 	pers "github.com/dhth/punchout/internal/persistence"
 	"github.com/dhth/punchout/internal/ui"
 )
@@ -166,19 +165,32 @@ func Execute() error {
 		return fmt.Errorf("fallback-comment cannot be empty")
 	}
 
-	configKeyMaxLen := 40
 	if *listConfig {
-		fmt.Fprint(os.Stdout, "Config:\n\n")
-		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("Config File Path", configKeyMaxLen), configPathFull)
-		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("DB File Path", configKeyMaxLen), dbPathFull)
-		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("JIRA Installation Type", configKeyMaxLen), cfg.Jira.InstallationType)
-		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("JIRA URL", configKeyMaxLen), *cfg.Jira.JiraURL)
-		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("JIRA Token", configKeyMaxLen), *cfg.Jira.JiraToken)
+		fmt.Fprintf(os.Stdout, `Config:
+
+Config File Path                        %s
+DB File Path                            %s
+JIRA Installation Type                  %s
+JIRA URL                                %s
+JIRA Token                              %s
+JQL                                     %s
+JIRA Time Delta Mins                    %d
+`,
+			configPathFull,
+			dbPathFull,
+			cfg.Jira.InstallationType,
+			*cfg.Jira.JiraURL,
+			*cfg.Jira.JiraToken,
+			*cfg.Jira.JQL,
+			cfg.Jira.JiraTimeDeltaMins)
+
 		if installationType == ui.CloudInstallation {
-			fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("JIRA Username", configKeyMaxLen), *cfg.Jira.JiraUsername)
+			fmt.Fprintf(os.Stdout, "JIRA Username                           %s\n", *cfg.Jira.JiraUsername)
 		}
-		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("JQL", configKeyMaxLen), *cfg.Jira.JQL)
-		fmt.Fprintf(os.Stdout, "%s%d\n", c.RightPadTrim("JIRA Time Delta Mins", configKeyMaxLen), cfg.Jira.JiraTimeDeltaMins)
+
+		if cfg.Jira.FallbackComment != nil {
+			fmt.Fprintf(os.Stdout, "Fallback Comment                        %s\n", *cfg.Jira.FallbackComment)
+		}
 		return nil
 	}
 

@@ -1,2 +1,0 @@
-[jira]
-jql = "project = SCRUM AND sprint in openSprints () ORDER BY updated DESC"

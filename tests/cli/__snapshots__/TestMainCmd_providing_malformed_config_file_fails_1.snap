@@ -1,0 +1,7 @@
+success: false
+exit_code: 1
+----- stdout -----
+
+----- stderr -----
+Error: couldn't parse config file: toml: line 2 (last key "jira"): expected '.' or '=', but got '"' instead
+
