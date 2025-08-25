@@ -180,7 +180,7 @@ func Execute() error {
 		fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("JQL", configKeyMaxLen), *cfg.Jira.JQL)
 		fmt.Fprintf(os.Stdout, "%s%d\n", c.RightPadTrim("JIRA Time Delta Mins", configKeyMaxLen), cfg.Jira.JiraTimeDeltaMins)
 		if cfg.Jira.FallbackComment != nil {
-			fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("FallbackComment", configKeyMaxLen), *cfg.Jira.FallbackComment)
+			fmt.Fprintf(os.Stdout, "%s%s\n", c.RightPadTrim("Fallback Comment", configKeyMaxLen), *cfg.Jira.FallbackComment)
 		}
 		return nil
 	}

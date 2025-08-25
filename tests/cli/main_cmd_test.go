@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -16,9 +14,7 @@ func TestMainCmd(t *testing.T) {
 
 	defer func() {
 		err := fx.cleanup()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error cleaning up: %s", err.Error())
-		}
+		require.NoErrorf(t, err, "error cleaning up fixture: %s", err)
 	}()
 
 	// SUCCESSES
