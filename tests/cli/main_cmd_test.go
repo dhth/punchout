@@ -103,6 +103,27 @@ func TestMainCmd(t *testing.T) {
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 
+	t.Run("flags override config", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"--config-file-path", "config/good.toml",
+			"--db-path", "db.db",
+			"--jira-url", "https://overridden.company.com",
+			"--jira-token", "overridden",
+			"--jql", "project = overridden AND sprint in openSprints ()",
+			"--jira-time-delta-mins", "60",
+			"--fallback-comment", "overridden",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
 	// FAILURES
 	t.Run("providing incorrect installation type fails", func(t *testing.T) {
 		// GIVEN
