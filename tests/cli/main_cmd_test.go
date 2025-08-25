@@ -17,7 +17,7 @@ func TestMainCmd(t *testing.T) {
 	defer func() {
 		err := fx.cleanup()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, `error cleaning up: %s`, err.Error())
+			fmt.Fprintf(os.Stderr, "error cleaning up: %s", err.Error())
 		}
 	}()
 
