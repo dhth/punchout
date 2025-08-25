@@ -3,27 +3,21 @@ exit_code: 0
 ----- stdout -----
 punchout takes the suck out of logging time on JIRA.
 
+Usage:
+  punchout [flags]
+
 Flags:
-  -config-file-path string
-     location of the punchout config file (default "[PATH]")
-  -db-path string
-     location of punchout's local database (default "[PATH]")
-  -fallback-comment string
-     Fallback comment to use for worklog entries
-  -jira-installation-type string
-     JIRA installation type; allowed values: [cloud, onpremise]
-  -jira-time-delta-mins string
-     Time delta (in minutes) between your timezone and the timezone of the server; can be +/-
-  -jira-token string
-     jira token (PAT for on-premise installation, API token for cloud installation)
-  -jira-url string
-     URL of the JIRA server
-  -jira-username string
-     username for authentication
-  -jql string
-     JQL to use to query issues
-  -list-config
-     print the config that punchout will use
+      --config-file-path string         location of the punchout config file (default "[PATH]")
+      --db-path string                  location of punchout's local database (default "[PATH]")
+      --fallback-comment string         Fallback comment to use for worklog entries
+  -h, --help                            help for punchout
+      --jira-installation-type string   JIRA installation type; allowed values: [cloud, onpremise]
+      --jira-time-delta-mins string     Time delta (in minutes) between your timezone and the timezone of the server; can be +/-
+      --jira-token string               jira token (PAT for on-premise installation, API token for cloud installation)
+      --jira-url string                 URL of the JIRA server
+      --jira-username string            username for authentication
+      --jql string                      JQL to use to query issues
+      --list-config                     print the config that punchout will use
 
 ----- stderr -----
 
