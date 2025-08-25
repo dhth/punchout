@@ -7,7 +7,7 @@ Usage:
   punchout [flags]
 
 Flags:
-      --config-file-path string         location of the punchout config file (default "[PATH]")
+      --config-file-path string         location of punchout's config file (default "[PATH]")
       --db-path string                  location of punchout's local database (default "[PATH]")
       --fallback-comment string         fallback comment to use for worklog entries
   -h, --help                            help for punchout

@@ -161,13 +161,13 @@ func NewRootCommand() (*cobra.Command, error) {
 			if listConfig {
 				fmt.Fprintf(os.Stdout, `Config:
 
-Config File Path                        %s
-DB File Path                            %s
-JIRA Installation Type                  %s
-JIRA URL                                %s
-JIRA Token                              %s
-JQL                                     %s
-JIRA Time Delta Mins                    %d
+Config File Path:              %s
+DB File Path:                  %s
+JIRA Installation Type:        %s
+JIRA URL:                      %s
+JIRA Token:                    %s
+JQL:                           %s
+JIRA Time Delta Mins:          %d
 `,
 					configPathFull,
 					dbPathFull,
@@ -178,11 +178,11 @@ JIRA Time Delta Mins                    %d
 					cfg.Jira.JiraTimeDeltaMins)
 
 				if installationType == ui.CloudInstallation {
-					fmt.Fprintf(os.Stdout, "JIRA Username                           %s\n", *cfg.Jira.JiraUsername)
+					fmt.Fprintf(os.Stdout, "JIRA Username:                 %s\n", *cfg.Jira.JiraUsername)
 				}
 
 				if cfg.Jira.FallbackComment != nil {
-					fmt.Fprintf(os.Stdout, "Fallback Comment                        %s\n", *cfg.Jira.FallbackComment)
+					fmt.Fprintf(os.Stdout, "Fallback Comment:              %s\n", *cfg.Jira.FallbackComment)
 				}
 				return nil
 			}
@@ -240,7 +240,7 @@ JIRA Time Delta Mins                    %d
 	dbFileName := fmt.Sprintf("punchout.v%s.db", pers.DBVersion)
 	defaultDBPath := filepath.Join(userHomeDir, dbFileName)
 
-	rootCmd.Flags().StringVarP(&configFilePath, "config-file-path", "", defaultConfigFilePath, "location of the punchout config file")
+	rootCmd.Flags().StringVarP(&configFilePath, "config-file-path", "", defaultConfigFilePath, "location of punchout's config file")
 	rootCmd.Flags().StringVarP(&dbPath, "db-path", "", defaultDBPath, "location of punchout's local database")
 	rootCmd.Flags().StringVarP(&jiraInstallationType, "jira-installation-type", "", "", "JIRA installation type; allowed values: [cloud, onpremise]")
 	rootCmd.Flags().StringVarP(&jiraURL, "jira-url", "", "", "URL of the JIRA server")
