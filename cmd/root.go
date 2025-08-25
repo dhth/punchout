@@ -21,10 +21,9 @@ const (
 	configFileName = "punchout/punchout.toml"
 )
 
-var dbFileName = fmt.Sprintf("punchout.v%s.db", pers.DBVersion)
-
 var (
 	errCouldntGetHomeDir       = errors.New("couldn't get your home directory")
+	errCouldntGetConfigDir     = errors.New("couldn't get your config directory")
 	errConfigFilePathEmpty     = errors.New("config file path cannot be empty")
 	errDBPathEmpty             = errors.New("db file path cannot be empty")
 	errCouldntInitializeDB     = errors.New("couldn't initialize database")
@@ -35,23 +34,16 @@ var (
 	errCouldntCreateJiraClient = errors.New("couldn't create JIRA client")
 )
 
-func NewRootCommand() *cobra.Command {
-	userHomeDir, _ := os.UserHomeDir()
-	defaultConfigDir, _ := os.UserConfigDir()
-
-	ros := runtime.GOOS
-	var defaultConfigFilePath string
-
-	switch ros {
-	case "darwin":
-		// This is to maintain backwards compatibility with a decision made in the first release of punchout
-		defaultConfigFilePath = filepath.Join(userHomeDir, ".config", configFileName)
-	default:
-		defaultConfigFilePath = filepath.Join(defaultConfigDir, configFileName)
+func Execute() error {
+	rootCmd, err := NewRootCommand()
+	if err != nil {
+		return err
 	}
 
-	defaultDBPath := filepath.Join(userHomeDir, dbFileName)
+	return rootCmd.Execute()
+}
 
+func NewRootCommand() (*cobra.Command, error) {
 	var (
 		configFilePath       string
 		dbPath               string
@@ -65,17 +57,22 @@ func NewRootCommand() *cobra.Command {
 		listConfig           bool
 	)
 
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", errCouldntGetHomeDir, err.Error())
+	}
+
+	defaultConfigDir, err := os.UserConfigDir()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", errCouldntGetConfigDir, err.Error())
+	}
+
 	rootCmd := &cobra.Command{
 		Use:           "punchout",
 		Short:         "punchout takes the suck out of logging time on JIRA.",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			userHomeDir, err := os.UserHomeDir()
-			if err != nil {
-				return fmt.Errorf("%w: %s", errCouldntGetHomeDir, err.Error())
-			}
-
 			if configFilePath == "" {
 				return errConfigFilePathEmpty
 			}
@@ -229,22 +226,32 @@ JIRA Time Delta Mins                    %d
 		},
 	}
 
+	ros := runtime.GOOS
+	var defaultConfigFilePath string
+
+	switch ros {
+	case "darwin":
+		// This is to maintain backwards compatibility with a decision made in the first release of punchout
+		defaultConfigFilePath = filepath.Join(userHomeDir, ".config", configFileName)
+	default:
+		defaultConfigFilePath = filepath.Join(defaultConfigDir, configFileName)
+	}
+
+	dbFileName := fmt.Sprintf("punchout.v%s.db", pers.DBVersion)
+	defaultDBPath := filepath.Join(userHomeDir, dbFileName)
+
 	rootCmd.Flags().StringVarP(&configFilePath, "config-file-path", "", defaultConfigFilePath, "location of the punchout config file")
 	rootCmd.Flags().StringVarP(&dbPath, "db-path", "", defaultDBPath, "location of punchout's local database")
 	rootCmd.Flags().StringVarP(&jiraInstallationType, "jira-installation-type", "", "", "JIRA installation type; allowed values: [cloud, onpremise]")
 	rootCmd.Flags().StringVarP(&jiraURL, "jira-url", "", "", "URL of the JIRA server")
 	rootCmd.Flags().StringVarP(&jiraToken, "jira-token", "", "", "jira token (PAT for on-premise installation, API token for cloud installation)")
-	rootCmd.Flags().StringVarP(&jiraUsername, "jira-username", "", "", "username for authentication")
+	rootCmd.Flags().StringVarP(&jiraUsername, "jira-username", "", "", "username for authentication (for cloud installation)")
 	rootCmd.Flags().StringVarP(&jql, "jql", "", "", "JQL to use to query issues")
-	rootCmd.Flags().StringVarP(&fallbackComment, "fallback-comment", "", "", "Fallback comment to use for worklog entries")
-	rootCmd.Flags().StringVarP(&jiraTimeDeltaMinsStr, "jira-time-delta-mins", "", "", "Time delta (in minutes) between your timezone and the timezone of the server; can be +/-")
+	rootCmd.Flags().StringVarP(&fallbackComment, "fallback-comment", "", "", "fallback comment to use for worklog entries")
+	rootCmd.Flags().StringVarP(&jiraTimeDeltaMinsStr, "jira-time-delta-mins", "", "", "time delta (in minutes) between your timezone and the timezone of the JIRA server; can be +/-")
 	rootCmd.Flags().BoolVarP(&listConfig, "list-config", "", false, "print the config that punchout will use")
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
-	return rootCmd
-}
-
-func Execute() error {
-	return NewRootCommand().Execute()
+	return rootCmd, nil
 }
