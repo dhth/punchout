@@ -5,13 +5,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dhth/punchout/internal/utils"
 	"github.com/dustin/go-humanize"
 )
 
 var listWidth = 140
 
 const (
-	timeFormat       = "2006/01/02 15:04"
 	dayAndTimeFormat = "Mon, 15:04"
 	dateFormat       = "2006/01/02"
 	timeOnlyFormat   = "15:04"
@@ -37,18 +37,18 @@ func (issue *Issue) SetDesc() {
 	issueType := getIssueTypeStyle(issue.IssueType).Render(issue.IssueType)
 
 	if issue.Assignee != "" {
-		assignee = assigneeStyle(issue.Assignee).Render(RightPadTrim(issue.Assignee, listWidth/4))
+		assignee = assigneeStyle(issue.Assignee).Render(utils.RightPadTrim(issue.Assignee, listWidth/4))
 	} else {
-		assignee = assigneeStyle(issue.Assignee).Render(RightPadTrim("", listWidth/4))
+		assignee = assigneeStyle(issue.Assignee).Render(utils.RightPadTrim("", listWidth/4))
 	}
 
-	status = issueStatusStyle.Render(RightPadTrim(issue.Status, listWidth/4))
+	status = issueStatusStyle.Render(utils.RightPadTrim(issue.Status, listWidth/4))
 
 	if issue.AggSecondsSpent > 0 {
-		totalSecsSpent = aggTimeSpentStyle.Render(HumanizeDuration(issue.AggSecondsSpent))
+		totalSecsSpent = aggTimeSpentStyle.Render(utils.HumanizeDuration(issue.AggSecondsSpent))
 	}
 
-	issue.Desc = fmt.Sprintf("%s%s%s%s%s", RightPadTrim(issue.IssueKey, listWidth/4), status, assignee, issueType, totalSecsSpent)
+	issue.Desc = fmt.Sprintf("%s%s%s%s%s", utils.RightPadTrim(issue.IssueKey, listWidth/4), status, assignee, issueType, totalSecsSpent)
 }
 
 func (issue Issue) Title() string {
@@ -56,7 +56,7 @@ func (issue Issue) Title() string {
 	if issue.TrackingActive {
 		trackingIndicator = "⏲ "
 	}
-	return trackingIndicator + RightPadTrim(issue.Summary, int(float64(listWidth)*0.8))
+	return trackingIndicator + utils.RightPadTrim(issue.Summary, int(float64(listWidth)*0.8))
 }
 
 func (issue Issue) Description() string {
@@ -137,7 +137,7 @@ func (entry WorklogEntry) Description() string {
 		durationMsg = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(timeOnlyFormat), entry.EndTS.Format(timeOnlyFormat))
 	}
 
-	timeSpentStr := HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
+	timeSpentStr := utils.HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
 
 	if entry.Synced {
 		syncedStatus = syncedStyle.Render("synced")
@@ -152,9 +152,9 @@ func (entry WorklogEntry) Description() string {
 	}
 
 	return fmt.Sprintf("%s%s%s%s%s",
-		RightPadTrim(entry.IssueKey, listWidth/4),
-		RightPadTrim(durationMsg, listWidth/4),
-		RightPadTrim(fmt.Sprintf("(%s)", timeSpentStr), listWidth/6),
+		utils.RightPadTrim(entry.IssueKey, listWidth/4),
+		utils.RightPadTrim(durationMsg, listWidth/4),
+		utils.RightPadTrim(fmt.Sprintf("(%s)", timeSpentStr), listWidth/6),
 		syncedStatus,
 		fallbackCommentStatus,
 	)
@@ -171,10 +171,10 @@ func (entry SyncedWorklogEntry) Title() string {
 
 func (entry SyncedWorklogEntry) Description() string {
 	durationMsg := humanize.Time(entry.EndTS)
-	timeSpentStr := HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
+	timeSpentStr := utils.HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
 	return fmt.Sprintf("%s%s%s",
-		RightPadTrim(entry.IssueKey, listWidth/4),
-		RightPadTrim(durationMsg, listWidth/4),
+		utils.RightPadTrim(entry.IssueKey, listWidth/4),
+		utils.RightPadTrim(durationMsg, listWidth/4),
 		fmt.Sprintf("(%s)", timeSpentStr),
 	)
 }

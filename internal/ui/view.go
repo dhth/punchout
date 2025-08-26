@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	c "github.com/dhth/punchout/internal/common"
+	"github.com/dhth/punchout/internal/utils"
 )
 
 const wLWarningThresholdSecs = 8 * 60 * 60
@@ -28,7 +28,7 @@ func (m Model) View() string {
 	var statusBar string
 	var helpMsg string
 	if m.message != "" {
-		statusBar = c.Trim(m.message, 120)
+		statusBar = utils.Trim(m.message, 120)
 	}
 	var activeMsg string
 
@@ -42,7 +42,7 @@ func (m Model) View() string {
 			var issueSummaryMsg, trackingSinceMsg string
 			issue, ok := m.issueMap[m.activeIssue]
 			if ok {
-				issueSummaryMsg = fmt.Sprintf("(%s)", c.Trim(issue.Summary, 50))
+				issueSummaryMsg = fmt.Sprintf("(%s)", utils.Trim(issue.Summary, 50))
 				if m.activeView != saveActiveWLView {
 					trackingSinceMsg = fmt.Sprintf("(since %s)", m.activeIssueBeginTS.Format(timeOnlyFormat))
 				}
@@ -251,7 +251,7 @@ func (m Model) View() string {
 		if m.unsyncedWLCount == 1 {
 			entryWord = "entry"
 		}
-		unsyncedTimeMsg := c.HumanizeDuration(m.unsyncedWLSecsSpent)
+		unsyncedTimeMsg := utils.HumanizeDuration(m.unsyncedWLSecsSpent)
 		unsyncedMsg = unsyncedCountStyle.Render(fmt.Sprintf("%d unsynced %s (%s)", m.unsyncedWLCount, entryWord, unsyncedTimeMsg))
 	}
 
@@ -301,7 +301,7 @@ func getDurationValidityContext(beginStr, endStr string) (string, wlFormValidity
 
 	totalSeconds := int(dur.Seconds())
 
-	humanized := c.HumanizeDuration(totalSeconds)
+	humanized := utils.HumanizeDuration(totalSeconds)
 	msg := fmt.Sprintf("You're recording %s", humanized)
 	if totalSeconds > wLWarningThresholdSecs {
 		return msg, wlSubmitWarn

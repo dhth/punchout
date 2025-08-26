@@ -61,10 +61,8 @@ const (
 )
 
 const (
-	timeFormat       = "2006/01/02 15:04"
-	dayAndTimeFormat = "Mon, 15:04"
-	dateFormat       = "2006/01/02"
-	timeOnlyFormat   = "15:04"
+	timeFormat     = "2006/01/02 15:04"
+	timeOnlyFormat = "15:04"
 )
 
 type Model struct {
