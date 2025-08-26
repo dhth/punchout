@@ -554,7 +554,7 @@ func (m *Model) handleIssuesFetchedFromJIRAMsg(msg issuesFetchedFromJIRA) tea.Cm
 		m.issueIndexMap[issue.IssueKey] = i
 	}
 	m.issueList.SetItems(issues)
-	m.issueList.Title = "Issues"
+	m.issueList.Title = "▪▫▫ Issues"
 	m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListColor))
 	m.issuesFetched = true
 
