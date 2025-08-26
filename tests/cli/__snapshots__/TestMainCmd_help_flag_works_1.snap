@@ -5,6 +5,11 @@ punchout takes the suck out of logging time on JIRA.
 
 Usage:
   punchout [flags]
+  punchout [command]
+
+Available Commands:
+  help        Help about any command
+  mcp         Interact with punchout's MCP server
 
 Flags:
       --config-file-path string         location of punchout's config file (default "[PATH]")
@@ -18,6 +23,8 @@ Flags:
       --jira-username string            username for authentication (for cloud installation)
       --jql string                      JQL to use to query issues
       --list-config                     print the config that punchout will use
+
+Use "punchout [command] --help" for more information about a command.
 
 ----- stderr -----
 

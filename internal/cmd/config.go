@@ -9,7 +9,7 @@ const (
 	jiraInstallationTypeCloud     = "cloud"
 )
 
-type jiraConfig struct {
+type userJiraConfig struct {
 	InstallationType  string  `toml:"installation_type"`
 	JiraURL           *string `toml:"jira_url"`
 	JQL               *string
@@ -19,12 +19,12 @@ type jiraConfig struct {
 	FallbackComment   *string `toml:"fallback_comment"`
 }
 
-type config struct {
-	Jira jiraConfig `toml:"jira"`
+type userConfig struct {
+	Jira userJiraConfig `toml:"jira"`
 }
 
-func getConfig(filePath string) (config, error) {
-	var config config
+func getConfig(filePath string) (userConfig, error) {
+	var config userConfig
 	_, err := toml.DecodeFile(filePath, &config)
 	if err != nil {
 		return config, err

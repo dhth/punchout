@@ -304,7 +304,8 @@ func openURLInBrowser(url string) tea.Cmd {
 			openCmd = "xdg-open"
 		}
 		c := exec.Command(openCmd, url)
-		_, err := c.Output()
+		err := c.Run()
+
 		return urlOpenedinBrowserMsg{url: url, err: err}
 	}
 }
