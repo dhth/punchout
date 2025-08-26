@@ -2,7 +2,7 @@ package ui
 
 import (
 	"github.com/charmbracelet/lipgloss"
-	c "github.com/dhth/punchout/internal/common"
+	d "github.com/dhth/punchout/internal/domain"
 )
 
 const (
@@ -47,7 +47,7 @@ var (
 
 	listStyle = baseListStyle
 
-	modeStyle = c.BaseStyle.
+	modeStyle = d.BaseStyle.
 			Align(lipgloss.Center).
 			Bold(true).
 			Background(lipgloss.Color(toolNameColor))
@@ -56,7 +56,7 @@ var (
 				Bold(true).
 				PaddingLeft(1).
 				PaddingRight(1).
-				Foreground(lipgloss.Color(c.DefaultBackgroundColor))
+				Foreground(lipgloss.Color(d.DefaultBackgroundColor))
 
 	workLogEntryHeadingStyle = baseHeadingStyle.
 					Background(lipgloss.Color(worklogListColor))
@@ -95,7 +95,7 @@ var (
 	initialHelpMsgStyle = helpMsgStyle.
 				Foreground(lipgloss.Color(initialHelpMsgColor))
 
-	helpTitleStyle = c.BaseStyle.
+	helpTitleStyle = d.BaseStyle.
 			Bold(true).
 			Background(lipgloss.Color(helpViewTitleColor)).
 			Align(lipgloss.Left)

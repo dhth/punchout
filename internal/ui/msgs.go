@@ -3,7 +3,7 @@ package ui
 import (
 	"time"
 
-	c "github.com/dhth/punchout/internal/common"
+	d "github.com/dhth/punchout/internal/domain"
 )
 
 type hideHelpMsg struct{}
@@ -50,12 +50,12 @@ type activeWLFetchedFromDB struct {
 }
 
 type wLEntriesFetchedFromDB struct {
-	entries []c.WorklogEntry
+	entries []d.WorklogEntry
 	err     error
 }
 
 type syncedWLEntriesFetchedFromDB struct {
-	entries []c.SyncedWorklogEntry
+	entries []d.SyncedWorklogEntry
 	err     error
 }
 
@@ -64,20 +64,20 @@ type wLDeletedFromDB struct {
 }
 
 type wLSyncUpdatedInDB struct {
-	entry c.WorklogEntry
+	entry d.WorklogEntry
 	index int
 	err   error
 }
 
 type issuesFetchedFromJIRA struct {
-	issues             []c.Issue
+	issues             []d.Issue
 	responseStatusCode int
 	err                error
 }
 
 type wLSyncedToJIRA struct {
 	index               int
-	entry               c.WorklogEntry
+	entry               d.WorklogEntry
 	fallbackCommentUsed bool
 	err                 error
 }

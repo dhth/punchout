@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	c "github.com/dhth/punchout/internal/common"
+	d "github.com/dhth/punchout/internal/domain"
 )
 
 type JiraInstallationType uint
@@ -61,10 +61,8 @@ const (
 )
 
 const (
-	timeFormat       = "2006/01/02 15:04"
-	dayAndTimeFormat = "Mon, 15:04"
-	dateFormat       = "2006/01/02"
-	timeOnlyFormat   = "15:04"
+	timeFormat     = "2006/01/02 15:04"
+	timeOnlyFormat = "15:04"
 )
 
 type Model struct {
@@ -76,7 +74,7 @@ type Model struct {
 	jql                   string
 	fallbackComment       *string
 	issueList             list.Model
-	issueMap              map[string]*c.Issue
+	issueMap              map[string]*d.Issue
 	issueIndexMap         map[string]int
 	issuesFetched         bool
 	worklogList           list.Model

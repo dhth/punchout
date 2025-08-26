@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	c "github.com/dhth/punchout/internal/common"
+	c "github.com/dhth/punchout/internal/domain"
 )
 
 var (
@@ -16,9 +16,12 @@ var (
 
 func getNumActiveIssuesFromDB(db *sql.DB) (int, error) {
 	row := db.QueryRow(`
-SELECT COUNT(*)
-from issue_log
-WHERE active=1
+SELECT
+    COUNT(*)
+FROM
+    issue_log
+WHERE
+    active = 1
 `)
 	var numActiveIssues int
 	err := row.Scan(&numActiveIssues)
@@ -29,10 +32,20 @@ func getWorkLogsForIssueFromDB(db *sql.DB, issueKey string) ([]c.WorklogEntry, e
 	var logEntries []c.WorklogEntry
 
 	rows, err := db.Query(`
-SELECT ID, issue_key, begin_ts, end_ts, comment, active, synced
-FROM issue_log
-WHERE issue_key=?
-ORDER by end_ts DESC;
+SELECT
+    ID,
+    issue_key,
+    begin_ts,
+    end_ts,
+    COMMENT,
+    active,
+    synced
+FROM
+    issue_log
+WHERE
+    issue_key =?
+ORDER BY
+    end_ts DESC;
 `, issueKey)
 	if err != nil {
 		return nil, err
@@ -69,8 +82,10 @@ ORDER by end_ts DESC;
 
 func InsertNewWLInDB(db *sql.DB, issueKey string, beginTS time.Time) error {
 	stmt, err := db.Prepare(`
-    INSERT INTO issue_log (issue_key, begin_ts, active, synced)
-    VALUES (?, ?, ?, ?);
+INSERT INTO
+    issue_log (issue_key, begin_ts, active, synced)
+VALUES
+    (?, ?, ?, ?);
 `)
 	if err != nil {
 		return err
@@ -87,13 +102,16 @@ func InsertNewWLInDB(db *sql.DB, issueKey string, beginTS time.Time) error {
 
 func UpdateActiveWLInDB(db *sql.DB, issueKey, comment string, beginTS, endTS time.Time) error {
 	stmt, err := db.Prepare(`
-UPDATE issue_log
-SET active = 0,
+UPDATE
+    issue_log
+SET
+    active = 0,
     begin_ts = ?,
     end_ts = ?,
-    comment = ?
-WHERE issue_key = ?
-AND active = 1;
+    COMMENT = ?
+WHERE
+    issue_key = ?
+    AND active = 1;
 `)
 	if err != nil {
 		return err
@@ -110,11 +128,14 @@ AND active = 1;
 
 func StopCurrentlyActiveWLInDB(db *sql.DB, issueKey string, endTS time.Time) error {
 	stmt, err := db.Prepare(`
-UPDATE issue_log
-SET active = 0,
+UPDATE
+    issue_log
+SET
+    active = 0,
     end_ts = ?
-WHERE issue_key = ?
-AND active = 1;
+WHERE
+    issue_key = ?
+    AND active = 1;
 `)
 	if err != nil {
 		return err
@@ -133,10 +154,21 @@ func FetchWLsFromDB(db *sql.DB) ([]c.WorklogEntry, error) {
 	var logEntries []c.WorklogEntry
 
 	rows, err := db.Query(`
-SELECT ID, issue_key, begin_ts, end_ts, comment, active, synced
-FROM issue_log
-WHERE active=false AND synced=false
-ORDER by end_ts DESC;
+SELECT
+    ID,
+    issue_key,
+    begin_ts,
+    end_ts,
+    comment,
+    active,
+    synced
+FROM
+    issue_log
+WHERE
+    active = false
+    AND synced = false
+ORDER BY
+    end_ts DESC;
 `)
 	if err != nil {
 		return nil, err
@@ -174,10 +206,21 @@ func FetchSyncedWLsFromDB(db *sql.DB) ([]c.SyncedWorklogEntry, error) {
 	var logEntries []c.SyncedWorklogEntry
 
 	rows, err := db.Query(`
-SELECT ID, issue_key, begin_ts, end_ts, comment
-FROM issue_log
-WHERE active=false AND synced=true
-ORDER by end_ts DESC LIMIT 30;
+SELECT
+    ID,
+    issue_key,
+    begin_ts,
+    end_ts,
+    COMMENT
+FROM
+    issue_log
+WHERE
+    active = false
+    AND synced = TRUE
+ORDER BY
+    end_ts DESC
+LIMIT
+    30;
 `)
 	if err != nil {
 		return nil, err
@@ -209,8 +252,10 @@ ORDER by end_ts DESC LIMIT 30;
 
 func DeleteWLInDB(db *sql.DB, id int) error {
 	stmt, err := db.Prepare(`
-DELETE from issue_log
-WHERE ID=?;
+DELETE FROM
+    issue_log
+WHERE
+    ID =?;
 `)
 	if err != nil {
 		return err
@@ -227,9 +272,12 @@ WHERE ID=?;
 
 func UpdateSyncStatusForWLInDB(db *sql.DB, id int) error {
 	stmt, err := db.Prepare(`
-UPDATE issue_log
-SET synced = 1
-WHERE id = ?;
+UPDATE
+    issue_log
+SET
+    synced = 1
+WHERE
+    id = ?;
 `)
 	if err != nil {
 		return err
@@ -246,10 +294,13 @@ WHERE id = ?;
 
 func UpdateSyncStatusAndCommentForWLInDB(db *sql.DB, id int, comment string) error {
 	stmt, err := db.Prepare(`
-UPDATE issue_log
-SET synced = 1,
-    comment = ?
-WHERE id = ?;
+UPDATE
+    issue_log
+SET
+    synced = 1,
+    COMMENT = ?
+WHERE
+    id = ?;
 `)
 	if err != nil {
 		return err
@@ -266,8 +317,10 @@ WHERE id = ?;
 
 func DeleteActiveLogInDB(db *sql.DB) error {
 	stmt, err := db.Prepare(`
-DELETE FROM issue_log
-WHERE active=true;
+DELETE FROM
+    issue_log
+WHERE
+    active = TRUE;
 `)
 	if err != nil {
 		return err
@@ -281,11 +334,16 @@ WHERE active=true;
 
 func GetActiveIssueFromDB(db *sql.DB) (string, error) {
 	row := db.QueryRow(`
-SELECT issue_key
-from issue_log
-WHERE active=1
-ORDER BY begin_ts DESC
-LIMIT 1
+SELECT
+    issue_key
+FROM
+    issue_log
+WHERE
+    active = 1
+ORDER BY
+    begin_ts DESC
+LIMIT
+    1
 `)
 	var activeIssue string
 	err := row.Scan(&activeIssue)
@@ -308,9 +366,12 @@ func QuickSwitchActiveWLInDB(db *sql.DB, currentIssue, selectedIssue string, cur
 
 func UpdateActiveWLBeginTSInDB(db *sql.DB, beginTS time.Time) error {
 	stmt, err := db.Prepare(`
-UPDATE issue_log
-    SET begin_ts=?
-WHERE active is true;
+UPDATE
+    issue_log
+SET
+    begin_ts =?
+WHERE
+    active IS TRUE;
 `)
 	if err != nil {
 		return err
@@ -327,10 +388,13 @@ WHERE active is true;
 
 func UpdateActiveWLBeginTSAndCommentInDB(db *sql.DB, beginTS time.Time, comment string) error {
 	stmt, err := db.Prepare(`
-UPDATE issue_log
-    SET begin_ts=?,
-    comment=?
-WHERE active is true;
+UPDATE
+    issue_log
+SET
+    begin_ts =?,
+    COMMENT =?
+WHERE
+    active IS TRUE;
 `)
 	if err != nil {
 		return err

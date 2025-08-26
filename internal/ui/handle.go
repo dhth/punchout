@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	c "github.com/dhth/punchout/internal/common"
+	d "github.com/dhth/punchout/internal/domain"
 	pers "github.com/dhth/punchout/internal/persistence"
 )
 
@@ -82,7 +82,7 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 		return nil
 	}
 
-	issue, ok := m.issueList.SelectedItem().(*c.Issue)
+	issue, ok := m.issueList.SelectedItem().(*d.Issue)
 
 	var cmd tea.Cmd
 	if ok {
@@ -96,7 +96,7 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 			)
 			m.activeView = issueListView
 		case worklogUpdate:
-			wl, ok := m.worklogList.SelectedItem().(c.WorklogEntry)
+			wl, ok := m.worklogList.SelectedItem().(d.WorklogEntry)
 			if ok {
 				cmd = updateManualEntry(m.db,
 					wl.ID,
@@ -323,7 +323,7 @@ func (m *Model) handleRequestToCreateManualWL() {
 }
 
 func (m *Model) handleRequestToUpdateSavedWL() {
-	wl, ok := m.worklogList.SelectedItem().(c.WorklogEntry)
+	wl, ok := m.worklogList.SelectedItem().(d.WorklogEntry)
 	if !ok {
 		return
 	}
@@ -377,7 +377,7 @@ func (m *Model) handleRequestToSyncTimestamps() {
 }
 
 func (m *Model) getCmdToDeleteWL() tea.Cmd {
-	issue, ok := m.worklogList.SelectedItem().(c.WorklogEntry)
+	issue, ok := m.worklogList.SelectedItem().(d.WorklogEntry)
 	if !ok {
 		msg := "Couldn't delete worklog entry"
 		m.message = msg
@@ -389,7 +389,7 @@ func (m *Model) getCmdToDeleteWL() tea.Cmd {
 }
 
 func (m *Model) getCmdToQuickSwitchTracking() tea.Cmd {
-	issue, ok := m.issueList.SelectedItem().(*c.Issue)
+	issue, ok := m.issueList.SelectedItem().(*d.Issue)
 	if !ok {
 		m.message = "Something went wrong"
 		return nil
@@ -434,7 +434,7 @@ func (m *Model) getCmdToToggleTracking() tea.Cmd {
 }
 
 func (m *Model) getCmdToStartTracking() tea.Cmd {
-	issue, ok := m.issueList.SelectedItem().(*c.Issue)
+	issue, ok := m.issueList.SelectedItem().(*d.Issue)
 	if !ok {
 		message := "Something went horribly wrong"
 		m.message = message
@@ -478,7 +478,7 @@ func (m *Model) getCmdToSyncWLToJIRA() []tea.Cmd {
 	var cmds []tea.Cmd
 	toSyncNum := 0
 	for i, entry := range m.worklogList.Items() {
-		if wl, ok := entry.(c.WorklogEntry); ok {
+		if wl, ok := entry.(d.WorklogEntry); ok {
 			if wl.Synced {
 				continue
 			}
@@ -734,7 +734,7 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 		return nil
 	}
 
-	var activeIssue *c.Issue
+	var activeIssue *d.Issue
 	if msg.activeIssue != "" {
 		activeIssue = m.issueMap[msg.activeIssue]
 	} else {
@@ -775,7 +775,7 @@ func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
 		return
 	}
 
-	var lastActiveIssue *c.Issue
+	var lastActiveIssue *d.Issue
 	if msg.lastActiveIssue != "" {
 		lastActiveIssue = m.issueMap[msg.lastActiveIssue]
 		if lastActiveIssue != nil {
@@ -783,7 +783,7 @@ func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
 		}
 	}
 
-	var currentActiveIssue *c.Issue
+	var currentActiveIssue *d.Issue
 	if msg.currentActiveIssue != "" {
 		currentActiveIssue = m.issueMap[msg.currentActiveIssue]
 	} else {
