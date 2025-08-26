@@ -15,12 +15,12 @@ var (
 	errCouldntCreateJiraClient     = errors.New("couldn't create JIRA client")
 )
 
-type JiraSvc struct {
+type Jira struct {
 	client *jira.Client
 }
 
-func NewOnPremJiraSvc(url string, token string) (JiraSvc, error) {
-	var zero JiraSvc
+func NewOnPremJiraSvc(url string, token string) (Jira, error) {
+	var zero Jira
 
 	tp := jira.BearerAuthTransport{
 		Token: token,
@@ -32,13 +32,13 @@ func NewOnPremJiraSvc(url string, token string) (JiraSvc, error) {
 		return zero, fmt.Errorf("%w: %s", errCouldntCreateJiraClient, err.Error())
 	}
 
-	return JiraSvc{
+	return Jira{
 		client: client,
 	}, nil
 }
 
-func NewCloudJiraSvc(url string, userName string, token string) (JiraSvc, error) {
-	var zero JiraSvc
+func NewCloudJiraSvc(url string, userName string, token string) (Jira, error) {
+	var zero Jira
 
 	tp := jiraCloud.BasicAuthTransport{
 		Username: userName,
@@ -56,17 +56,17 @@ func NewCloudJiraSvc(url string, userName string, token string) (JiraSvc, error)
 		return zero, fmt.Errorf("%w: %s", errCouldntCreateJiraClient, err.Error())
 	}
 
-	return JiraSvc{
+	return Jira{
 		client: client,
 	}, nil
 }
 
-func (svc JiraSvc) GetIssues(jql string) ([]jira.Issue, int, error) {
+func (svc Jira) GetIssues(jql string) ([]jira.Issue, int, error) {
 	issues, resp, err := svc.client.Issue.Search(context.Background(), jql, nil)
 	return issues, resp.StatusCode, err
 }
 
-func (svc JiraSvc) SyncWLToJIRA(issueKey string, beginTS, endTS time.Time, comment string, timeDeltaMins int) error {
+func (svc Jira) SyncWLToJIRA(issueKey string, beginTS, endTS time.Time, comment string, timeDeltaMins int) error {
 	start := beginTS
 
 	if timeDeltaMins != 0 {
@@ -91,6 +91,6 @@ func (svc JiraSvc) SyncWLToJIRA(issueKey string, beginTS, endTS time.Time, comme
 	return err
 }
 
-func (svc JiraSvc) JiraURL() string {
+func (svc Jira) JiraURL() string {
 	return svc.client.BaseURL.String()
 }

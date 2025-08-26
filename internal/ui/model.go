@@ -62,7 +62,7 @@ type Model struct {
 	activeView            stateView
 	lastView              stateView
 	db                    *sql.DB
-	jiraSvc               svc.JiraSvc
+	jiraSvc               svc.Jira
 	jiraCfg               d.JiraConfig
 	issueList             list.Model
 	issueMap              map[string]*d.Issue

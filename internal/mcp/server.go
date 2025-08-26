@@ -8,7 +8,7 @@ import (
 	svc "github.com/dhth/punchout/internal/service"
 )
 
-func Serve(_ *sql.DB, _ svc.JiraSvc, _ d.JiraConfig) error {
+func Serve(_ *sql.DB, _ svc.Jira, _ d.JiraConfig) error {
 	fmt.Println("serving...")
 	return nil
 }

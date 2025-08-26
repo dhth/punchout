@@ -10,7 +10,7 @@ import (
 	svc "github.com/dhth/punchout/internal/service"
 )
 
-func InitialModel(db *sql.DB, jiraSvc svc.JiraSvc, jiraCfg d.JiraConfig, debug bool) Model {
+func InitialModel(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, debug bool) Model {
 	var stackItems []list.Item
 	var worklogListItems []list.Item
 	var syncedWorklogListItems []list.Item

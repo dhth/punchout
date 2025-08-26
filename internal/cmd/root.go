@@ -59,7 +59,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		configPathFull string
 		dbPathFull     string
 		db             *sql.DB
-		jiraSvc        svc.JiraSvc
+		jiraSvc        svc.Jira
 	)
 
 	userHomeDir, err := os.UserHomeDir()
@@ -160,6 +160,13 @@ func NewRootCommand() (*cobra.Command, error) {
 				return fmt.Errorf("fallback-comment cannot be empty")
 			}
 
+			jiraCfg = d.JiraConfig{
+				InstallationType: installationType,
+				JQL:              *userCfg.Jira.JQL,
+				TimeDeltaMins:    userCfg.Jira.JiraTimeDeltaMins,
+				FallbackComment:  userCfg.Jira.FallbackComment,
+			}
+
 			if flagListConfig {
 				printConfig(configPathFull, dbPathFull, userCfg)
 				return nil
@@ -173,13 +180,6 @@ func NewRootCommand() (*cobra.Command, error) {
 			jiraSvc, err = getJiraSvc(jiraCfg.InstallationType, userCfg)
 			if err != nil {
 				return err
-			}
-
-			jiraCfg = d.JiraConfig{
-				InstallationType: installationType,
-				JQL:              *userCfg.Jira.JQL,
-				TimeDeltaMins:    userCfg.Jira.JiraTimeDeltaMins,
-				FallbackComment:  userCfg.Jira.FallbackComment,
 			}
 
 			return nil
@@ -276,7 +276,7 @@ JIRA Time Delta Mins                    %d
 	}
 }
 
-func getJiraSvc(installationType d.JiraInstallationType, cfg userConfig) (svc.JiraSvc, error) {
+func getJiraSvc(installationType d.JiraInstallationType, cfg userConfig) (svc.Jira, error) {
 	switch installationType {
 	case d.OnPremiseInstallation:
 		return svc.NewOnPremJiraSvc(*cfg.Jira.JiraURL, *cfg.Jira.JiraToken)

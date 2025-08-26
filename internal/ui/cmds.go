@@ -43,7 +43,7 @@ LIMIT
 
 		switch trackStatus {
 		case trackingInactive:
-			err = pers.InsertNewWLInDB(db, selectedIssue, beginTS)
+			err = pers.InsertNewActiveWLInDB(db, selectedIssue, beginTS)
 			if err != nil {
 				return trackingToggledInDB{err: err}
 			}
@@ -90,30 +90,9 @@ func updateActiveWL(db *sql.DB, beginTS time.Time, comment *string) tea.Cmd {
 
 func insertManualEntry(db *sql.DB, issueKey string, beginTS time.Time, endTS time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
-		stmt, err := db.Prepare(`
-INSERT INTO
-    issue_log (
-        issue_key,
-        begin_ts,
-        end_ts,
-        COMMENT,
-        active,
-        synced
-    )
-VALUES
-    (?, ?, ?, ?, ?, ?);
-`)
-		if err != nil {
-			return manualWLInsertedInDB{issueKey, err}
-		}
-		defer stmt.Close()
+		err := pers.InsertManualWLInDB(db, issueKey, beginTS, endTS, comment)
 
-		_, err = stmt.Exec(issueKey, beginTS, endTS, comment, false, false)
-		if err != nil {
-			return manualWLInsertedInDB{issueKey, err}
-		}
-
-		return manualWLInsertedInDB{issueKey, nil}
+		return manualWLInsertedInDB{issueKey, err}
 	}
 }
 
