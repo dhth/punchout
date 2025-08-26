@@ -9,7 +9,7 @@ import (
 
 	jira "github.com/andygrunwald/go-jira/v2/onpremise"
 	tea "github.com/charmbracelet/bubbletea"
-	common "github.com/dhth/punchout/internal/common"
+	d "github.com/dhth/punchout/internal/domain"
 	pers "github.com/dhth/punchout/internal/persistence"
 
 	_ "modernc.org/sqlite" // sqlite driver
@@ -187,7 +187,7 @@ func deleteLogEntry(db *sql.DB, id int) tea.Cmd {
 	}
 }
 
-func updateSyncStatusForEntry(db *sql.DB, entry common.WorklogEntry, index int, fallbackCommentUsed bool) tea.Cmd {
+func updateSyncStatusForEntry(db *sql.DB, entry d.WorklogEntry, index int, fallbackCommentUsed bool) tea.Cmd {
 	return func() tea.Msg {
 		var err error
 		var comment string
@@ -211,7 +211,7 @@ func updateSyncStatusForEntry(db *sql.DB, entry common.WorklogEntry, index int, 
 func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 	return func() tea.Msg {
 		jIssues, statusCode, err := getIssues(cl, jql)
-		var issues []common.Issue
+		var issues []d.Issue
 		if err != nil {
 			return issuesFetchedFromJIRA{issues, statusCode, err}
 		}
@@ -231,7 +231,7 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 					status = issue.Fields.Status.Name
 				}
 			}
-			issues = append(issues, common.Issue{
+			issues = append(issues, d.Issue{
 				IssueKey:        issue.Key,
 				IssueType:       issue.Fields.Type.Name,
 				Summary:         issue.Fields.Summary,
@@ -245,7 +245,7 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 	}
 }
 
-func syncWorklogWithJIRA(cl *jira.Client, entry common.WorklogEntry, fallbackComment *string, index int, timeDeltaMins int) tea.Cmd {
+func syncWorklogWithJIRA(cl *jira.Client, entry d.WorklogEntry, fallbackComment *string, index int, timeDeltaMins int) tea.Cmd {
 	return func() tea.Msg {
 		var fallbackCmtUsed bool
 		if entry.EndTS == nil {

@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	c "github.com/dhth/punchout/internal/common"
+	d "github.com/dhth/punchout/internal/domain"
 )
 
 type JiraInstallationType uint
@@ -74,7 +74,7 @@ type Model struct {
 	jql                   string
 	fallbackComment       *string
 	issueList             list.Model
-	issueMap              map[string]*c.Issue
+	issueMap              map[string]*d.Issue
 	issueIndexMap         map[string]int
 	issuesFetched         bool
 	worklogList           list.Model

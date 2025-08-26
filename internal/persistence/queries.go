@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	c "github.com/dhth/punchout/internal/common"
+	c "github.com/dhth/punchout/internal/domain"
 )
 
 var (

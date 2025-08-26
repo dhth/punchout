@@ -1,4 +1,4 @@
-package common
+package domain
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
+// TODO: get all UI logic out of the domain package
 var listWidth = 140
 
 const (
