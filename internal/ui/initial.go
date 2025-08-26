@@ -50,7 +50,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 		trackingInputs:    trackingInputs,
 		debug:             debug,
 	}
-	m.issueList.Title = "fetching..."
+	m.issueList.Title = "▪▫▫ Issues"
 	m.issueList.SetStatusBarItemName("issue", "issues")
 	m.issueList.DisableQuitKeybindings()
 	m.issueList.SetShowHelp(false)
@@ -60,7 +60,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 	m.issueList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
 	m.issueList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 
-	m.worklogList.Title = "Worklog Entries"
+	m.worklogList.Title = "▫▪▫ Worklog Entries"
 	m.worklogList.SetStatusBarItemName("entry", "entries")
 	m.worklogList.SetFilteringEnabled(false)
 	m.worklogList.DisableQuitKeybindings()
@@ -71,7 +71,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 	m.worklogList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
 	m.worklogList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 
-	m.syncedWorklogList.Title = "Synced Worklog Entries (from local db)"
+	m.syncedWorklogList.Title = "▫▫▪ Synced Entries"
 	m.syncedWorklogList.SetStatusBarItemName("entry", "entries")
 	m.syncedWorklogList.SetFilteringEnabled(false)
 	m.syncedWorklogList.DisableQuitKeybindings()
