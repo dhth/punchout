@@ -50,7 +50,7 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 		trackingInputs:    trackingInputs,
 		debug:             debug,
 	}
-	m.issueList.Title = "▪▫▫ Issues"
+	m.issueList.Title = "fetching..."
 	m.issueList.SetStatusBarItemName("issue", "issues")
 	m.issueList.DisableQuitKeybindings()
 	m.issueList.SetShowHelp(false)
