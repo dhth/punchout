@@ -261,7 +261,7 @@ func (m *Model) getCmdToReloadData() tea.Cmd {
 	case issueListView:
 		m.issueList.Title = "fetching..."
 		m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListUnfetchedColor))
-		cmd = fetchJIRAIssues(m.jiraClient, m.jql)
+		cmd = m.fetchJIRAIssues()
 	case wLView:
 		cmd = fetchWorkLogs(m.db)
 		m.worklogList.ResetSelected()
@@ -485,7 +485,7 @@ func (m *Model) getCmdToSyncWLToJIRA() []tea.Cmd {
 
 			wl.SyncInProgress = true
 			m.worklogList.SetItem(i, wl)
-			cmds = append(cmds, syncWorklogWithJIRA(m.jiraClient, wl, m.fallbackComment, i, m.jiraTimeDeltaMins))
+			cmds = append(cmds, m.syncWorklogWithJIRA(wl, i))
 			toSyncNum++
 		}
 	}
@@ -499,7 +499,7 @@ func (m *Model) getCmdToSyncWLToJIRA() []tea.Cmd {
 func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
 	selectedIssue := m.issueList.SelectedItem().FilterValue()
 	return openURLInBrowser(fmt.Sprintf("%sbrowse/%s",
-		m.jiraClient.BaseURL.String(),
+		m.jiraSvc.JiraURL(),
 		selectedIssue))
 }
 
@@ -528,10 +528,10 @@ func (m *Model) handleIssuesFetchedFromJIRAMsg(msg issuesFetchedFromJIRA) tea.Cm
 	if msg.err != nil {
 		var remoteServerName string
 		if msg.responseStatusCode >= 400 && msg.responseStatusCode < 500 {
-			switch m.installationType {
-			case OnPremiseInstallation:
+			switch m.jiraCfg.InstallationType {
+			case d.OnPremiseInstallation:
 				remoteServerName = "Your on-premise JIRA installation"
-			case CloudInstallation:
+			case d.CloudInstallation:
 				remoteServerName = "Atlassian Cloud"
 			}
 			m.message = fmt.Sprintf("%s returned a %d status code, check if your configuration is correct",
@@ -602,7 +602,7 @@ func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
 	var secsSpent int
 	for i, e := range msg.entries {
 		secsSpent += e.SecsSpent()
-		e.FallbackComment = m.fallbackComment
+		e.FallbackComment = m.jiraCfg.FallbackComment
 		items[i] = list.Item(e)
 	}
 	m.worklogList.SetItems(items)
@@ -706,7 +706,7 @@ func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 	msg.entry.Synced = true
 	msg.entry.SyncInProgress = false
 	if msg.fallbackCommentUsed {
-		msg.entry.Comment = m.fallbackComment
+		msg.entry.Comment = m.jiraCfg.FallbackComment
 	}
 	m.worklogList.SetItem(msg.index, msg.entry)
 	return updateSyncStatusForEntry(m.db, msg.entry, msg.index, msg.fallbackCommentUsed)

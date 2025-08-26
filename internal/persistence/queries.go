@@ -80,7 +80,7 @@ ORDER BY
 	return logEntries, nil
 }
 
-func InsertNewWLInDB(db *sql.DB, issueKey string, beginTS time.Time) error {
+func InsertNewActiveWLInDB(db *sql.DB, issueKey string, beginTS time.Time) error {
 	stmt, err := db.Prepare(`
 INSERT INTO
     issue_log (issue_key, begin_ts, active, synced)
@@ -98,6 +98,30 @@ VALUES
 	}
 
 	return nil
+}
+
+func InsertManualWLInDB(db *sql.DB, issueKey string, beginTS time.Time, endTS time.Time, comment string) error {
+	stmt, err := db.Prepare(`
+INSERT INTO
+    issue_log (
+        issue_key,
+        begin_ts,
+        end_ts,
+        COMMENT,
+        active,
+        synced
+    )
+VALUES
+    (?, ?, ?, ?, ?, ?);
+`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(issueKey, beginTS, endTS, comment, false, false)
+
+	return err
 }
 
 func UpdateActiveWLInDB(db *sql.DB, issueKey, comment string, beginTS, endTS time.Time) error {
@@ -361,7 +385,7 @@ func QuickSwitchActiveWLInDB(db *sql.DB, currentIssue, selectedIssue string, cur
 		return ErrCouldntStopActiveTask
 	}
 
-	return InsertNewWLInDB(db, selectedIssue, currentTime)
+	return InsertNewActiveWLInDB(db, selectedIssue, currentTime)
 }
 
 func UpdateActiveWLBeginTSInDB(db *sql.DB, beginTS time.Time) error {

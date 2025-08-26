@@ -30,8 +30,8 @@ func TestMainCmd(t *testing.T) {
 		// THEN
 		require.NoError(t, err)
 
-		re := regexp.MustCompile(`"[^"]*"`)
-		result = re.ReplaceAllString(result, `"[PATH]"`)
+		re := regexp.MustCompile(`default "[^"]*"`)
+		result = re.ReplaceAllString(result, `default "[PATH]"`)
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 

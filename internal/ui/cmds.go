@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"time"
 
-	jira "github.com/andygrunwald/go-jira/v2/onpremise"
 	tea "github.com/charmbracelet/bubbletea"
 	d "github.com/dhth/punchout/internal/domain"
 	pers "github.com/dhth/punchout/internal/persistence"
@@ -20,11 +19,16 @@ var errWorklogsEndTSIsEmpty = errors.New("worklog's end timestamp is empty")
 func toggleTracking(db *sql.DB, selectedIssue string, beginTS, endTS time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
 		row := db.QueryRow(`
-SELECT issue_key
-from issue_log
-WHERE active=1
-ORDER BY begin_ts DESC
-LIMIT 1
+SELECT
+    issue_key
+FROM
+    issue_log
+WHERE
+    active = 1
+ORDER BY
+    begin_ts DESC
+LIMIT
+    1;
 `)
 		var trackStatus trackingStatus
 		var activeIssue string
@@ -39,7 +43,7 @@ LIMIT 1
 
 		switch trackStatus {
 		case trackingInactive:
-			err = pers.InsertNewWLInDB(db, selectedIssue, beginTS)
+			err = pers.InsertNewActiveWLInDB(db, selectedIssue, beginTS)
 			if err != nil {
 				return trackingToggledInDB{err: err}
 			}
@@ -86,21 +90,9 @@ func updateActiveWL(db *sql.DB, beginTS time.Time, comment *string) tea.Cmd {
 
 func insertManualEntry(db *sql.DB, issueKey string, beginTS time.Time, endTS time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
-		stmt, err := db.Prepare(`
-INSERT INTO issue_log (issue_key, begin_ts, end_ts, comment, active, synced)
-VALUES (?, ?, ?, ?, ?, ?);
-`)
-		if err != nil {
-			return manualWLInsertedInDB{issueKey, err}
-		}
-		defer stmt.Close()
+		err := pers.InsertManualWLInDB(db, issueKey, beginTS, endTS, comment)
 
-		_, err = stmt.Exec(issueKey, beginTS, endTS, comment, false, false)
-		if err != nil {
-			return manualWLInsertedInDB{issueKey, err}
-		}
-
-		return manualWLInsertedInDB{issueKey, nil}
+		return manualWLInsertedInDB{issueKey, err}
 	}
 }
 
@@ -114,11 +106,14 @@ func deleteActiveIssueLog(db *sql.DB) tea.Cmd {
 func updateManualEntry(db *sql.DB, rowID int, issueKey string, beginTS time.Time, endTS time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
 		stmt, err := db.Prepare(`
-UPDATE issue_log
-SET begin_ts = ?,
+UPDATE
+    issue_log
+SET
+    begin_ts = ?,
     end_ts = ?,
-    comment = ?
-WHERE ID = ?;
+    COMMENT = ?
+WHERE
+    ID = ?;
 `)
 		if err != nil {
 			return wLUpdatedInDB{rowID, issueKey, err}
@@ -137,11 +132,18 @@ WHERE ID = ?;
 func fetchActiveStatus(db *sql.DB, interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
 		row := db.QueryRow(`
-SELECT issue_key, begin_ts, comment
-from issue_log
-WHERE active=1
-ORDER BY begin_ts DESC
-LIMIT 1
+SELECT
+    issue_key,
+    begin_ts,
+    COMMENT
+FROM
+    issue_log
+WHERE
+    active = 1
+ORDER BY
+    begin_ts DESC
+LIMIT
+    1;
 `)
 		var activeIssue string
 		var beginTS time.Time
@@ -208,9 +210,9 @@ func updateSyncStatusForEntry(db *sql.DB, entry d.WorklogEntry, index int, fallb
 	}
 }
 
-func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
+func (m Model) fetchJIRAIssues() tea.Cmd {
 	return func() tea.Msg {
-		jIssues, statusCode, err := getIssues(cl, jql)
+		jIssues, statusCode, err := m.jiraSvc.GetIssues(m.jiraCfg.JQL)
 		var issues []d.Issue
 		if err != nil {
 			return issuesFetchedFromJIRA{issues, statusCode, err}
@@ -245,7 +247,7 @@ func fetchJIRAIssues(cl *jira.Client, jql string) tea.Cmd {
 	}
 }
 
-func syncWorklogWithJIRA(cl *jira.Client, entry d.WorklogEntry, fallbackComment *string, index int, timeDeltaMins int) tea.Cmd {
+func (m Model) syncWorklogWithJIRA(entry d.WorklogEntry, index int) tea.Cmd {
 	return func() tea.Msg {
 		var fallbackCmtUsed bool
 		if entry.EndTS == nil {
@@ -253,14 +255,14 @@ func syncWorklogWithJIRA(cl *jira.Client, entry d.WorklogEntry, fallbackComment 
 		}
 
 		var comment string
-		if entry.NeedsComment() && fallbackComment != nil {
-			comment = *fallbackComment
+		if entry.NeedsComment() && m.jiraCfg.FallbackComment != nil {
+			comment = *m.jiraCfg.FallbackComment
 			fallbackCmtUsed = true
 		} else if entry.Comment != nil {
 			comment = *entry.Comment
 		}
 
-		err := syncWLToJIRA(cl, entry.IssueKey, entry.BeginTS, *entry.EndTS, comment, timeDeltaMins)
+		err := m.jiraSvc.SyncWLToJIRA(entry.IssueKey, entry.BeginTS, *entry.EndTS, comment, m.jiraCfg.TimeDeltaMins)
 		return wLSyncedToJIRA{index, entry, fallbackCmtUsed, err}
 	}
 }
@@ -272,18 +274,17 @@ func hideHelp(interval time.Duration) tea.Cmd {
 }
 
 func openURLInBrowser(url string) tea.Cmd {
-	var openCmd string
-	switch runtime.GOOS {
-	case "darwin":
-		openCmd = "open"
-	default:
-		openCmd = "xdg-open"
-	}
-	c := exec.Command(openCmd, url)
-	return tea.ExecProcess(c, func(err error) tea.Msg {
-		if err != nil {
-			return urlOpenedinBrowserMsg{url: url, err: err}
+	return func() tea.Msg {
+		var openCmd string
+		switch runtime.GOOS {
+		case "darwin":
+			openCmd = "open"
+		default:
+			openCmd = "xdg-open"
 		}
-		return tea.Msg(urlOpenedinBrowserMsg{url: url})
-	})
+		c := exec.Command(openCmd, url)
+		err := c.Run()
+
+		return urlOpenedinBrowserMsg{url: url, err: err}
+	}
 }

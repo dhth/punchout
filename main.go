@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dhth/punchout/cmd"
+	"github.com/dhth/punchout/internal/cmd"
 )
 
 func main() {

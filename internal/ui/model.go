@@ -4,19 +4,12 @@ import (
 	"database/sql"
 	"time"
 
-	jira "github.com/andygrunwald/go-jira/v2/onpremise"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	d "github.com/dhth/punchout/internal/domain"
-)
-
-type JiraInstallationType uint
-
-const (
-	OnPremiseInstallation JiraInstallationType = iota
-	CloudInstallation
+	svc "github.com/dhth/punchout/internal/service"
 )
 
 type trackingStatus uint
@@ -69,10 +62,8 @@ type Model struct {
 	activeView            stateView
 	lastView              stateView
 	db                    *sql.DB
-	jiraClient            *jira.Client
-	installationType      JiraInstallationType
-	jql                   string
-	fallbackComment       *string
+	jiraSvc               svc.Jira
+	jiraCfg               d.JiraConfig
 	issueList             list.Model
 	issueMap              map[string]*d.Issue
 	issueIndexMap         map[string]int
@@ -94,7 +85,6 @@ type Model struct {
 	worklogSaveType       worklogSaveType
 	message               string
 	messages              []string
-	jiraTimeDeltaMins     int
 	showHelpIndicator     bool
 	terminalHeight        int
 	trackingActive        bool
@@ -104,7 +94,7 @@ type Model struct {
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		hideHelp(time.Minute*1),
-		fetchJIRAIssues(m.jiraClient, m.jql),
+		m.fetchJIRAIssues(),
 		fetchWorkLogs(m.db),
 		fetchSyncedWorkLogs(m.db),
 	)

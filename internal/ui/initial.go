@@ -3,14 +3,14 @@ package ui
 import (
 	"database/sql"
 
-	jira "github.com/andygrunwald/go-jira/v2/onpremise"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
 	d "github.com/dhth/punchout/internal/domain"
+	svc "github.com/dhth/punchout/internal/service"
 )
 
-func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInstallationType, jql string, jiraTimeDeltaMins int, fallbackComment *string, debug bool) Model {
+func InitialModel(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, debug bool) Model {
 	var stackItems []list.Item
 	var worklogListItems []list.Item
 	var syncedWorklogListItems []list.Item
@@ -36,16 +36,13 @@ func InitialModel(db *sql.DB, jiraClient *jira.Client, installationType JiraInst
 
 	m := Model{
 		db:                db,
-		jiraClient:        jiraClient,
-		installationType:  installationType,
-		jql:               jql,
-		fallbackComment:   fallbackComment,
+		jiraSvc:           jiraSvc,
+		jiraCfg:           jiraCfg,
 		issueList:         list.New(stackItems, newItemDelegate(lipgloss.Color(issueListColor)), listWidth, 0),
 		issueMap:          make(map[string]*d.Issue),
 		issueIndexMap:     make(map[string]int),
 		worklogList:       list.New(worklogListItems, newItemDelegate(lipgloss.Color(worklogListColor)), listWidth, 0),
 		syncedWorklogList: list.New(syncedWorklogListItems, newItemDelegate(syncedWorklogListColor), listWidth, 0),
-		jiraTimeDeltaMins: jiraTimeDeltaMins,
 		showHelpIndicator: true,
 		trackingInputs:    trackingInputs,
 		debug:             debug,
