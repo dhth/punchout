@@ -170,6 +170,13 @@ func NewRootCommand() (*cobra.Command, error) {
 				TimeDeltaMins:    userCfg.Jira.JiraTimeDeltaMins,
 				FallbackComment:  userCfg.Jira.FallbackComment,
 			}
+			return nil
+		},
+		RunE: func(_ *cobra.Command, _ []string) error {
+			if flagListConfig {
+				printConfig(configPathFull, dbPathFull, userCfg)
+				return nil
+			}
 
 			db, err = pers.GetDB(dbPathFull)
 			if err != nil {
@@ -179,14 +186,6 @@ func NewRootCommand() (*cobra.Command, error) {
 			jiraSvc, err = getJiraSvc(jiraCfg.InstallationType, userCfg)
 			if err != nil {
 				return err
-			}
-
-			return nil
-		},
-		RunE: func(_ *cobra.Command, _ []string) error {
-			if flagListConfig {
-				printConfig(configPathFull, dbPathFull, userCfg)
-				return nil
 			}
 
 			return ui.RenderUI(db, jiraSvc, jiraCfg)
@@ -216,10 +215,21 @@ func NewRootCommand() (*cobra.Command, error) {
 				return nil
 			}
 
+			db, err = pers.GetDB(dbPathFull)
+			if err != nil {
+				return err
+			}
+
+			jiraSvc, err = getJiraSvc(jiraCfg.InstallationType, userCfg)
+			if err != nil {
+				return err
+			}
+
 			mcpCfg := d.McpConfig{
 				Transport: transport,
 				HTTPPort:  flagMcpServerPort,
 			}
+
 			return mcp.Serve(db, jiraSvc, jiraCfg, mcpCfg)
 		},
 	}

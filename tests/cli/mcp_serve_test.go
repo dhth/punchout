@@ -79,6 +79,8 @@ func TestMCPServeCmd(t *testing.T) {
 		args := []string{
 			"mcp",
 			"serve",
+			"--config-file-path", "config/good.toml",
+			"--db-path", "db.db",
 			"--transport", "blah",
 			"--list-config",
 		}
@@ -96,6 +98,8 @@ func TestMCPServeCmd(t *testing.T) {
 		args := []string{
 			"mcp",
 			"serve",
+			"--config-file-path", "config/good.toml",
+			"--db-path", "db.db",
 			"--transport", "http",
 			"--http-port", "blah",
 			"--list-config",
