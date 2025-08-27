@@ -1,0 +1,7 @@
+success: false
+exit_code: 1
+----- stdout -----
+
+----- stderr -----
+Error: invalid value provided for MCP transport: "blah"
+

@@ -19,14 +19,14 @@ const (
 )
 
 type Issue struct {
-	IssueKey        string
-	IssueType       string
-	Summary         string
-	Assignee        string
-	Status          string
-	AggSecondsSpent int
-	TrackingActive  bool
-	Desc            string
+	IssueKey        string `json:"issue_key" jsonschema:"issue key"`
+	IssueType       string `json:"issue_type" jsonschema:"issue type"`
+	Summary         string `json:"summary" jsonschema:"issue summary"`
+	Assignee        string `json:"assignee" jsonschema:"issue assignee"`
+	Status          string `json:"status" jsonschema:"issue status"`
+	AggSecondsSpent int    `json:"agg_seconds_spent" jsonschema:"aggregate seconds spent on the issue"`
+	TrackingActive  bool   `json:"-"`
+	Desc            string `json:"-"`
 }
 
 func (issue *Issue) SetDesc() {
@@ -67,16 +67,16 @@ func (issue Issue) Description() string {
 func (issue Issue) FilterValue() string { return issue.IssueKey }
 
 type WorklogEntry struct {
-	ID              int
-	IssueKey        string
-	BeginTS         time.Time
-	EndTS           *time.Time
-	Comment         *string
-	FallbackComment *string
-	Active          bool
-	Synced          bool
-	SyncInProgress  bool
-	Error           error
+	ID              int        `json:"id" jsonschema:"worklog entry ID"`
+	IssueKey        string     `json:"issue_key" jsonschema:"JIRA issue key"`
+	BeginTS         time.Time  `json:"begin_time" jsonschema:"worklog begin time"`
+	EndTS           *time.Time `json:"end_time" jsonschema:"worklog end time"`
+	Comment         *string    `json:"comment" jsonschema:"worklog comment"`
+	FallbackComment *string    `json:"-"`
+	Active          bool       `json:"-"`
+	Synced          bool       `json:"-"`
+	SyncInProgress  bool       `json:"-"`
+	Error           error      `json:"-"`
 }
 
 type SyncedWorklogEntry struct {

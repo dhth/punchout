@@ -30,6 +30,7 @@ var (
 	errTimeDeltaIncorrect      = errors.New("couldn't convert time delta to a number")
 	errCouldntParseConfigFile  = errors.New("couldn't parse config file")
 	errInvalidInstallationType = fmt.Errorf("invalid value for jira installation type (allowed values: [%s, %s])", jiraInstallationTypeOnPremise, jiraInstallationTypeCloud)
+	errInvalidMCPTransport     = fmt.Errorf("invalid value provided for MCP transport")
 )
 
 func Execute() error {
@@ -53,6 +54,9 @@ func NewRootCommand() (*cobra.Command, error) {
 		flagJiraUsername         string
 		flagJQL                  string
 		flagListConfig           bool
+
+		flagMcpTransportStr string
+		flagMcpServerPort   uint
 
 		userCfg        userConfig
 		jiraCfg        d.JiraConfig
@@ -167,11 +171,6 @@ func NewRootCommand() (*cobra.Command, error) {
 				FallbackComment:  userCfg.Jira.FallbackComment,
 			}
 
-			if flagListConfig {
-				printConfig(configPathFull, dbPathFull, userCfg)
-				return nil
-			}
-
 			db, err = pers.GetDB(dbPathFull)
 			if err != nil {
 				return err
@@ -186,6 +185,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if flagListConfig {
+				printConfig(configPathFull, dbPathFull, userCfg)
 				return nil
 			}
 
@@ -202,11 +202,25 @@ func NewRootCommand() (*cobra.Command, error) {
 		Use:   "serve",
 		Short: "Run punchout's MCP server",
 		RunE: func(_ *cobra.Command, _ []string) error {
+			transport, ok := d.ParseMCPTransport(flagMcpTransportStr)
+			if !ok {
+				return fmt.Errorf("%w: %q", errInvalidMCPTransport, flagMcpTransportStr)
+			}
+
 			if flagListConfig {
+				printConfig(configPathFull, dbPathFull, userCfg)
+				fmt.Fprintf(os.Stdout, "Transport                               %s\n", flagMcpTransportStr)
+				if transport == d.McpTransportHTTP {
+					fmt.Fprintf(os.Stdout, "Port                                    %d\n", flagMcpServerPort)
+				}
 				return nil
 			}
 
-			return mcp.Serve(db, jiraSvc, jiraCfg)
+			mcpCfg := d.McpConfig{
+				Transport: transport,
+				HTTPPort:  flagMcpServerPort,
+			}
+			return mcp.Serve(db, jiraSvc, jiraCfg, mcpCfg)
 		},
 	}
 
@@ -240,10 +254,13 @@ func NewRootCommand() (*cobra.Command, error) {
 	rootCmd.PersistentFlags().StringVarP(&flagJiraTimeDeltaMinsStr, "jira-time-delta-mins", "", "", "time delta (in minutes) between your timezone and the timezone of the JIRA server; can be +/-")
 	rootCmd.PersistentFlags().BoolVarP(&flagListConfig, "list-config", "", false, "print the config that punchout will use")
 
-	rootCmd.CompletionOptions.DisableDefaultCmd = true
+	mcpServeCmd.Flags().StringVarP(&flagMcpTransportStr, "transport", "t", "stdio", "transport to use (possible values: [stdio, http])")
+	mcpServeCmd.Flags().UintVarP(&flagMcpServerPort, "http-port", "p", 18899, "port to use (when transport is http)")
 
 	mcpCmd.AddCommand(mcpServeCmd)
 	rootCmd.AddCommand(mcpCmd)
+
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	return rootCmd, nil
 }

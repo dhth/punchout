@@ -1,14 +1,14 @@
-package mcp
+package tools
 
 import (
 	"database/sql"
-	"fmt"
 
 	d "github.com/dhth/punchout/internal/domain"
 	svc "github.com/dhth/punchout/internal/service"
 )
 
-func Serve(_ *sql.DB, _ svc.Jira, _ d.JiraConfig) error {
-	fmt.Println("serving...")
-	return nil
+type Handler struct {
+	DB      *sql.DB
+	JiraSvc svc.Jira
+	JiraCfg d.JiraConfig
 }

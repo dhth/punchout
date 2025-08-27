@@ -1,0 +1,7 @@
+success: false
+exit_code: 1
+----- stdout -----
+
+----- stderr -----
+Error: invalid argument "blah" for "-p, --http-port" flag: strconv.ParseUint: parsing "blah": invalid syntax
+

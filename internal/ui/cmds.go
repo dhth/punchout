@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"os/exec"
@@ -160,9 +161,9 @@ LIMIT
 	})
 }
 
-func fetchWorkLogs(db *sql.DB) tea.Cmd {
+func fetchUnsyncedWorkLogs(db *sql.DB) tea.Cmd {
 	return func() tea.Msg {
-		entries, err := pers.FetchWLsFromDB(db)
+		entries, err := pers.FetchUnsyncedWLsFromDB(db)
 		return wLEntriesFetchedFromDB{
 			entries: entries,
 			err:     err,
@@ -212,38 +213,9 @@ func updateSyncStatusForEntry(db *sql.DB, entry d.WorklogEntry, index int, fallb
 
 func (m Model) fetchJIRAIssues() tea.Cmd {
 	return func() tea.Msg {
-		jIssues, statusCode, err := m.jiraSvc.GetIssues(m.jiraCfg.JQL)
-		var issues []d.Issue
-		if err != nil {
-			return issuesFetchedFromJIRA{issues, statusCode, err}
-		}
+		issues, statusCode, err := m.jiraSvc.GetIssues(m.jiraCfg.JQL)
 
-		for _, issue := range jIssues {
-			var assignee string
-			var totalSecsSpent int
-			var status string
-			if issue.Fields != nil {
-				if issue.Fields.Assignee != nil {
-					assignee = issue.Fields.Assignee.DisplayName
-				}
-
-				totalSecsSpent = issue.Fields.AggregateTimeSpent
-
-				if issue.Fields.Status != nil {
-					status = issue.Fields.Status.Name
-				}
-			}
-			issues = append(issues, d.Issue{
-				IssueKey:        issue.Key,
-				IssueType:       issue.Fields.Type.Name,
-				Summary:         issue.Fields.Summary,
-				Assignee:        assignee,
-				Status:          status,
-				AggSecondsSpent: totalSecsSpent,
-				TrackingActive:  false,
-			})
-		}
-		return issuesFetchedFromJIRA{issues, statusCode, nil}
+		return issuesFetchedFromJIRA{issues, statusCode, err}
 	}
 }
 
@@ -262,7 +234,7 @@ func (m Model) syncWorklogWithJIRA(entry d.WorklogEntry, index int) tea.Cmd {
 			comment = *entry.Comment
 		}
 
-		err := m.jiraSvc.SyncWLToJIRA(entry.IssueKey, entry.BeginTS, *entry.EndTS, comment, m.jiraCfg.TimeDeltaMins)
+		err := m.jiraSvc.SyncWLToJIRA(context.TODO(), entry, comment, m.jiraCfg.TimeDeltaMins)
 		return wLSyncedToJIRA{index, entry, fallbackCmtUsed, err}
 	}
 }
