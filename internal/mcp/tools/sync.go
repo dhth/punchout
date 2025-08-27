@@ -84,6 +84,7 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 			if err != nil {
 				sr.Err = err
 				resultChan <- sr
+				return
 			}
 
 			slog.Info("synced worklog to jira", "issue_key", entry.IssueKey, "worklog_id", entry.ID)
@@ -97,6 +98,7 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 			if err != nil {
 				sr.Err = err
 				resultChan <- sr
+				return
 			}
 
 			slog.Info("updated worklog in db", "issue_key", entry.IssueKey, "worklog_id", entry.ID)
