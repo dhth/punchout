@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/gkampitakis/go-snaps/snaps"
@@ -30,8 +29,7 @@ func TestMainCmd(t *testing.T) {
 		// THEN
 		require.NoError(t, err)
 
-		re := regexp.MustCompile(`default "[^"]*"`)
-		result = re.ReplaceAllString(result, `default "[PATH]"`)
+		result = pathRegex.ReplaceAllString(result, `default "[PATH]"`)
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 

@@ -121,7 +121,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "2":
 			if m.activeView != wLView {
 				m.activeView = wLView
-				cmds = append(cmds, fetchWorkLogs(m.db))
+				cmds = append(cmds, fetchUnsyncedWorkLogs(m.db))
 			}
 		case "3":
 			if m.activeView != syncedWLView {

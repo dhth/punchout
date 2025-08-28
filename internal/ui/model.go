@@ -95,7 +95,7 @@ func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		hideHelp(time.Minute*1),
 		m.fetchJIRAIssues(),
-		fetchWorkLogs(m.db),
+		fetchUnsyncedWorkLogs(m.db),
 		fetchSyncedWorkLogs(m.db),
 	)
 }

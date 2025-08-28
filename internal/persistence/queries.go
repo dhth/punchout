@@ -174,7 +174,7 @@ WHERE
 	return nil
 }
 
-func FetchWLsFromDB(db *sql.DB) ([]c.WorklogEntry, error) {
+func FetchUnsyncedWLsFromDB(db *sql.DB) ([]c.WorklogEntry, error) {
 	var logEntries []c.WorklogEntry
 
 	rows, err := db.Query(`

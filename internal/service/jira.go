@@ -8,11 +8,13 @@ import (
 
 	jiraCloud "github.com/andygrunwald/go-jira/v2/cloud"
 	jira "github.com/andygrunwald/go-jira/v2/onpremise"
+	d "github.com/dhth/punchout/internal/domain"
 )
 
 var (
 	errJIRARepliedWithEmptyWorklog = errors.New("JIRA replied with an empty worklog; something is probably wrong")
 	errCouldntCreateJiraClient     = errors.New("couldn't create JIRA client")
+	errCouldntFetchIssuesFromJira  = errors.New("couldn't fetch issues from JIRA")
 )
 
 type Jira struct {
@@ -61,27 +63,60 @@ func NewCloudJiraSvc(url string, userName string, token string) (Jira, error) {
 	}, nil
 }
 
-func (svc Jira) GetIssues(jql string) ([]jira.Issue, int, error) {
-	issues, resp, err := svc.client.Issue.Search(context.Background(), jql, nil)
+func (svc Jira) GetIssues(jql string) ([]d.Issue, int, error) {
+	var zero []d.Issue
+
+	jIssues, resp, err := svc.client.Issue.Search(context.Background(), jql, nil)
+	if err != nil {
+		return zero, 0, fmt.Errorf("%w: %s", errCouldntFetchIssuesFromJira, err.Error())
+	}
+
+	issues := make([]d.Issue, len(jIssues))
+	for i, issue := range jIssues {
+		var assignee string
+		var totalSecsSpent int
+		var status string
+		if issue.Fields != nil {
+			if issue.Fields.Assignee != nil {
+				assignee = issue.Fields.Assignee.DisplayName
+			}
+
+			totalSecsSpent = issue.Fields.AggregateTimeSpent
+
+			if issue.Fields.Status != nil {
+				status = issue.Fields.Status.Name
+			}
+		}
+		issues[i] = d.Issue{
+			IssueKey:        issue.Key,
+			IssueType:       issue.Fields.Type.Name,
+			Summary:         issue.Fields.Summary,
+			Assignee:        assignee,
+			Status:          status,
+			AggSecondsSpent: totalSecsSpent,
+		}
+	}
+
 	return issues, resp.StatusCode, err
 }
 
-func (svc Jira) SyncWLToJIRA(issueKey string, beginTS, endTS time.Time, comment string, timeDeltaMins int) error {
-	start := beginTS
+func (svc Jira) SyncWLToJIRA(ctx context.Context, entry d.WorklogEntry, comment string, timeDeltaMins int) error {
+	start := entry.BeginTS
 
 	if timeDeltaMins != 0 {
 		start = start.Add(time.Minute * time.Duration(timeDeltaMins))
 	}
 
-	timeSpentSecs := int(endTS.Sub(beginTS).Seconds())
+	timeSpentSecs := int(entry.EndTS.Sub(entry.BeginTS).Seconds())
+
 	wl := jira.WorklogRecord{
-		IssueID:          issueKey,
+		IssueID:          entry.IssueKey,
 		Started:          (*jira.Time)(&start),
 		TimeSpentSeconds: timeSpentSecs,
 		Comment:          comment,
 	}
-	cwl, _, err := svc.client.Issue.AddWorklogRecord(context.Background(),
-		issueKey,
+	cwl, _, err := svc.client.Issue.AddWorklogRecord(ctx,
+		entry.IssueKey,
 		&wl,
 	)
 

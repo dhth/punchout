@@ -152,7 +152,7 @@ func (m *Model) getCmdToGoForwardsInViews() tea.Cmd {
 	switch m.activeView {
 	case issueListView:
 		m.activeView = wLView
-		cmd = fetchWorkLogs(m.db)
+		cmd = fetchUnsyncedWorkLogs(m.db)
 	case wLView:
 		m.activeView = syncedWLView
 		cmd = fetchSyncedWorkLogs(m.db)
@@ -194,7 +194,7 @@ func (m *Model) getCmdToGoBackwardsInViews() tea.Cmd {
 		m.activeView = issueListView
 	case syncedWLView:
 		m.activeView = wLView
-		cmd = fetchWorkLogs(m.db)
+		cmd = fetchUnsyncedWorkLogs(m.db)
 	case issueListView:
 		m.activeView = syncedWLView
 		cmd = fetchSyncedWorkLogs(m.db)
@@ -263,7 +263,7 @@ func (m *Model) getCmdToReloadData() tea.Cmd {
 		m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListUnfetchedColor))
 		cmd = m.fetchJIRAIssues()
 	case wLView:
-		cmd = fetchWorkLogs(m.db)
+		cmd = fetchUnsyncedWorkLogs(m.db)
 		m.worklogList.ResetSelected()
 	case syncedWLView:
 		cmd = fetchSyncedWorkLogs(m.db)
@@ -572,7 +572,7 @@ func (m *Model) handleManualEntryInsertedInDBMsg(msg manualWLInsertedInDB) tea.C
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].SetValue("")
 	}
-	return fetchWorkLogs(m.db)
+	return fetchUnsyncedWorkLogs(m.db)
 }
 
 func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
@@ -587,7 +587,7 @@ func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].SetValue("")
 	}
-	return fetchWorkLogs(m.db)
+	return fetchUnsyncedWorkLogs(m.db)
 }
 
 func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
@@ -677,7 +677,7 @@ func (m *Model) handleWLDeletedFromDBMsg(msg wLDeletedFromDB) tea.Cmd {
 		return nil
 	}
 
-	return fetchWorkLogs(m.db)
+	return fetchUnsyncedWorkLogs(m.db)
 }
 
 func (m *Model) handleActiveWLDeletedFromDBMsg(msg activeWLDeletedFromDB) {
@@ -750,7 +750,7 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 		}
 		m.trackingActive = false
 		m.activeIssueComment = nil
-		cmd = fetchWorkLogs(m.db)
+		cmd = fetchUnsyncedWorkLogs(m.db)
 	case false:
 		m.lastChange = insertChange
 		if activeIssue != nil {
