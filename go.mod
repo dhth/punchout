@@ -13,7 +13,7 @@ require (
 	github.com/google/jsonschema-go v0.2.0
 	github.com/modelcontextprotocol/go-sdk v0.3.0
 	github.com/spf13/cobra v1.9.1
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	modernc.org/sqlite v1.38.2
 )
 
