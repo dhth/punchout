@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	c "github.com/dhth/punchout/internal/domain"
+	d "github.com/dhth/punchout/internal/domain"
 )
 
 var (
@@ -28,8 +28,8 @@ WHERE
 	return numActiveIssues, err
 }
 
-func getWorkLogsForIssueFromDB(db *sql.DB, issueKey string) ([]c.WorklogEntry, error) {
-	var logEntries []c.WorklogEntry
+func getWorkLogsForIssueFromDB(db *sql.DB, issueKey string) ([]d.WorklogEntry, error) {
+	var logEntries []d.WorklogEntry
 
 	rows, err := db.Query(`
 SELECT
@@ -54,7 +54,7 @@ ORDER BY
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry c.WorklogEntry
+		var entry d.WorklogEntry
 		err = rows.Scan(&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
@@ -100,7 +100,7 @@ VALUES
 	return nil
 }
 
-func InsertManualWLInDB(db *sql.DB, issueKey string, beginTS time.Time, endTS time.Time, comment string) error {
+func InsertManualWLInDB(db *sql.DB, worklog d.ValidatedWorkLog) error {
 	stmt, err := db.Prepare(`
 INSERT INTO
     issue_log (
@@ -119,7 +119,7 @@ VALUES
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(issueKey, beginTS, endTS, comment, false, false)
+	_, err = stmt.Exec(worklog.IssueKey, worklog.BeginTS, worklog.EndTS, worklog.Comment, false, false)
 
 	return err
 }
@@ -174,8 +174,8 @@ WHERE
 	return nil
 }
 
-func FetchUnsyncedWLsFromDB(db *sql.DB) ([]c.WorklogEntry, error) {
-	var logEntries []c.WorklogEntry
+func FetchUnsyncedWLsFromDB(db *sql.DB) ([]d.WorklogEntry, error) {
+	var logEntries []d.WorklogEntry
 
 	rows, err := db.Query(`
 SELECT
@@ -200,7 +200,7 @@ ORDER BY
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry c.WorklogEntry
+		var entry d.WorklogEntry
 		err = rows.Scan(&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
@@ -226,8 +226,8 @@ ORDER BY
 	return logEntries, nil
 }
 
-func FetchSyncedWLsFromDB(db *sql.DB) ([]c.SyncedWorklogEntry, error) {
-	var logEntries []c.SyncedWorklogEntry
+func FetchSyncedWLsFromDB(db *sql.DB) ([]d.SyncedWorklogEntry, error) {
+	var logEntries []d.SyncedWorklogEntry
 
 	rows, err := db.Query(`
 SELECT
@@ -252,7 +252,7 @@ LIMIT
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry c.SyncedWorklogEntry
+		var entry d.SyncedWorklogEntry
 		err = rows.Scan(&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,

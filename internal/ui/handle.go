@@ -88,12 +88,13 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 	if ok {
 		switch m.worklogSaveType {
 		case worklogInsert:
-			cmd = insertManualEntry(m.db,
-				issue.IssueKey,
-				beginTS,
-				endTS,
-				m.trackingInputs[entryComment].Value(),
-			)
+			worklog := d.ValidatedWorkLog{
+				IssueKey: issue.IssueKey,
+				BeginTS:  beginTS,
+				EndTS:    endTS,
+				Comment:  m.trackingInputs[entryComment].Value(),
+			}
+			cmd = insertManualEntry(m.db, worklog)
 			m.activeView = issueListView
 		case worklogUpdate:
 			wl, ok := m.worklogList.SelectedItem().(d.WorklogEntry)

@@ -89,11 +89,11 @@ func updateActiveWL(db *sql.DB, beginTS time.Time, comment *string) tea.Cmd {
 	}
 }
 
-func insertManualEntry(db *sql.DB, issueKey string, beginTS time.Time, endTS time.Time, comment string) tea.Cmd {
+func insertManualEntry(db *sql.DB, worklog d.ValidatedWorkLog) tea.Cmd {
 	return func() tea.Msg {
-		err := pers.InsertManualWLInDB(db, issueKey, beginTS, endTS, comment)
+		err := pers.InsertManualWLInDB(db, worklog)
 
-		return manualWLInsertedInDB{issueKey, err}
+		return manualWLInsertedInDB{worklog.IssueKey, err}
 	}
 }
 

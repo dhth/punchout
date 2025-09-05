@@ -29,6 +29,12 @@ func (h Handler) AddToolsToServer(server *mcp.Server) error {
 	}
 	tools = append(tools, addWorkLogTool.Name)
 
+	addMultipleWorklogsTool, err := addMultipleWorklogsTool()
+	if err != nil {
+		return fmt.Errorf("%w: add_multiple_worklogs: %s", errCouldntAddToolToServer, err.Error())
+	}
+	tools = append(tools, addMultipleWorklogsTool.Name)
+
 	getUnsyncedWorklogsTool, err := getUnsyncedWorklogsTool()
 	if err != nil {
 		return fmt.Errorf("%w: get_unsynced_worklogs: %s", errCouldntAddToolToServer, err.Error())
@@ -45,6 +51,7 @@ func (h Handler) AddToolsToServer(server *mcp.Server) error {
 
 	mcp.AddTool(server, &getIssuesTool, h.getIssues)
 	mcp.AddTool(server, &addWorkLogTool, h.addWorklog)
+	mcp.AddTool(server, &addMultipleWorklogsTool, h.addMultipleWorklogs)
 	mcp.AddTool(server, &getUnsyncedWorklogsTool, h.getUnsyncedWorklogs)
 	mcp.AddTool(server, &syncWorklogsTool, h.syncWorklogsToJira)
 
