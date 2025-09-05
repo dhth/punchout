@@ -52,13 +52,6 @@ type getUnsyncedWorklogsOutput struct {
 	Worklogs []d.WorklogEntry `json:"worklogs" jsonschema:"unsynced worklog entries"`
 }
 
-type validatedAddWorkLogInput struct {
-	IssueKey string
-	BeginTS  time.Time
-	EndTS    time.Time
-	Comment  string
-}
-
 func (h Handler) addWorklog(_ context.Context, _ *mcp.CallToolRequest, params addWorkLogInput) (*mcp.CallToolResult, addWorkLogOutput, error) {
 	tErr := toolCallError[addWorkLogOutput]
 	tSuc := toolCallSuccess[addWorkLogOutput]
@@ -70,7 +63,7 @@ func (h Handler) addWorklog(_ context.Context, _ *mcp.CallToolRequest, params ad
 		return tErr(err.Error())
 	}
 
-	err = pers.InsertManualWLInDB(h.DB, validatedWorkLog.IssueKey, validatedWorkLog.BeginTS, validatedWorkLog.EndTS, validatedWorkLog.Comment)
+	err = pers.InsertManualWLInDB(h.DB, validatedWorkLog)
 	if err != nil {
 		return tErr(err.Error())
 	}
@@ -104,11 +97,7 @@ func (h Handler) addMultipleWorklogs(_ context.Context, _ *mcp.CallToolRequest, 
 			continue
 		}
 
-		err = pers.InsertManualWLInDB(h.DB,
-			worklogInput.IssueKey,
-			validatedWorkLog.BeginTS,
-			validatedWorkLog.EndTS,
-			validatedWorkLog.Comment)
+		err = pers.InsertManualWLInDB(h.DB, validatedWorkLog)
 		if err != nil {
 			failedWorklogs = append(failedWorklogs, failedWorklog{
 				Input: worklogInput,
@@ -150,8 +139,8 @@ func (h Handler) getUnsyncedWorklogs(_ context.Context, _ *mcp.CallToolRequest, 
 	return tSuc(output)
 }
 
-func (h Handler) validateWorklogInput(input addWorkLogInput) (validatedAddWorkLogInput, error) {
-	var zero validatedAddWorkLogInput
+func (h Handler) validateWorklogInput(input addWorkLogInput) (d.ValidatedWorkLog, error) {
+	var zero d.ValidatedWorkLog
 	if !jiraIssueRegex.MatchString(input.IssueKey) {
 		return zero, fmt.Errorf(`issue_key doesn't look valid; JIRA issue keys match the regex '[A-Z]{2,}-\d+'`)
 	}
@@ -178,7 +167,7 @@ func (h Handler) validateWorklogInput(input addWorkLogInput) (validatedAddWorkLo
 		comment = *h.JiraCfg.FallbackComment
 	}
 
-	return validatedAddWorkLogInput{
+	return d.ValidatedWorkLog{
 		IssueKey: input.IssueKey,
 		BeginTS:  beginTS,
 		EndTS:    endTS,

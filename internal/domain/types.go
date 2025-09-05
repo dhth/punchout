@@ -180,3 +180,10 @@ func (entry SyncedWorklogEntry) Description() string {
 	)
 }
 func (entry SyncedWorklogEntry) FilterValue() string { return entry.IssueKey }
+
+type ValidatedWorkLog struct {
+	IssueKey string
+	BeginTS  time.Time
+	EndTS    time.Time
+	Comment  string
+}
