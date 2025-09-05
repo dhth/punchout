@@ -88,16 +88,10 @@ func (h Handler) addMultipleWorklogs(_ context.Context, _ *mcp.CallToolRequest, 
 
 	for i, worklogInput := range params.Worklogs {
 		validatedWorkLog, err := h.validateWorklogInput(worklogInput)
-		if err != nil {
-			failedWorklogs = append(failedWorklogs, failedWorklog{
-				Input: worklogInput,
-				Error: err.Error(),
-				Index: i,
-			})
-			continue
+		if err == nil {
+			err = pers.InsertManualWLInDB(h.DB, validatedWorkLog)
 		}
 
-		err = pers.InsertManualWLInDB(h.DB, validatedWorkLog)
 		if err != nil {
 			failedWorklogs = append(failedWorklogs, failedWorklog{
 				Input: worklogInput,
