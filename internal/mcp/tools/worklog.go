@@ -33,56 +33,102 @@ type addWorkLogOutput struct {
 	Comment  string `json:"comment" jsonschema:"comment for the worklog"`
 }
 
+type addMultipleWorklogsInput struct {
+	Worklogs []addWorkLogInput `json:"worklogs" jsonschema:"array of worklog entries to create"`
+}
+
+type addMultipleWorklogsOutput struct {
+	SuccessfulWorklogs []addWorkLogOutput `json:"successful_worklogs" jsonschema:"successfully created worklog entries"`
+	FailedWorklogs     []failedWorklog    `json:"failed_worklogs" jsonschema:"failed worklog entries with error details"`
+}
+
+type failedWorklog struct {
+	Input addWorkLogInput `json:"input" jsonschema:"original input that failed"`
+	Error string          `json:"error" jsonschema:"error message describing the failure"`
+	Index int             `json:"index" jsonschema:"index of the failed entry in the original input array"`
+}
+
 type getUnsyncedWorklogsOutput struct {
 	Worklogs []d.WorklogEntry `json:"worklogs" jsonschema:"unsynced worklog entries"`
+}
+
+type validatedAddWorkLogInput struct {
+	IssueKey string
+	BeginTS  time.Time
+	EndTS    time.Time
+	Comment  string
 }
 
 func (h Handler) addWorklog(_ context.Context, _ *mcp.CallToolRequest, params addWorkLogInput) (*mcp.CallToolResult, addWorkLogOutput, error) {
 	tErr := toolCallError[addWorkLogOutput]
 	tSuc := toolCallSuccess[addWorkLogOutput]
 
-	issueKey := params.IssueKey
-	beginTSStr := params.BeginTS
-	endTSStr := params.EndTS
+	slog.Info("got request for adding worklog", "issue_key", params.IssueKey, "begin_time", params.BeginTS, "end_time", params.EndTS)
 
-	slog.Info("got request for adding worklog", "issue_key", issueKey, "begin_time", beginTSStr, "end_time", endTSStr)
-
-	if !jiraIssueRegex.MatchString(issueKey) {
-		return tErr(`issue_key doesn't look valid; JIRA issue keys match the regex '[A-Z]{2,}-\d+'`)
-	}
-
-	beginTS, err := time.ParseInLocation(timeFormat, beginTSStr, time.Local)
+	validatedWorkLog, err := h.validateWorklogInput(params)
 	if err != nil {
-		return tErr("begin_time is not correct, expected format: 2006/01/02 15:04")
+		return tErr(err.Error())
 	}
 
-	endTS, err := time.ParseInLocation(timeFormat, endTSStr, time.Local)
-	if err != nil {
-		return tErr("end_time is not correct, expected format: 2006/01/02 15:04")
-	}
-
-	if endTS.Sub(beginTS).Seconds() < 60 {
-		return tErr("duration is not valid, end time needs to be atleast a minute after begin time")
-	}
-
-	var comment string
-
-	if params.Comment != nil {
-		comment = *params.Comment
-	} else if h.JiraCfg.FallbackComment != nil {
-		comment = *h.JiraCfg.FallbackComment
-	}
-
-	err = pers.InsertManualWLInDB(h.DB, issueKey, beginTS, endTS, comment)
+	err = pers.InsertManualWLInDB(h.DB, validatedWorkLog.IssueKey, validatedWorkLog.BeginTS, validatedWorkLog.EndTS, validatedWorkLog.Comment)
 	if err != nil {
 		return tErr(err.Error())
 	}
 
 	output := addWorkLogOutput{
-		IssueKey: issueKey,
-		BeginTS:  beginTSStr,
-		EndTS:    endTSStr,
-		Comment:  comment,
+		IssueKey: validatedWorkLog.IssueKey,
+		BeginTS:  params.BeginTS,
+		EndTS:    params.EndTS,
+		Comment:  validatedWorkLog.Comment,
+	}
+
+	return tSuc(output)
+}
+
+func (h Handler) addMultipleWorklogs(_ context.Context, _ *mcp.CallToolRequest, params addMultipleWorklogsInput) (*mcp.CallToolResult, addMultipleWorklogsOutput, error) {
+	tSuc := toolCallSuccess[addMultipleWorklogsOutput]
+
+	slog.Info("got request for adding multiple worklogs", "count", len(params.Worklogs))
+
+	successfulWorklogs := make([]addWorkLogOutput, 0, len(params.Worklogs))
+	failedWorklogs := make([]failedWorklog, 0, len(params.Worklogs))
+
+	for i, worklogInput := range params.Worklogs {
+		validatedWorkLog, err := h.validateWorklogInput(worklogInput)
+		if err != nil {
+			failedWorklogs = append(failedWorklogs, failedWorklog{
+				Input: worklogInput,
+				Error: err.Error(),
+				Index: i,
+			})
+			continue
+		}
+
+		err = pers.InsertManualWLInDB(h.DB,
+			worklogInput.IssueKey,
+			validatedWorkLog.BeginTS,
+			validatedWorkLog.EndTS,
+			validatedWorkLog.Comment)
+		if err != nil {
+			failedWorklogs = append(failedWorklogs, failedWorklog{
+				Input: worklogInput,
+				Error: err.Error(),
+				Index: i,
+			})
+			continue
+		}
+
+		successfulWorklogs = append(successfulWorklogs, addWorkLogOutput{
+			IssueKey: validatedWorkLog.IssueKey,
+			BeginTS:  worklogInput.BeginTS,
+			EndTS:    worklogInput.EndTS,
+			Comment:  validatedWorkLog.Comment,
+		})
+	}
+
+	output := addMultipleWorklogsOutput{
+		SuccessfulWorklogs: successfulWorklogs,
+		FailedWorklogs:     failedWorklogs,
 	}
 
 	return tSuc(output)
@@ -104,6 +150,42 @@ func (h Handler) getUnsyncedWorklogs(_ context.Context, _ *mcp.CallToolRequest, 
 	return tSuc(output)
 }
 
+func (h Handler) validateWorklogInput(input addWorkLogInput) (validatedAddWorkLogInput, error) {
+	var zero validatedAddWorkLogInput
+	if !jiraIssueRegex.MatchString(input.IssueKey) {
+		return zero, fmt.Errorf(`issue_key doesn't look valid; JIRA issue keys match the regex '[A-Z]{2,}-\d+'`)
+	}
+
+	beginTS, err := time.ParseInLocation(timeFormat, input.BeginTS, time.Local)
+	if err != nil {
+		return zero, fmt.Errorf("begin_time is not correct, expected format: 2006/01/02 15:04")
+	}
+
+	endTS, err := time.ParseInLocation(timeFormat, input.EndTS, time.Local)
+	if err != nil {
+		return zero, fmt.Errorf("end_time is not correct, expected format: 2006/01/02 15:04")
+	}
+
+	if endTS.Sub(beginTS).Seconds() < 60 {
+		return zero, fmt.Errorf("duration is not valid, end time needs to be atleast a minute after begin time")
+	}
+
+	var comment string
+
+	if input.Comment != nil {
+		comment = *input.Comment
+	} else if h.JiraCfg.FallbackComment != nil {
+		comment = *h.JiraCfg.FallbackComment
+	}
+
+	return validatedAddWorkLogInput{
+		IssueKey: input.IssueKey,
+		BeginTS:  beginTS,
+		EndTS:    endTS,
+		Comment:  comment,
+	}, nil
+}
+
 func addWorkLogTool() (mcp.Tool, error) {
 	var zero mcp.Tool
 
@@ -121,6 +203,34 @@ func addWorkLogTool() (mcp.Tool, error) {
 	return mcp.Tool{
 		Name:         "add_worklog",
 		Description:  "add worklog for a JIRA issue; will save the worklog to punchout's local database (this will not sync the worklog to JIRA yet)",
+		InputSchema:  inputSch,
+		OutputSchema: outputSch,
+		Annotations: &mcp.ToolAnnotations{
+			DestructiveHint: &hintFalse,
+			IdempotentHint:  false,
+			OpenWorldHint:   &hintFalse,
+			ReadOnlyHint:    false,
+		},
+	}, nil
+}
+
+func addMultipleWorklogsTool() (mcp.Tool, error) {
+	var zero mcp.Tool
+
+	inputSch, err := jsonschema.For[addMultipleWorklogsInput](nil)
+	if err != nil {
+		return zero, fmt.Errorf("couldn't construct input jsonschema: %w", err)
+	}
+
+	outputSch, err := jsonschema.For[addMultipleWorklogsOutput](nil)
+	if err != nil {
+		return zero, fmt.Errorf("couldn't construct output jsonschema: %w", err)
+	}
+
+	hintFalse := false
+	return mcp.Tool{
+		Name:         "add_multiple_worklogs",
+		Description:  "add multiple worklogs for JIRA issues in a single operation; will save the worklogs to punchout's local database (this will not sync the worklogs to JIRA yet). Returns detailed success/failure information for each worklog entry.",
 		InputSchema:  inputSch,
 		OutputSchema: outputSch,
 		Annotations: &mcp.ToolAnnotations{
