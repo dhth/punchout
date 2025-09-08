@@ -10,8 +10,8 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gkampitakis/go-snaps v0.5.14
-	github.com/google/jsonschema-go v0.2.0
-	github.com/modelcontextprotocol/go-sdk v0.3.0
+	github.com/google/jsonschema-go v0.2.1-0.20250825175020-748c325cec76
+	github.com/modelcontextprotocol/go-sdk v0.4.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.11.1
 	modernc.org/sqlite v1.38.2
