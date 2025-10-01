@@ -14,7 +14,7 @@ require (
 	github.com/modelcontextprotocol/go-sdk v0.4.0
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
-	modernc.org/sqlite v1.38.2
+	modernc.org/sqlite v1.39.0
 )
 
 require (
