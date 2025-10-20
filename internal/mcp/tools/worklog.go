@@ -60,12 +60,12 @@ func (h Handler) addWorklog(_ context.Context, _ *mcp.CallToolRequest, params ad
 
 	validatedWorkLog, err := h.validateWorklogInput(params)
 	if err != nil {
-		return tErr(err.Error())
+		return tErr(err)
 	}
 
 	err = pers.InsertManualWLInDB(h.DB, validatedWorkLog)
 	if err != nil {
-		return tErr(err.Error())
+		return tErr(err)
 	}
 
 	output := addWorkLogOutput{
@@ -125,7 +125,7 @@ func (h Handler) getUnsyncedWorklogs(_ context.Context, _ *mcp.CallToolRequest, 
 
 	entries, err := pers.FetchUnsyncedWLsFromDB(h.DB)
 	if err != nil {
-		return tErr(err.Error())
+		return tErr(err)
 	}
 
 	output := getUnsyncedWorklogsOutput{Worklogs: entries}

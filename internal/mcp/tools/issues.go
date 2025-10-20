@@ -22,7 +22,7 @@ func (h Handler) getIssues(_ context.Context, _ *mcp.CallToolRequest, _ any) (*m
 
 	issues, _, err := h.JiraSvc.GetIssues(h.JiraCfg.JQL)
 	if err != nil {
-		return tErr(err.Error())
+		return tErr(err)
 	}
 
 	output := getIssuesOutput{Issues: issues}

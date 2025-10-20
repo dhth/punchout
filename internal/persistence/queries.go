@@ -29,7 +29,7 @@ WHERE
 }
 
 func getWorkLogsForIssueFromDB(db *sql.DB, issueKey string) ([]d.WorklogEntry, error) {
-	var logEntries []d.WorklogEntry
+	logEntries := make([]d.WorklogEntry, 0)
 
 	rows, err := db.Query(`
 SELECT
@@ -175,7 +175,7 @@ WHERE
 }
 
 func FetchUnsyncedWLsFromDB(db *sql.DB) ([]d.WorklogEntry, error) {
-	var logEntries []d.WorklogEntry
+	logEntries := make([]d.WorklogEntry, 0)
 
 	rows, err := db.Query(`
 SELECT
@@ -227,7 +227,7 @@ ORDER BY
 }
 
 func FetchSyncedWLsFromDB(db *sql.DB) ([]d.SyncedWorklogEntry, error) {
-	var logEntries []d.SyncedWorklogEntry
+	logEntries := make([]d.SyncedWorklogEntry, 0)
 
 	rows, err := db.Query(`
 SELECT
