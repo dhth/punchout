@@ -47,11 +47,11 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 
 	entries, err := pers.FetchUnsyncedWLsFromDB(h.DB)
 	if err != nil {
-		return tErr(err.Error())
+		return tErr(err)
 	}
 
 	if len(entries) == 0 {
-		return tErr("there are no unsynced worklogs")
+		return tErr(fmt.Errorf("there are no unsynced worklogs"))
 	}
 
 	semaphore := make(chan struct{}, 5)
@@ -113,8 +113,8 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 	}()
 
 	//nolint:prealloc
-	var successes []syncSuccess
-	var errors []syncError
+	successes := make([]syncSuccess, 0)
+	errors := make([]syncError, 0)
 	for sr := range resultChan {
 		if sr.Err != nil {
 			errors = append(errors, syncError{

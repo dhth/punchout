@@ -1,7 +1,7 @@
 package tools
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -58,38 +58,13 @@ func (h Handler) AddToolsToServer(server *mcp.Server) error {
 	return nil
 }
 
-func toolCallError[T any](content string) (*mcp.CallToolResult, T, error) {
+func toolCallError[T any](err error) (*mcp.CallToolResult, T, error) {
 	var zero T
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{
-			&mcp.TextContent{
-				Text: content,
-			},
-		},
-		IsError: true,
-	}, zero, nil
+	return nil, zero, err
 }
 
 func toolCallSuccess[T any](output T) (*mcp.CallToolResult, T, error) {
-	var zero T
-	jsonBytes, err := json.Marshal(&output)
-	if err != nil {
-		slog.Error("failed to marshal results to json")
-		return nil, zero, fmt.Errorf("%w: %w", errFailedtoMarshalToJSON, err)
-	}
-
-	return &mcp.CallToolResult{
-		// It appears the Claude Code doesn't see the tool output if only StructuredContent is sent
-		// https://github.com/anthropics/claude-code/issues/4427
-		// Sending it as both Content as well as StructuredContent for now
-		Content: []mcp.Content{
-			&mcp.TextContent{
-				Text: string(jsonBytes),
-			},
-		},
-		IsError:           false,
-		StructuredContent: output,
-	}, output, nil
+	return nil, output, nil
 }
 
 func handleErr[T any](err error) (*mcp.CallToolResult, T, error) {
