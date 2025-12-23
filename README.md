@@ -130,7 +130,7 @@ of recording worklogs and syncing them to your JIRA server. The server provides
 
 You can leverage this MCP server in any way you want. I use it as follows:
 
-[![mcp-server-usage](https://tools.dhruvs.space/images/punchout/v1-3-0/mcp-server-usage-yt.jpg)](https://youtu.be/DNA6L3Vrwrk?si=G-r9MVlI72BpXU5Y)
+[![mcp-server-usage](https://tools.dhruvs.space/images/punchout/v1-3-0/mcp-server-usage-yt.jpg)](https://youtu.be/72bZE_mMRiQ?si=e0cMQnawlrXEWrRP)
 
 TUI
 ---
