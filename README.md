@@ -32,6 +32,31 @@ go install github.com/dhth/punchout@latest
 ⚡️ Usage
 ---
 
+```text
+punchout takes the suck out of logging time on JIRA.
+
+Usage:
+  punchout [flags]
+  punchout [command]
+
+Available Commands:
+  help        Help about any command
+  mcp         Interact with punchout's MCP server
+
+Flags:
+      --config-file-path string         location of punchout's config file (default "/Users/user/.config/punchout/punchout.toml")
+      --db-path string                  location of punchout's local database (default "/Users/user/punchout.v1.db")
+      --fallback-comment string         fallback comment to use for worklog entries
+  -h, --help                            help for punchout
+      --jira-installation-type string   JIRA installation type; allowed values: [cloud, onpremise]
+      --jira-time-delta-mins string     time delta (in minutes) between your timezone and the timezone of the JIRA server; can be +/-
+      --jira-token string               jira token (PAT for on-premise installation, API token for cloud installation)
+      --jira-url string                 URL of the JIRA server
+      --jira-username string            username for authentication (for cloud installation)
+      --jql string                      JQL to use to query issues
+      --list-config                     print the config that punchout will use
+```
+
 `punchout` can receive its configuration via command line flags, or a config
 file.
 
@@ -67,39 +92,50 @@ jira_time_delta_mins = 300
 fallback_comment = "comment"
 ```
 
-### Basic usage
-
-Use `punchout -h` for help.
-
-```bash
-punchout \
-    -db-path='/path/to/punchout/db/file.db' \
-    -jira-url='https://jira.company.com' \
-    -jira-installation-type 'onpremise' \
-    -jira-token='XXX' \
-    -jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC'
-
-punchout \
-    -db-path='/path/to/punchout/db/file.db' \
-    -jira-url='https://jira.company.com' \
-    -jira-installation-type 'cloud' \
-    -jira-token='XXX' \
-    -jira-username='example@example.com' \
-    -jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC'
-```
-
 Both the config file and the command line flags can be used in conjunction, but
 the latter will take precedence over the former.
 
-```bash
-punchout \
-    -config-file-path='/path/to/punchout/config/file.toml' \
-    -jira-token='XXX' \
-    -jql='assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC'
-```
-
-🖥️ Screenshots
+Workflow
 ---
+
+`punchout` lets you add worklogs on JIRA in a two step approach.
+
+1. Your record one or more worklogs locally
+2. You push all unsynced worklogs to your JIRA server
+
+This can be done either via `punchout`'s TUI or its MCP server.
+
+> **Historical context:**
+>
+> punchout's TUI came first. It was faster to track time using it when compared
+> to JIRA's website. When AI agents became a thing, I saw an opportunity to
+> offload the tedious work of creating worklogs to them by the means of the
+> Model Context Protocol.
+
+MCP Server
+---
+
+`punchout` comes with an MCP server which can allow you to automate the process
+of recording worklogs and syncing them to your JIRA server. The server allows
+access to 5 tools:
+
+| Tool                    | What it does                                         |
+|-------------------------|------------------------------------------------------|
+| `get_jira_issues`       | Return JIRA issues based on JQL configured           |
+| `add_worklog`           | Record a worklog for an issue in punchout's database |
+| `add_multiple_worklogs` | Record multiple worklogs in punchout's database      |
+| `get_unsynced_worklogs` | Get unsynced worklogs from punchout's database       |
+| `sync_worklogs_to_jira` | Sync all unsynced worklogs to JIRA                   |
+
+You can leverage this MCP in any way you want. I use it as follows:
+
+[![mcp-server-usage](https://tools.dhruvs.space/images/punchout/v1-3-0/mcp-server-usage-yt.jpg)](https://youtu.be/DNA6L3Vrwrk?si=G-r9MVlI72BpXU5Y)
+
+TUI
+---
+
+Before MCP was a thing, the primary way to interact with `punchout` was through
+its TUI. It's still an option for those who prefer it.
 
 <p align="center">
   <img src="https://tools.dhruvs.space/images/punchout/punchout-1.png" alt="Usage" />
@@ -111,8 +147,7 @@ punchout \
   <img src="https://tools.dhruvs.space/images/punchout/punchout-3.png" alt="Usage" />
 </p>
 
-📋 Reference Manual
----
+### 📋 TUI Reference Manual
 
 ```
 punchout Reference Manual
@@ -187,7 +222,7 @@ Synced Worklog Entry View
 Acknowledgements
 ---
 
-`punchout` is built using the awesome TUI framework [bubbletea][1].
+`punchout`'s TUI is built using [bubbletea][1].
 
 [1]: https://github.com/charmbracelet/bubbletea
 [2]: https://community.atlassian.com/t5/Atlassian-Migration-Program/Product-features-comparison-Atlassian-Cloud-vs-on-premise/ba-p/1918147
