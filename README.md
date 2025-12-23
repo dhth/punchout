@@ -44,8 +44,8 @@ Available Commands:
   mcp         Interact with punchout's MCP server
 
 Flags:
-      --config-file-path string         location of punchout's config file (default "/Users/user/.config/punchout/punchout.toml")
-      --db-path string                  location of punchout's local database (default "/Users/user/punchout.v1.db")
+      --config-file-path string         location of punchout's config file (default "~/.config/punchout/punchout.toml")
+      --db-path string                  location of punchout's local database (default "~/punchout.v1.db")
       --fallback-comment string         fallback comment to use for worklog entries
   -h, --help                            help for punchout
       --jira-installation-type string   JIRA installation type; allowed values: [cloud, onpremise]
@@ -100,7 +100,7 @@ Workflow
 
 `punchout` lets you add worklogs on JIRA in a two step approach.
 
-1. Your record one or more worklogs locally
+1. You record one or more worklogs locally
 2. You push all unsynced worklogs to your JIRA server
 
 This can be done either via `punchout`'s TUI or its MCP server.
