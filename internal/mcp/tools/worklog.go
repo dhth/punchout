@@ -174,15 +174,16 @@ func addWorkLogTool() (mcp.Tool, error) {
 
 	inputSch, err := jsonschema.For[addWorkLogInput](nil)
 	if err != nil {
-		return zero, fmt.Errorf("couldn't construct input jsonschema: %w", err)
+		return zero, fmt.Errorf("%w: %w", ErrCouldntConstructInputSchema, err)
 	}
 
 	outputSch, err := jsonschema.For[addWorkLogOutput](nil)
 	if err != nil {
-		return zero, fmt.Errorf("couldn't construct output jsonschema: %w", err)
+		return zero, fmt.Errorf("%w: %w", ErrCouldntConstructOutputSchema, err)
 	}
 
 	hintFalse := false
+
 	return mcp.Tool{
 		Name:         "add_worklog",
 		Description:  "add worklog for a JIRA issue; will save the worklog to punchout's local database (this will not sync the worklog to JIRA yet)",
@@ -202,12 +203,12 @@ func addMultipleWorklogsTool() (mcp.Tool, error) {
 
 	inputSch, err := jsonschema.For[addMultipleWorklogsInput](nil)
 	if err != nil {
-		return zero, fmt.Errorf("couldn't construct input jsonschema: %w", err)
+		return zero, fmt.Errorf("%w: %w", ErrCouldntConstructInputSchema, err)
 	}
 
 	outputSch, err := jsonschema.For[addMultipleWorklogsOutput](nil)
 	if err != nil {
-		return zero, fmt.Errorf("couldn't construct output jsonschema: %w", err)
+		return zero, fmt.Errorf("%w: %w", ErrCouldntConstructOutputSchema, err)
 	}
 
 	hintFalse := false
@@ -230,7 +231,7 @@ func getUnsyncedWorklogsTool() (mcp.Tool, error) {
 
 	outputSch, err := jsonschema.For[getUnsyncedWorklogsOutput](nil)
 	if err != nil {
-		return zero, fmt.Errorf("couldn't construct output jsonschema")
+		return zero, fmt.Errorf("%w: %w", ErrCouldntConstructOutputSchema, err)
 	}
 
 	hintFalse := false

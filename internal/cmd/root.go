@@ -200,7 +200,7 @@ func NewRootCommand() (*cobra.Command, error) {
 	mcpServeCmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Run punchout's MCP server",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			transport, ok := d.ParseMCPTransport(flagMcpTransportStr)
 			if !ok {
 				return fmt.Errorf("%w: %q", errInvalidMCPTransport, flagMcpTransportStr)
@@ -230,7 +230,7 @@ func NewRootCommand() (*cobra.Command, error) {
 				HTTPPort:  flagMcpServerPort,
 			}
 
-			return mcp.Serve(db, jiraSvc, jiraCfg, mcpCfg)
+			return mcp.Serve(cmd.Context(), db, jiraSvc, jiraCfg, mcpCfg)
 		},
 	}
 

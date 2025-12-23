@@ -1,7 +1,6 @@
 package tools
 
 import (
-	// "encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -11,7 +10,7 @@ import (
 
 var (
 	errFailedtoMarshalToJSON  = errors.New("failed to marshal output to JSON")
-	errCouldntAddToolToServer = errors.New("couldn't add tool to server")
+	ErrCouldntAddToolToServer = errors.New("couldn't add tool to server")
 )
 
 func (h Handler) AddToolsToServer(server *mcp.Server) error {
@@ -19,31 +18,31 @@ func (h Handler) AddToolsToServer(server *mcp.Server) error {
 
 	getIssuesTool, err := getIssuesTool()
 	if err != nil {
-		return fmt.Errorf("%w: get_jira_issues: %s", errCouldntAddToolToServer, err.Error())
+		return fmt.Errorf("%w: get_jira_issues: %w", ErrCouldntAddToolToServer, err)
 	}
 	tools = append(tools, getIssuesTool.Name)
 
 	addWorkLogTool, err := addWorkLogTool()
 	if err != nil {
-		return fmt.Errorf("%w: add_worklog: %s", errCouldntAddToolToServer, err.Error())
+		return fmt.Errorf("%w: add_worklog: %w", ErrCouldntAddToolToServer, err)
 	}
 	tools = append(tools, addWorkLogTool.Name)
 
 	addMultipleWorklogsTool, err := addMultipleWorklogsTool()
 	if err != nil {
-		return fmt.Errorf("%w: add_multiple_worklogs: %s", errCouldntAddToolToServer, err.Error())
+		return fmt.Errorf("%w: add_multiple_worklogs: %w", ErrCouldntAddToolToServer, err)
 	}
 	tools = append(tools, addMultipleWorklogsTool.Name)
 
 	getUnsyncedWorklogsTool, err := getUnsyncedWorklogsTool()
 	if err != nil {
-		return fmt.Errorf("%w: get_unsynced_worklogs: %s", errCouldntAddToolToServer, err.Error())
+		return fmt.Errorf("%w: get_unsynced_worklogs: %w", ErrCouldntAddToolToServer, err)
 	}
 	tools = append(tools, getUnsyncedWorklogsTool.Name)
 
 	syncWorklogsTool, err := syncWorklogsTool()
 	if err != nil {
-		return fmt.Errorf("%w: sync_worklogs_to_jira: %s", errCouldntAddToolToServer, err.Error())
+		return fmt.Errorf("%w: sync_worklogs_to_jira: %w", ErrCouldntAddToolToServer, err)
 	}
 	tools = append(tools, syncWorklogsTool.Name)
 

@@ -35,7 +35,7 @@ func getIssuesTool() (mcp.Tool, error) {
 
 	outputSch, err := jsonschema.For[getIssuesOutput](nil)
 	if err != nil {
-		return zero, fmt.Errorf("couldn't construct output jsonschema")
+		return zero, fmt.Errorf("%w: %w", ErrCouldntConstructOutputSchema, err)
 	}
 
 	hintFalse := false
