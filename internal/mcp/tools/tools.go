@@ -18,31 +18,31 @@ func (h Handler) AddToolsToServer(server *mcp.Server) error {
 
 	getIssuesTool, err := getIssuesTool()
 	if err != nil {
-		return fmt.Errorf("%w: get_jira_issues: %s", ErrCouldntAddToolToServer, err.Error())
+		return fmt.Errorf("%w: get_jira_issues: %w", ErrCouldntAddToolToServer, err)
 	}
 	tools = append(tools, getIssuesTool.Name)
 
 	addWorkLogTool, err := addWorkLogTool()
 	if err != nil {
-		return fmt.Errorf("%w: add_worklog: %s", ErrCouldntAddToolToServer, err.Error())
+		return fmt.Errorf("%w: add_worklog: %w", ErrCouldntAddToolToServer, err)
 	}
 	tools = append(tools, addWorkLogTool.Name)
 
 	addMultipleWorklogsTool, err := addMultipleWorklogsTool()
 	if err != nil {
-		return fmt.Errorf("%w: add_multiple_worklogs: %s", ErrCouldntAddToolToServer, err.Error())
+		return fmt.Errorf("%w: add_multiple_worklogs: %w", ErrCouldntAddToolToServer, err)
 	}
 	tools = append(tools, addMultipleWorklogsTool.Name)
 
 	getUnsyncedWorklogsTool, err := getUnsyncedWorklogsTool()
 	if err != nil {
-		return fmt.Errorf("%w: get_unsynced_worklogs: %s", ErrCouldntAddToolToServer, err.Error())
+		return fmt.Errorf("%w: get_unsynced_worklogs: %w", ErrCouldntAddToolToServer, err)
 	}
 	tools = append(tools, getUnsyncedWorklogsTool.Name)
 
 	syncWorklogsTool, err := syncWorklogsTool()
 	if err != nil {
-		return fmt.Errorf("%w: sync_worklogs_to_jira: %s", ErrCouldntAddToolToServer, err.Error())
+		return fmt.Errorf("%w: sync_worklogs_to_jira: %w", ErrCouldntAddToolToServer, err)
 	}
 	tools = append(tools, syncWorklogsTool.Name)
 
