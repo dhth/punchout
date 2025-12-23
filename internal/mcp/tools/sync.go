@@ -158,7 +158,7 @@ func syncWorklogsTool() (mcp.Tool, error) {
 	var zero mcp.Tool
 	outputSch, err := jsonschema.For[syncWorklogsOutput](nil)
 	if err != nil {
-		return zero, fmt.Errorf("couldn't construct output jsonschema")
+		return zero, fmt.Errorf("%w: %w", ErrCouldntConstructOutputSchema, err)
 	}
 
 	hintFalse := false

@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -13,7 +14,12 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func Serve(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, mcpCfg d.McpConfig) error {
+var (
+	errCouldntRunServer    = errors.New("couldn't run MCP server")
+	errCouldntListenOnAddr = errors.New("MCP server couldn't listen on address")
+)
+
+func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, mcpCfg d.McpConfig) error {
 	opts := &mcp.ServerOptions{
 		Instructions: "Use this server for creating worklogs and syncing them to JIRA. You can also use it to fetch issues from JIRA, and view unsynced worklogs.",
 	}
@@ -31,9 +37,9 @@ func Serve(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, mcpCfg d.McpConfi
 	}
 
 	if mcpCfg.Transport == d.McpTransportStdio {
-		err := server.Run(context.Background(), &mcp.StdioTransport{})
+		err := server.Run(ctx, &mcp.StdioTransport{})
 		if err != nil {
-			return fmt.Errorf("MCP server failed: %s", err.Error())
+			return fmt.Errorf("%w: %w", errCouldntRunServer, err)
 		}
 
 		return nil
@@ -55,7 +61,7 @@ func Serve(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, mcpCfg d.McpConfi
 	slog.Info("starting MCP HTTP server", "address", addr)
 	err = http.ListenAndServe(addr, mux)
 	if err != nil {
-		return fmt.Errorf("MCP server failed: %s", err.Error())
+		return fmt.Errorf(`%w "%s": %w`, errCouldntListenOnAddr, addr, err)
 	}
 
 	return nil
