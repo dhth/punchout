@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- An MCP server that allows for creating worklogs and syncing them to JIRA
 - Allow syncing worklog timestamps with each other in workflow create/edit form
 - Show time duration being recorded in workflow create/edit form
 - Allow quickly finishing a worklog (ends worklog at current time, doesn't ask
