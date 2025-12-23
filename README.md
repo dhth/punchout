@@ -110,14 +110,15 @@ This can be done either via `punchout`'s TUI or its MCP server.
 > punchout's TUI came first. It was faster to track time using it when compared
 > to JIRA's website. When AI agents became a thing, I saw an opportunity to
 > offload the tedious work of creating worklogs to them by the means of the
-> Model Context Protocol.
+> Model Context Protocol. These days, I exclusively use the MCP server as it's
+> way faster than manually creating worklogs (demo below).
 
 MCP Server
 ---
 
 `punchout` comes with an MCP server which can allow you to automate the process
-of recording worklogs and syncing them to your JIRA server. The server allows
-access to 5 tools:
+of recording worklogs and syncing them to your JIRA server. The server provides
+5 tools:
 
 | Tool                    | What it does                                         |
 |-------------------------|------------------------------------------------------|
@@ -127,7 +128,7 @@ access to 5 tools:
 | `get_unsynced_worklogs` | Get unsynced worklogs from punchout's database       |
 | `sync_worklogs_to_jira` | Sync all unsynced worklogs to JIRA                   |
 
-You can leverage this MCP in any way you want. I use it as follows:
+You can leverage this MCP server in any way you want. I use it as follows:
 
 [![mcp-server-usage](https://tools.dhruvs.space/images/punchout/v1-3-0/mcp-server-usage-yt.jpg)](https://youtu.be/DNA6L3Vrwrk?si=G-r9MVlI72BpXU5Y)
 
