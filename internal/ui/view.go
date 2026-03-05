@@ -5,7 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/dhth/punchout/internal/utils"
 )
 
@@ -21,7 +22,7 @@ const (
 	wlSubmitErr
 )
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	var content string
 	var footer string
 
@@ -263,11 +264,14 @@ func (m Model) View() string {
 	)
 	footer = footerStyle.Render(footerStr)
 
-	return lipgloss.JoinVertical(lipgloss.Left,
+	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Left,
 		content,
 		statusBar,
 		footer,
-	)
+	))
+	v.AltScreen = true
+
+	return v
 }
 
 func getDurationValidityContext(beginStr, endStr string) (string, wlFormValidity) {

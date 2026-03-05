@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	d "github.com/dhth/punchout/internal/domain"
 	pers "github.com/dhth/punchout/internal/persistence"
 )
@@ -516,12 +516,12 @@ func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
 
 	vw, vh := viewPortStyle.GetFrameSize()
 	if !m.helpVPReady {
-		m.helpVP = viewport.New(msg.Width-vw, m.terminalHeight-vh-5)
+		m.helpVP = viewport.New(viewport.WithWidth(msg.Width-vw), viewport.WithHeight(m.terminalHeight-vh-5))
 		m.helpVP.SetContent(helpText)
 		m.helpVPReady = true
 	} else {
-		m.helpVP.Height = m.terminalHeight - vh - 5
-		m.helpVP.Width = msg.Width - vw
+		m.helpVP.SetHeight(m.terminalHeight - vh - 5)
+		m.helpVP.SetWidth(msg.Width - vw)
 	}
 }
 

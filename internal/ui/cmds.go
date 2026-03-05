@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	d "github.com/dhth/punchout/internal/domain"
 	pers "github.com/dhth/punchout/internal/persistence"
 
