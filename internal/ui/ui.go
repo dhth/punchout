@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	d "github.com/dhth/punchout/internal/domain"
 	svc "github.com/dhth/punchout/internal/service"
 )
@@ -19,7 +19,7 @@ func RenderUI(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig) error {
 		defer f.Close()
 	}
 
-	p := tea.NewProgram(InitialModel(db, jiraSvc, jiraCfg, debug), tea.WithAltScreen())
+	p := tea.NewProgram(InitialModel(db, jiraSvc, jiraCfg, debug))
 	if _, err := p.Run(); err != nil {
 		return err
 	}

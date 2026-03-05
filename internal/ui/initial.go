@@ -3,9 +3,9 @@ package ui
 import (
 	"database/sql"
 
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/textinput"
+	"charm.land/lipgloss/v2"
 	d "github.com/dhth/punchout/internal/domain"
 	svc "github.com/dhth/punchout/internal/service"
 )
@@ -20,19 +20,19 @@ func InitialModel(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, debug bool
 	trackingInputs[entryBeginTS].Placeholder = "09:30"
 	trackingInputs[entryBeginTS].Focus()
 	trackingInputs[entryBeginTS].CharLimit = len(string(timeFormat))
-	trackingInputs[entryBeginTS].Width = 30
+	trackingInputs[entryBeginTS].SetWidth(30)
 
 	trackingInputs[entryEndTS] = textinput.New()
 	trackingInputs[entryEndTS].Placeholder = "12:30pm"
 	trackingInputs[entryEndTS].Focus()
 	trackingInputs[entryEndTS].CharLimit = len(string(timeFormat))
-	trackingInputs[entryEndTS].Width = 30
+	trackingInputs[entryEndTS].SetWidth(30)
 
 	trackingInputs[entryComment] = textinput.New()
 	trackingInputs[entryComment].Placeholder = "Your comment goes here"
 	trackingInputs[entryComment].Focus()
 	trackingInputs[entryComment].CharLimit = 255
-	trackingInputs[entryComment].Width = 60
+	trackingInputs[entryComment].SetWidth(60)
 
 	m := Model{
 		db:                db,
@@ -42,7 +42,7 @@ func InitialModel(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, debug bool
 		issueMap:          make(map[string]*d.Issue),
 		issueIndexMap:     make(map[string]int),
 		worklogList:       list.New(worklogListItems, newItemDelegate(lipgloss.Color(worklogListColor)), listWidth, 0),
-		syncedWorklogList: list.New(syncedWorklogListItems, newItemDelegate(syncedWorklogListColor), listWidth, 0),
+		syncedWorklogList: list.New(syncedWorklogListItems, newItemDelegate(lipgloss.Color(syncedWorklogListColor)), listWidth, 0),
 		showHelpIndicator: true,
 		trackingInputs:    trackingInputs,
 		debug:             debug,
