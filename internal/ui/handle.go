@@ -500,7 +500,7 @@ func (m *Model) getCmdToSyncWLToJIRA() []tea.Cmd {
 func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
 	selectedIssue := m.issueList.SelectedItem().FilterValue()
 	return openURLInBrowser(fmt.Sprintf("%sbrowse/%s",
-		m.jiraSvc.JiraURL(),
+		m.jiraSvc.URL(),
 		selectedIssue))
 }
 
