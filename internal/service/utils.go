@@ -11,6 +11,7 @@ var (
 	errJIRARepliedWithEmptyWorklog = errors.New("JIRA replied with an empty worklog; something is probably wrong")
 	errCouldntCreateJiraClient     = errors.New("couldn't create JIRA client")
 	errCouldntFetchIssuesFromJira  = errors.New("couldn't fetch issues from JIRA")
+	errCannotSyncWLWithoutEndTime  = errors.New("cannot sync worklog without an end time")
 )
 
 func getWorklogStart(entry d.WorklogEntry, timeDeltaMins int) time.Time {
@@ -23,6 +24,6 @@ func getWorklogStart(entry d.WorklogEntry, timeDeltaMins int) time.Time {
 	return start
 }
 
-func getTimeSpentSeconds(entry d.WorklogEntry) int {
-	return int(entry.EndTS.Sub(entry.BeginTS).Seconds())
+func getTimeSpentSeconds(beginTS, endTS time.Time) int {
+	return int(endTS.Sub(beginTS).Seconds())
 }

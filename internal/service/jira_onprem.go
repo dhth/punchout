@@ -40,12 +40,16 @@ func (svc *onPremJira) GetIssues(jql string) ([]d.Issue, int, error) {
 }
 
 func (svc *onPremJira) SyncWLToJIRA(ctx context.Context, entry d.WorklogEntry, comment string, timeDeltaMins int) error {
+	if entry.EndTS == nil {
+		return errCannotSyncWLWithoutEndTime
+	}
+
 	start := getWorklogStart(entry, timeDeltaMins)
 
 	wl := jira.WorklogRecord{
 		IssueID:          entry.IssueKey,
 		Started:          (*jira.Time)(&start),
-		TimeSpentSeconds: getTimeSpentSeconds(entry),
+		TimeSpentSeconds: getTimeSpentSeconds(entry.BeginTS, *entry.EndTS),
 		Comment:          comment,
 	}
 
