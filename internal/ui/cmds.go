@@ -213,9 +213,9 @@ func updateSyncStatusForEntry(db *sql.DB, entry d.WorklogEntry, index int, fallb
 
 func (m Model) fetchJIRAIssues() tea.Cmd {
 	return func() tea.Msg {
-		issues, statusCode, err := m.jiraSvc.GetIssues(m.jiraCfg.JQL)
+		issues, err := m.jiraSvc.GetIssues(m.jiraCfg.JQL)
 
-		return issuesFetchedFromJIRA{issues, statusCode, err}
+		return issuesFetchedFromJIRA{issues, err}
 	}
 }
 

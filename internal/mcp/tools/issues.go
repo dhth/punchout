@@ -20,7 +20,7 @@ func (h Handler) getIssues(_ context.Context, _ *mcp.CallToolRequest, _ any) (*m
 
 	slog.Info("got request for fetching issues")
 
-	issues, _, err := h.JiraSvc.GetIssues(h.JiraCfg.JQL)
+	issues, err := h.JiraSvc.GetIssues(h.JiraCfg.JQL)
 	if err != nil {
 		return tErr(err)
 	}

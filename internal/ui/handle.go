@@ -500,7 +500,7 @@ func (m *Model) getCmdToSyncWLToJIRA() []tea.Cmd {
 func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
 	selectedIssue := m.issueList.SelectedItem().FilterValue()
 	return openURLInBrowser(fmt.Sprintf("%sbrowse/%s",
-		m.jiraSvc.JiraURL(),
+		m.jiraSvc.URL(),
 		selectedIssue))
 }
 
@@ -527,20 +527,7 @@ func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
 
 func (m *Model) handleIssuesFetchedFromJIRAMsg(msg issuesFetchedFromJIRA) tea.Cmd {
 	if msg.err != nil {
-		var remoteServerName string
-		if msg.responseStatusCode >= 400 && msg.responseStatusCode < 500 {
-			switch m.jiraCfg.InstallationType {
-			case d.OnPremiseInstallation:
-				remoteServerName = "Your on-premise JIRA installation"
-			case d.CloudInstallation:
-				remoteServerName = "Atlassian Cloud"
-			}
-			m.message = fmt.Sprintf("%s returned a %d status code, check if your configuration is correct",
-				remoteServerName,
-				msg.responseStatusCode)
-		} else {
-			m.message = fmt.Sprintf("error fetching issues from JIRA: %s", msg.err.Error())
-		}
+		m.message = fmt.Sprintf("error fetching issues from JIRA: %s", msg.err.Error())
 		m.messages = append(m.messages, m.message)
 		m.issueList.Title = "Failure"
 		m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(failureColor))
