@@ -70,9 +70,8 @@ type wLSyncUpdatedInDB struct {
 }
 
 type issuesFetchedFromJIRA struct {
-	issues             []d.Issue
-	responseStatusCode int
-	err                error
+	issues []d.Issue
+	err    error
 }
 
 type wLSyncedToJIRA struct {

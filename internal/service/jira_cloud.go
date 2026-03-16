@@ -26,8 +26,8 @@ func NewCloudJiraSvc(url string, userName string, token string) (Jira, error) {
 	return &cloudJira{client: client}, nil
 }
 
-func (svc *cloudJira) GetIssues(jql string) ([]d.Issue, int, error) {
-	jIssues, resp, err := svc.client.Issue.SearchV2JQL(context.Background(), jql, &jira.SearchOptionsV2{
+func (svc *cloudJira) GetIssues(jql string) ([]d.Issue, error) {
+	jIssues, _, err := svc.client.Issue.SearchV2JQL(context.Background(), jql, &jira.SearchOptionsV2{
 		Fields: []string{
 			"issuetype",
 			"summary",
@@ -37,7 +37,7 @@ func (svc *cloudJira) GetIssues(jql string) ([]d.Issue, int, error) {
 		},
 	})
 	if err != nil {
-		return nil, 0, fmt.Errorf("%w: %s", errCouldntFetchIssuesFromJira, err.Error())
+		return nil, fmt.Errorf("%w: %s", errCouldntFetchIssuesFromJira, err.Error())
 	}
 
 	issues := make([]d.Issue, len(jIssues))
@@ -45,7 +45,7 @@ func (svc *cloudJira) GetIssues(jql string) ([]d.Issue, int, error) {
 		issues[i] = mapCloudIssue(issue)
 	}
 
-	return issues, resp.StatusCode, nil
+	return issues, nil
 }
 
 func (svc *cloudJira) SyncWLToJIRA(ctx context.Context, entry d.WorklogEntry, comment string, timeDeltaMins int) error {

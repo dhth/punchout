@@ -7,7 +7,7 @@ import (
 )
 
 type Jira interface {
-	GetIssues(jql string) ([]d.Issue, int, error)
+	GetIssues(jql string) ([]d.Issue, error)
 	SyncWLToJIRA(ctx context.Context, entry d.WorklogEntry, comment string, timeDeltaMins int) error
 	URL() string
 }
