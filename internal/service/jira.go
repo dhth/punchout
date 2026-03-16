@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
 	"time"
 
 	jiraCloud "github.com/andygrunwald/go-jira/v2/cloud"
@@ -18,7 +20,8 @@ var (
 )
 
 type Jira struct {
-	client *jira.Client
+	client  *jira.Client
+	isCloud bool
 }
 
 func NewOnPremJiraSvc(url string, token string) (Jira, error) {
@@ -35,7 +38,8 @@ func NewOnPremJiraSvc(url string, token string) (Jira, error) {
 	}
 
 	return Jira{
-		client: client,
+		client:  client,
+		isCloud: false,
 	}, nil
 }
 
@@ -59,16 +63,52 @@ func NewCloudJiraSvc(url string, userName string, token string) (Jira, error) {
 	}
 
 	return Jira{
-		client: client,
+		client:  client,
+		isCloud: true,
 	}, nil
+}
+
+// searchResult mirrors the Jira search response structure.
+type searchResult struct {
+	Issues []jira.Issue `json:"issues"`
 }
 
 func (svc Jira) GetIssues(jql string) ([]d.Issue, int, error) {
 	var zero []d.Issue
 
-	jIssues, resp, err := svc.client.Issue.Search(context.Background(), jql, nil)
-	if err != nil {
-		return zero, 0, fmt.Errorf("%w: %s", errCouldntFetchIssuesFromJira, err.Error())
+	var jIssues []jira.Issue
+	var resp *jira.Response
+
+	if svc.isCloud {
+		// Atlassian removed GET /rest/api/2/search on Jira Cloud.
+		// Use the replacement /rest/api/2/search/jql endpoint instead.
+		// See: https://developer.atlassian.com/changelog/#CHANGE-2046
+		u := url.URL{Path: "rest/api/2/search/jql"}
+		uv := url.Values{}
+		if jql != "" {
+			uv.Add("jql", jql)
+		}
+		// The new endpoint defaults to returning only issue IDs;
+		// request all fields to match the old endpoint's behavior.
+		uv.Add("fields", "*all")
+		u.RawQuery = uv.Encode()
+
+		req, err := svc.client.NewRequest(context.Background(), http.MethodGet, u.String(), nil)
+		if err != nil {
+			return zero, 0, fmt.Errorf("%w: %s", errCouldntFetchIssuesFromJira, err.Error())
+		}
+		v := new(searchResult)
+		resp, err = svc.client.Do(req, v)
+		if err != nil {
+			return zero, 0, fmt.Errorf("%w: %s", errCouldntFetchIssuesFromJira, err.Error())
+		}
+		jIssues = v.Issues
+	} else {
+		var err error
+		jIssues, resp, err = svc.client.Issue.Search(context.Background(), jql, nil)
+		if err != nil {
+			return zero, 0, fmt.Errorf("%w: %s", errCouldntFetchIssuesFromJira, err.Error())
+		}
 	}
 
 	issues := make([]d.Issue, len(jIssues))
@@ -97,7 +137,7 @@ func (svc Jira) GetIssues(jql string) ([]d.Issue, int, error) {
 		}
 	}
 
-	return issues, resp.StatusCode, err
+	return issues, resp.StatusCode, nil
 }
 
 func (svc Jira) SyncWLToJIRA(ctx context.Context, entry d.WorklogEntry, comment string, timeDeltaMins int) error {
