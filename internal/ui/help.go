@@ -2,7 +2,8 @@ package ui
 
 import "fmt"
 
-var helpText = fmt.Sprintf(`
+var helpText = fmt.Sprintf(
+	`
   %s
 %s
   %s
