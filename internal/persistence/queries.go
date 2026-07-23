@@ -55,7 +55,8 @@ ORDER BY
 
 	for rows.Next() {
 		var entry d.WorklogEntry
-		err = rows.Scan(&entry.ID,
+		err = rows.Scan(
+			&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
 			&entry.EndTS,
@@ -201,7 +202,8 @@ ORDER BY
 
 	for rows.Next() {
 		var entry d.WorklogEntry
-		err = rows.Scan(&entry.ID,
+		err = rows.Scan(
+			&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
 			&entry.EndTS,
@@ -253,7 +255,8 @@ LIMIT
 
 	for rows.Next() {
 		var entry d.SyncedWorklogEntry
-		err = rows.Scan(&entry.ID,
+		err = rows.Scan(
+			&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
 			&entry.EndTS,

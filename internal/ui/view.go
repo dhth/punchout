@@ -48,7 +48,8 @@ func (m Model) View() tea.View {
 					trackingSinceMsg = fmt.Sprintf("(since %s)", m.activeIssueBeginTS.Format(timeOnlyFormat))
 				}
 			}
-			activeMsg = fmt.Sprintf("%s%s%s%s",
+			activeMsg = fmt.Sprintf(
+				"%s%s%s%s",
 				trackingStyle.Render("tracking:"),
 				activeIssueKeyMsgStyle.Render(m.activeIssue),
 				activeIssueSummaryMsgStyle.Render(issueSummaryMsg),
@@ -256,7 +257,8 @@ func (m Model) View() tea.View {
 		unsyncedMsg = unsyncedCountStyle.Render(fmt.Sprintf("%d unsynced %s (%s)", m.unsyncedWLCount, entryWord, unsyncedTimeMsg))
 	}
 
-	footerStr := fmt.Sprintf("%s%s%s%s",
+	footerStr := fmt.Sprintf(
+		"%s%s%s%s",
 		modeStyle.Render("punchout"),
 		helpMsg,
 		unsyncedMsg,
@@ -264,7 +266,8 @@ func (m Model) View() tea.View {
 	)
 	footer = footerStyle.Render(footerStr)
 
-	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Left,
+	v := tea.NewView(lipgloss.JoinVertical(
+		lipgloss.Left,
 		content,
 		statusBar,
 		footer,

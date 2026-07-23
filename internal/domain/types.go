@@ -152,7 +152,8 @@ func (entry WorklogEntry) Description() string {
 		fallbackCommentStatus = usingFallbackCommentStyle.Render("fallback comment")
 	}
 
-	return fmt.Sprintf("%s%s%s%s%s",
+	return fmt.Sprintf(
+		"%s%s%s%s%s",
 		utils.RightPadTrim(entry.IssueKey, listWidth/4),
 		utils.RightPadTrim(durationMsg, listWidth/4),
 		utils.RightPadTrim(fmt.Sprintf("(%s)", timeSpentStr), listWidth/6),
@@ -173,7 +174,8 @@ func (entry SyncedWorklogEntry) Title() string {
 func (entry SyncedWorklogEntry) Description() string {
 	durationMsg := humanize.Time(entry.EndTS)
 	timeSpentStr := utils.HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
-	return fmt.Sprintf("%s%s%s",
+	return fmt.Sprintf(
+		"%s%s%s",
 		utils.RightPadTrim(entry.IssueKey, listWidth/4),
 		utils.RightPadTrim(durationMsg, listWidth/4),
 		fmt.Sprintf("(%s)", timeSpentStr),

@@ -57,7 +57,8 @@ func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 		m.trackingInputs[i].SetValue("")
 	}
 
-	return toggleTracking(m.db,
+	return toggleTracking(
+		m.db,
 		m.activeIssue,
 		m.activeIssueBeginTS,
 		m.activeIssueEndTS,
@@ -99,7 +100,8 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 		case worklogUpdate:
 			wl, ok := m.worklogList.SelectedItem().(d.WorklogEntry)
 			if ok {
-				cmd = updateManualEntry(m.db,
+				cmd = updateManualEntry(
+					m.db,
 					wl.ID,
 					wl.IssueKey,
 					beginTS,
@@ -403,7 +405,8 @@ func (m *Model) getCmdToQuickSwitchTracking() tea.Cmd {
 	if !m.trackingActive {
 		m.changesLocked = true
 		m.activeIssueBeginTS = time.Now()
-		return toggleTracking(m.db,
+		return toggleTracking(
+			m.db,
 			issue.IssueKey,
 			m.activeIssueBeginTS,
 			m.activeIssueEndTS,
@@ -445,7 +448,8 @@ func (m *Model) getCmdToStartTracking() tea.Cmd {
 
 	m.changesLocked = true
 	m.activeIssueBeginTS = time.Now().Truncate(time.Second)
-	return toggleTracking(m.db,
+	return toggleTracking(
+		m.db,
 		issue.IssueKey,
 		m.activeIssueBeginTS,
 		m.activeIssueEndTS,
