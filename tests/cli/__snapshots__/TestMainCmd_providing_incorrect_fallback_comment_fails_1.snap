@@ -3,5 +3,5 @@ exit_code: 1
 ----- stdout -----
 
 ----- stderr -----
-Error: fallback-comment cannot be empty
+Error: invalid configuration: fallback-comment cannot be empty
 

@@ -212,7 +212,7 @@ func TestMainCmd(t *testing.T) {
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 
-	t.Run("providing empty jira url fails", func(t *testing.T) {
+	t.Run("empty jira url flag fails validation", func(t *testing.T) {
 		// GIVEN
 		args := []string{
 			"--config-file-path", "config/empty.toml",
@@ -231,7 +231,24 @@ func TestMainCmd(t *testing.T) {
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 
-	t.Run("providing empty jira token fails", func(t *testing.T) {
+	t.Run("empty jira url override does not fall back to config", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"--config-file-path", "config/good.toml",
+			"--db-path", "db.db",
+			"--jira-url", "",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
+	t.Run("empty jira token flag fails validation", func(t *testing.T) {
 		// GIVEN
 		args := []string{
 			"--config-file-path", "config/empty.toml",
@@ -250,7 +267,7 @@ func TestMainCmd(t *testing.T) {
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 
-	t.Run("providing empty jira username fails", func(t *testing.T) {
+	t.Run("empty jira username flag fails validation", func(t *testing.T) {
 		// GIVEN
 		args := []string{
 			"--config-file-path", "config/good.toml",

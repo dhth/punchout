@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	d "github.com/dhth/punchout/internal/domain"
+	"github.com/dhth/punchout/internal/config"
 	"github.com/dhth/punchout/internal/mcp/tools"
 	svc "github.com/dhth/punchout/internal/service"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -19,7 +19,7 @@ var (
 	errCouldntListenOnAddr = errors.New("MCP server couldn't listen on address")
 )
 
-func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, mcpCfg d.McpConfig) error {
+func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraCfg config.JiraOptions, mcpCfg Config) error {
 	opts := &mcp.ServerOptions{
 		Instructions: "Use this server for creating worklogs and syncing them to JIRA. You can also use it to fetch issues from JIRA, and view unsynced worklogs.",
 	}
@@ -36,7 +36,7 @@ func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConf
 		return err
 	}
 
-	if mcpCfg.Transport == d.McpTransportStdio {
+	if mcpCfg.Transport == TransportStdio {
 		err := server.Run(ctx, &mcp.StdioTransport{})
 		if err != nil {
 			return fmt.Errorf("%w: %w", errCouldntRunServer, err)

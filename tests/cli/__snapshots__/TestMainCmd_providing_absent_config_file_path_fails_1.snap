@@ -3,5 +3,5 @@ exit_code: 1
 ----- stdout -----
 
 ----- stderr -----
-Error: couldn't parse config file: open config/absent.toml: no such file or directory
+Error: couldn't open config file: open config/absent.toml: no such file or directory
 

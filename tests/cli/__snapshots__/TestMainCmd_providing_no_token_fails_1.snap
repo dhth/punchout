@@ -3,5 +3,5 @@ exit_code: 1
 ----- stdout -----
 
 ----- stderr -----
-Error: jira-token cannot be empty
+Error: invalid configuration: jira-token cannot be empty
 

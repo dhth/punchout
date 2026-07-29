@@ -8,6 +8,7 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
+	"github.com/dhth/punchout/internal/config"
 	d "github.com/dhth/punchout/internal/domain"
 	svc "github.com/dhth/punchout/internal/service"
 )
@@ -63,7 +64,7 @@ type Model struct {
 	lastView              stateView
 	db                    *sql.DB
 	jiraSvc               svc.Jira
-	jiraCfg               d.JiraConfig
+	jiraCfg               config.JiraOptions
 	issueList             list.Model
 	issueMap              map[string]*d.Issue
 	issueIndexMap         map[string]int

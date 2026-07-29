@@ -6,11 +6,12 @@ import (
 	"charm.land/bubbles/v2/list"
 	"charm.land/bubbles/v2/textinput"
 	"charm.land/lipgloss/v2"
+	"github.com/dhth/punchout/internal/config"
 	d "github.com/dhth/punchout/internal/domain"
 	svc "github.com/dhth/punchout/internal/service"
 )
 
-func InitialModel(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, debug bool) Model {
+func InitialModel(db *sql.DB, jiraSvc svc.Jira, jiraCfg config.JiraOptions, debug bool) Model {
 	var stackItems []list.Item
 	var worklogListItems []list.Item
 	var syncedWorklogListItems []list.Item

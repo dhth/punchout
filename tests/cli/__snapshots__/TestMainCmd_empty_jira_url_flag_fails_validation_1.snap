@@ -3,5 +3,5 @@ exit_code: 1
 ----- stdout -----
 
 ----- stderr -----
-Error: jira-username cannot be empty for cloud installation
+Error: invalid configuration: jira-url cannot be empty
 

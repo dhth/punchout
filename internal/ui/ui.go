@@ -5,11 +5,11 @@ import (
 	"os"
 
 	tea "charm.land/bubbletea/v2"
-	d "github.com/dhth/punchout/internal/domain"
+	"github.com/dhth/punchout/internal/config"
 	svc "github.com/dhth/punchout/internal/service"
 )
 
-func RenderUI(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig) error {
+func RenderUI(db *sql.DB, jiraSvc svc.Jira, jiraCfg config.JiraOptions) error {
 	debug := os.Getenv("DEBUG") == "1"
 	if debug {
 		f, err := tea.LogToFile("debug.log", "debug")
