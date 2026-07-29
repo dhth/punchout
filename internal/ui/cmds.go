@@ -213,7 +213,7 @@ func updateSyncStatusForEntry(db *sql.DB, entry d.WorklogEntry, index int, fallb
 
 func (m Model) fetchJIRAIssues() tea.Cmd {
 	return func() tea.Msg {
-		issues, err := m.jiraSvc.GetIssues(m.jiraCfg.JQL)
+		issues, err := m.jiraSvc.GetIssues(m.jiraOpts.JQL)
 
 		return issuesFetchedFromJIRA{issues, err}
 	}
@@ -227,14 +227,14 @@ func (m Model) syncWorklogWithJIRA(entry d.WorklogEntry, index int) tea.Cmd {
 		}
 
 		var comment string
-		if entry.NeedsComment() && m.jiraCfg.FallbackComment != nil {
-			comment = *m.jiraCfg.FallbackComment
+		if entry.NeedsComment() && m.jiraOpts.FallbackComment != nil {
+			comment = *m.jiraOpts.FallbackComment
 			fallbackCmtUsed = true
 		} else if entry.Comment != nil {
 			comment = *entry.Comment
 		}
 
-		err := m.jiraSvc.SyncWLToJIRA(context.TODO(), entry, comment, m.jiraCfg.TimeDeltaMins)
+		err := m.jiraSvc.SyncWLToJIRA(context.TODO(), entry, comment, m.jiraOpts.TimeDeltaMins)
 		return wLSyncedToJIRA{index, entry, fallbackCmtUsed, err}
 	}
 }

@@ -6,11 +6,12 @@ import (
 	"charm.land/bubbles/v2/list"
 	"charm.land/bubbles/v2/textinput"
 	"charm.land/lipgloss/v2"
+	"github.com/dhth/punchout/internal/config"
 	d "github.com/dhth/punchout/internal/domain"
 	svc "github.com/dhth/punchout/internal/service"
 )
 
-func InitialModel(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, debug bool) Model {
+func InitialModel(db *sql.DB, jiraSvc svc.Jira, jiraOpts config.JiraOptions, debug bool) Model {
 	var stackItems []list.Item
 	var worklogListItems []list.Item
 	var syncedWorklogListItems []list.Item
@@ -37,7 +38,7 @@ func InitialModel(db *sql.DB, jiraSvc svc.Jira, jiraCfg d.JiraConfig, debug bool
 	m := Model{
 		db:                db,
 		jiraSvc:           jiraSvc,
-		jiraCfg:           jiraCfg,
+		jiraOpts:          jiraOpts,
 		issueList:         list.New(stackItems, newItemDelegate(lipgloss.Color(issueListColor)), listWidth, 0),
 		issueMap:          make(map[string]*d.Issue),
 		issueIndexMap:     make(map[string]int),

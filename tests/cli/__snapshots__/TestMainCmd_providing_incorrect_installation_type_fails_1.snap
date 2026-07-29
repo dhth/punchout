@@ -3,5 +3,5 @@ exit_code: 1
 ----- stdout -----
 
 ----- stderr -----
-Error: invalid value for jira installation type (allowed values: [onpremise, cloud])
+Error: invalid configuration: invalid value for jira installation type (allowed values: [onpremise, cloud])
 

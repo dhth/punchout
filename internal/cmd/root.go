@@ -8,9 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
 
-	d "github.com/dhth/punchout/internal/domain"
+	"github.com/dhth/punchout/internal/config"
 	"github.com/dhth/punchout/internal/mcp"
 	pers "github.com/dhth/punchout/internal/persistence"
 	svc "github.com/dhth/punchout/internal/service"
@@ -23,14 +22,12 @@ const (
 )
 
 var (
-	errCouldntGetHomeDir       = errors.New("couldn't get your home directory")
-	errCouldntGetConfigDir     = errors.New("couldn't get your config directory")
-	errConfigFilePathEmpty     = errors.New("config file path cannot be empty")
-	errDBPathEmpty             = errors.New("db file path cannot be empty")
-	errTimeDeltaIncorrect      = errors.New("couldn't convert time delta to a number")
-	errCouldntParseConfigFile  = errors.New("couldn't parse config file")
-	errInvalidInstallationType = fmt.Errorf("invalid value for jira installation type (allowed values: [%s, %s])", jiraInstallationTypeOnPremise, jiraInstallationTypeCloud)
-	errInvalidMCPTransport     = fmt.Errorf("invalid value provided for MCP transport")
+	errCouldntGetHomeDir   = errors.New("couldn't get your home directory")
+	errCouldntGetConfigDir = errors.New("couldn't get your config directory")
+	errConfigFilePathEmpty = errors.New("config file path cannot be empty")
+	errDBPathEmpty         = errors.New("db file path cannot be empty")
+	errTimeDeltaIncorrect  = errors.New("couldn't convert time delta to a number")
+	errInvalidMCPTransport = fmt.Errorf("invalid value provided for MCP transport")
 )
 
 func Execute() error {
@@ -58,8 +55,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		flagMcpTransportStr string
 		flagMcpServerPort   uint
 
-		userCfg        userConfig
-		jiraCfg        d.JiraConfig
+		appCfg         config.Config
 		configPathFull string
 		dbPathFull     string
 		db             *sql.DB
@@ -76,7 +72,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		Short:         "punchout takes the suck out of logging time on JIRA.",
 		SilenceErrors: true,
 		SilenceUsage:  true,
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			if flagConfigFilePath == "" {
 				return errConfigFilePathEmpty
 			}
@@ -88,7 +84,7 @@ func NewRootCommand() (*cobra.Command, error) {
 			dbPathFull = expandTilde(flagDBPath, userHomeDir)
 
 			var jiraTimeDeltaMins int
-			if flagJiraTimeDeltaMinsStr != "" {
+			if cmd.Flags().Changed("jira-time-delta-mins") {
 				jiraTimeDeltaMins, err = strconv.Atoi(flagJiraTimeDeltaMinsStr)
 				if err != nil {
 					return fmt.Errorf("%w: %s", errTimeDeltaIncorrect, err.Error())
@@ -97,84 +93,42 @@ func NewRootCommand() (*cobra.Command, error) {
 
 			configPathFull = expandTilde(flagConfigFilePath, userHomeDir)
 
-			var err error
-			userCfg, err = getConfig(configPathFull)
-			if err != nil {
-				return fmt.Errorf("%w: %s", errCouldntParseConfigFile, err.Error())
+			overrides := config.Overrides{}
+
+			if cmd.Flags().Changed("jira-installation-type") {
+				overrides.Jira.InstallationType = &flagJiraInstallationType
 			}
 
-			if flagJiraInstallationType != "" {
-				userCfg.Jira.InstallationType = flagJiraInstallationType
+			if cmd.Flags().Changed("jira-url") {
+				overrides.Jira.URL = &flagJiraURL
 			}
 
-			if flagJiraURL != "" {
-				userCfg.Jira.JiraURL = &flagJiraURL
+			if cmd.Flags().Changed("jira-token") {
+				overrides.Jira.Token = &flagJiraToken
 			}
 
-			if flagJiraToken != "" {
-				userCfg.Jira.JiraToken = &flagJiraToken
+			if cmd.Flags().Changed("jira-username") {
+				overrides.Jira.Username = &flagJiraUsername
 			}
 
-			if flagJiraUsername != "" {
-				userCfg.Jira.JiraUsername = &flagJiraUsername
+			if cmd.Flags().Changed("jql") {
+				overrides.Jira.JQL = &flagJQL
 			}
 
-			if flagJQL != "" {
-				userCfg.Jira.JQL = &flagJQL
+			if cmd.Flags().Changed("jira-time-delta-mins") {
+				overrides.Jira.TimeDeltaMins = &jiraTimeDeltaMins
 			}
 
-			if flagJiraTimeDeltaMinsStr != "" {
-				userCfg.Jira.JiraTimeDeltaMins = jiraTimeDeltaMins
+			if cmd.Flags().Changed("fallback-comment") {
+				overrides.Jira.FallbackComment = &flagFallbackComment
 			}
 
-			if flagFallbackComment != "" {
-				userCfg.Jira.FallbackComment = &flagFallbackComment
-			}
-
-			// validations
-			var installationType d.JiraInstallationType
-
-			switch userCfg.Jira.InstallationType {
-			case "", jiraInstallationTypeOnPremise: // "" to maintain backwards compatibility
-				installationType = d.OnPremiseInstallation
-				userCfg.Jira.InstallationType = jiraInstallationTypeOnPremise
-			case jiraInstallationTypeCloud:
-				installationType = d.CloudInstallation
-			default:
-				return errInvalidInstallationType
-			}
-
-			if userCfg.Jira.JiraURL == nil || *userCfg.Jira.JiraURL == "" {
-				return fmt.Errorf("jira-url cannot be empty")
-			}
-
-			if userCfg.Jira.JQL == nil || *userCfg.Jira.JQL == "" {
-				return fmt.Errorf("jql cannot be empty")
-			}
-
-			if userCfg.Jira.JiraToken == nil || *userCfg.Jira.JiraToken == "" {
-				return fmt.Errorf("jira-token cannot be empty")
-			}
-
-			if installationType == d.CloudInstallation && (userCfg.Jira.JiraUsername == nil || *userCfg.Jira.JiraUsername == "") {
-				return fmt.Errorf("jira-username cannot be empty for cloud installation")
-			}
-
-			if userCfg.Jira.FallbackComment != nil && strings.TrimSpace(*userCfg.Jira.FallbackComment) == "" {
-				return fmt.Errorf("fallback-comment cannot be empty")
-			}
-
-			jiraCfg = d.JiraConfig{
-				InstallationType: installationType,
-				JQL:              *userCfg.Jira.JQL,
-				TimeDeltaMins:    userCfg.Jira.JiraTimeDeltaMins,
-				FallbackComment:  userCfg.Jira.FallbackComment,
-			}
-			return nil
+			appCfg, err = config.Load(configPathFull, overrides)
+			return err
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if flagListConfig {
-				printConfig(configPathFull, dbPathFull, userCfg)
+				printConfig(configPathFull, dbPathFull, appCfg.Jira)
 				return nil
 			}
 
@@ -183,12 +137,12 @@ func NewRootCommand() (*cobra.Command, error) {
 				return err
 			}
 
-			jiraSvc, err = getJiraSvc(jiraCfg.InstallationType, userCfg)
+			jiraSvc, err = getJiraSvc(appCfg.Jira.Installation)
 			if err != nil {
 				return err
 			}
 
-			return ui.RenderUI(db, jiraSvc, jiraCfg)
+			return ui.RenderUI(db, jiraSvc, appCfg.Jira.Options)
 		},
 	}
 
@@ -201,15 +155,15 @@ func NewRootCommand() (*cobra.Command, error) {
 		Use:   "serve",
 		Short: "Run punchout's MCP server",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			transport, ok := d.ParseMCPTransport(flagMcpTransportStr)
+			transport, ok := mcp.ParseTransport(flagMcpTransportStr)
 			if !ok {
 				return fmt.Errorf("%w: %q", errInvalidMCPTransport, flagMcpTransportStr)
 			}
 
 			if flagListConfig {
-				printConfig(configPathFull, dbPathFull, userCfg)
+				printConfig(configPathFull, dbPathFull, appCfg.Jira)
 				fmt.Fprintf(os.Stdout, "Transport                               %s\n", flagMcpTransportStr)
-				if transport == d.McpTransportHTTP {
+				if transport == mcp.TransportHTTP {
 					fmt.Fprintf(os.Stdout, "Port                                    %d\n", flagMcpServerPort)
 				}
 				return nil
@@ -220,17 +174,17 @@ func NewRootCommand() (*cobra.Command, error) {
 				return err
 			}
 
-			jiraSvc, err = getJiraSvc(jiraCfg.InstallationType, userCfg)
+			jiraSvc, err = getJiraSvc(appCfg.Jira.Installation)
 			if err != nil {
 				return err
 			}
 
-			mcpCfg := d.McpConfig{
+			mcpCfg := mcp.Config{
 				Transport: transport,
 				HTTPPort:  flagMcpServerPort,
 			}
 
-			return mcp.Serve(cmd.Context(), db, jiraSvc, jiraCfg, mcpCfg)
+			return mcp.Serve(cmd.Context(), db, jiraSvc, appCfg.Jira.Options, mcpCfg)
 		},
 	}
 
@@ -275,7 +229,24 @@ func NewRootCommand() (*cobra.Command, error) {
 	return rootCmd, nil
 }
 
-func printConfig(configPath, dbPath string, userCfg userConfig) {
+func printConfig(configPath, dbPath string, jiraCfg config.JiraConfig) {
+	var installationType string
+	var jiraURL string
+	var jiraToken string
+	var jiraUsername string
+
+	switch installation := jiraCfg.Installation.(type) {
+	case config.OnPremiseInstallation:
+		installationType = config.JiraInstallationTypeOnPremise
+		jiraURL = installation.URL
+		jiraToken = installation.Token
+	case config.CloudInstallation:
+		installationType = config.JiraInstallationTypeCloud
+		jiraURL = installation.URL
+		jiraToken = installation.Token
+		jiraUsername = installation.Username
+	}
+
 	fmt.Fprintf(os.Stdout, `Config:
 
 Config File Path                        %s
@@ -288,26 +259,28 @@ JIRA Time Delta Mins                    %d
 `,
 		configPath,
 		dbPath,
-		userCfg.Jira.InstallationType,
-		*userCfg.Jira.JiraURL,
-		*userCfg.Jira.JiraToken,
-		*userCfg.Jira.JQL,
-		userCfg.Jira.JiraTimeDeltaMins)
+		installationType,
+		jiraURL,
+		jiraToken,
+		jiraCfg.Options.JQL,
+		jiraCfg.Options.TimeDeltaMins)
 
-	if userCfg.Jira.InstallationType == jiraInstallationTypeCloud {
-		fmt.Fprintf(os.Stdout, "JIRA Username                           %s\n", *userCfg.Jira.JiraUsername)
+	if jiraUsername != "" {
+		fmt.Fprintf(os.Stdout, "JIRA Username                           %s\n", jiraUsername)
 	}
 
-	if userCfg.Jira.FallbackComment != nil {
-		fmt.Fprintf(os.Stdout, "Fallback Comment                        %s\n", *userCfg.Jira.FallbackComment)
+	if jiraCfg.Options.FallbackComment != nil {
+		fmt.Fprintf(os.Stdout, "Fallback Comment                        %s\n", *jiraCfg.Options.FallbackComment)
 	}
 }
 
-func getJiraSvc(installationType d.JiraInstallationType, cfg userConfig) (svc.Jira, error) {
-	switch installationType {
-	case d.OnPremiseInstallation:
-		return svc.NewOnPremJiraSvc(*cfg.Jira.JiraURL, *cfg.Jira.JiraToken)
+func getJiraSvc(installation config.JiraInstallation) (svc.Jira, error) {
+	switch installation := installation.(type) {
+	case config.OnPremiseInstallation:
+		return svc.NewOnPremJiraSvc(installation.URL, installation.Token)
+	case config.CloudInstallation:
+		return svc.NewCloudJiraSvc(installation.URL, installation.Username, installation.Token)
 	default:
-		return svc.NewCloudJiraSvc(*cfg.Jira.JiraURL, *cfg.Jira.JiraUsername, *cfg.Jira.JiraToken)
+		return nil, fmt.Errorf("unsupported JIRA installation type %T", installation)
 	}
 }

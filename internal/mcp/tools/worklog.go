@@ -157,8 +157,8 @@ func (h Handler) validateWorklogInput(input addWorkLogInput) (d.ValidatedWorkLog
 
 	if input.Comment != nil {
 		comment = *input.Comment
-	} else if h.JiraCfg.FallbackComment != nil {
-		comment = *h.JiraCfg.FallbackComment
+	} else if h.JiraOpts.FallbackComment != nil {
+		comment = *h.JiraOpts.FallbackComment
 	}
 
 	return d.ValidatedWorkLog{

@@ -3,12 +3,12 @@ package tools
 import (
 	"database/sql"
 
-	d "github.com/dhth/punchout/internal/domain"
+	"github.com/dhth/punchout/internal/config"
 	svc "github.com/dhth/punchout/internal/service"
 )
 
 type Handler struct {
-	DB      *sql.DB
-	JiraSvc svc.Jira
-	JiraCfg d.JiraConfig
+	DB       *sql.DB
+	JiraSvc  svc.Jira
+	JiraOpts config.JiraOptions
 }
