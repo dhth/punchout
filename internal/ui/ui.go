@@ -9,7 +9,7 @@ import (
 	svc "github.com/dhth/punchout/internal/service"
 )
 
-func RenderUI(db *sql.DB, jiraSvc svc.Jira, jiraCfg config.JiraOptions) error {
+func RenderUI(db *sql.DB, jiraSvc svc.Jira, jiraOpts config.JiraOptions) error {
 	debug := os.Getenv("DEBUG") == "1"
 	if debug {
 		f, err := tea.LogToFile("debug.log", "debug")
@@ -19,7 +19,7 @@ func RenderUI(db *sql.DB, jiraSvc svc.Jira, jiraCfg config.JiraOptions) error {
 		defer f.Close()
 	}
 
-	p := tea.NewProgram(InitialModel(db, jiraSvc, jiraCfg, debug))
+	p := tea.NewProgram(InitialModel(db, jiraSvc, jiraOpts, debug))
 	if _, err := p.Run(); err != nil {
 		return err
 	}

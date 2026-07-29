@@ -19,16 +19,16 @@ var (
 	errCouldntListenOnAddr = errors.New("MCP server couldn't listen on address")
 )
 
-func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraCfg config.JiraOptions, mcpCfg Config) error {
+func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraOpts config.JiraOptions, mcpCfg Config) error {
 	opts := &mcp.ServerOptions{
 		Instructions: "Use this server for creating worklogs and syncing them to JIRA. You can also use it to fetch issues from JIRA, and view unsynced worklogs.",
 	}
 	server := mcp.NewServer(&mcp.Implementation{Name: "punchout"}, opts)
 
 	toolsHandler := tools.Handler{
-		DB:      db,
-		JiraSvc: jiraSvc,
-		JiraCfg: jiraCfg,
+		DB:       db,
+		JiraSvc:  jiraSvc,
+		JiraOpts: jiraOpts,
 	}
 
 	err := toolsHandler.AddToolsToServer(server)

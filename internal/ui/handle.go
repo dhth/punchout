@@ -594,7 +594,7 @@ func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
 	var secsSpent int
 	for i, e := range msg.entries {
 		secsSpent += e.SecsSpent()
-		e.FallbackComment = m.jiraCfg.FallbackComment
+		e.FallbackComment = m.jiraOpts.FallbackComment
 		items[i] = list.Item(e)
 	}
 	m.worklogList.SetItems(items)
@@ -698,7 +698,7 @@ func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 	msg.entry.Synced = true
 	msg.entry.SyncInProgress = false
 	if msg.fallbackCommentUsed {
-		msg.entry.Comment = m.jiraCfg.FallbackComment
+		msg.entry.Comment = m.jiraOpts.FallbackComment
 	}
 	m.worklogList.SetItem(msg.index, msg.entry)
 	return updateSyncStatusForEntry(m.db, msg.entry, msg.index, msg.fallbackCommentUsed)

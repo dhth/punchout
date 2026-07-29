@@ -68,8 +68,8 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 			semaphore <- struct{}{}
 			var comment string
 			var fallbackCommentUsed bool
-			if entry.NeedsComment() && h.JiraCfg.FallbackComment != nil {
-				comment = *h.JiraCfg.FallbackComment
+			if entry.NeedsComment() && h.JiraOpts.FallbackComment != nil {
+				comment = *h.JiraOpts.FallbackComment
 				fallbackCommentUsed = true
 			} else if entry.Comment != nil {
 				comment = *entry.Comment
@@ -80,7 +80,7 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 				IssueKey: entry.IssueKey,
 			}
 
-			err := h.JiraSvc.SyncWLToJIRA(ctx, entry, comment, h.JiraCfg.TimeDeltaMins)
+			err := h.JiraSvc.SyncWLToJIRA(ctx, entry, comment, h.JiraOpts.TimeDeltaMins)
 			if err != nil {
 				sr.Err = err
 				resultChan <- sr

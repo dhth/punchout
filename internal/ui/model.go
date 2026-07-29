@@ -64,7 +64,7 @@ type Model struct {
 	lastView              stateView
 	db                    *sql.DB
 	jiraSvc               svc.Jira
-	jiraCfg               config.JiraOptions
+	jiraOpts              config.JiraOptions
 	issueList             list.Model
 	issueMap              map[string]*d.Issue
 	issueIndexMap         map[string]int

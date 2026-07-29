@@ -8,7 +8,7 @@ import (
 )
 
 type Handler struct {
-	DB      *sql.DB
-	JiraSvc svc.Jira
-	JiraCfg config.JiraOptions
+	DB       *sql.DB
+	JiraSvc  svc.Jira
+	JiraOpts config.JiraOptions
 }
