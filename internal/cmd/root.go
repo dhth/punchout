@@ -128,7 +128,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if flagListConfig {
-				printConfig(configPathFull, dbPathFull, appCfg.Jira)
+				printConfig(configPathFull, dbPathFull, appCfg)
 				return nil
 			}
 
@@ -161,7 +161,7 @@ func NewRootCommand() (*cobra.Command, error) {
 			}
 
 			if flagListConfig {
-				printConfig(configPathFull, dbPathFull, appCfg.Jira)
+				printConfig(configPathFull, dbPathFull, appCfg)
 				fmt.Fprintf(os.Stdout, "Transport                               %s\n", flagMcpTransportStr)
 				if transport == mcp.TransportHTTP {
 					fmt.Fprintf(os.Stdout, "Port                                    %d\n", flagMcpServerPort)
@@ -229,21 +229,18 @@ func NewRootCommand() (*cobra.Command, error) {
 	return rootCmd, nil
 }
 
-func printConfig(configPath, dbPath string, jiraCfg config.JiraConfig) {
+func printConfig(configPath, dbPath string, cfg config.Config) {
 	var installationType string
 	var jiraURL string
-	var jiraToken string
 	var jiraUsername string
 
-	switch installation := jiraCfg.Installation.(type) {
+	switch installation := cfg.Jira.Installation.(type) {
 	case config.OnPremiseInstallation:
 		installationType = config.JiraInstallationTypeOnPremise
 		jiraURL = installation.URL
-		jiraToken = installation.Token
 	case config.CloudInstallation:
 		installationType = config.JiraInstallationTypeCloud
 		jiraURL = installation.URL
-		jiraToken = installation.Token
 		jiraUsername = installation.Username
 	}
 
@@ -253,7 +250,7 @@ Config File Path                        %s
 DB File Path                            %s
 JIRA Installation Type                  %s
 JIRA URL                                %s
-JIRA Token                              %s
+JIRA Token                              ********
 JQL                                     %s
 JIRA Time Delta Mins                    %d
 `,
@@ -261,16 +258,15 @@ JIRA Time Delta Mins                    %d
 		dbPath,
 		installationType,
 		jiraURL,
-		jiraToken,
-		jiraCfg.Options.JQL,
-		jiraCfg.Options.TimeDeltaMins)
+		cfg.Jira.Options.JQL,
+		cfg.Jira.Options.TimeDeltaMins)
 
 	if jiraUsername != "" {
 		fmt.Fprintf(os.Stdout, "JIRA Username                           %s\n", jiraUsername)
 	}
 
-	if jiraCfg.Options.FallbackComment != nil {
-		fmt.Fprintf(os.Stdout, "Fallback Comment                        %s\n", *jiraCfg.Options.FallbackComment)
+	if cfg.Jira.Options.FallbackComment != nil {
+		fmt.Fprintf(os.Stdout, "Fallback Comment                        %s\n", *cfg.Jira.Options.FallbackComment)
 	}
 }
 
