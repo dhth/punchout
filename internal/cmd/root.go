@@ -250,7 +250,7 @@ Config File Path                        %s
 DB File Path                            %s
 JIRA Installation Type                  %s
 JIRA URL                                %s
-JIRA Token                              ********
+JIRA Token                              [REDACTED]
 JQL                                     %s
 JIRA Time Delta Mins                    %d
 `,
