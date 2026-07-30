@@ -7,7 +7,7 @@ Config File Path                        config/good.toml
 DB File Path                            db.db
 JIRA Installation Type                  onpremise
 JIRA URL                                https://jira.company.com
-JIRA Token                              XXX
+JIRA Token                              ********
 JQL                                     project = BLAH AND sprint in openSprints ()
 JIRA Time Delta Mins                    300
 Fallback Comment                        work
