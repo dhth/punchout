@@ -69,9 +69,17 @@ type wLSyncUpdatedInDB struct {
 	err   error
 }
 
-type issuesFetchedFromJIRA struct {
+type issueSource uint
+
+const (
+	issueSourceJIRA issueSource = iota
+	issueSourceCache
+)
+
+type issuesLoaded struct {
 	issues    []d.Issue
 	fetchedAt time.Time
+	source    issueSource
 	err       error
 }
 

@@ -227,8 +227,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		m.handleWindowResizing(msg)
-	case issuesFetchedFromJIRA:
-		handleCmd := m.handleIssuesFetchedFromJIRAMsg(msg)
+	case issuesLoaded:
+		handleCmd := m.handleIssuesLoadedMsg(msg)
 		if handleCmd != nil {
 			cmds = append(cmds, handleCmd)
 		}

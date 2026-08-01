@@ -265,7 +265,7 @@ func (m *Model) getCmdToReloadData() tea.Cmd {
 	case issueListView:
 		m.issueList.Title = "fetching..."
 		m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListUnfetchedColor))
-		cmd = m.fetchJIRAIssues()
+		cmd = m.fetchIssuesFromJIRA()
 	case wLView:
 		cmd = fetchUnsyncedWorkLogs(m.db)
 		m.worklogList.ResetSelected()
@@ -530,8 +530,12 @@ func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
 	}
 }
 
-func (m *Model) handleIssuesFetchedFromJIRAMsg(msg issuesFetchedFromJIRA) tea.Cmd {
+func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) tea.Cmd {
 	if msg.err != nil {
+		if msg.source == issueSourceCache {
+			return m.fetchIssuesFromJIRA()
+		}
+
 		m.message = fmt.Sprintf("error fetching issues from JIRA: %s", msg.err.Error())
 		m.messages = append(m.messages, m.message)
 		m.issueList.Title = "Failure"
@@ -551,13 +555,15 @@ func (m *Model) handleIssuesFetchedFromJIRAMsg(msg issuesFetchedFromJIRA) tea.Cm
 	m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListColor))
 	m.issuesFetched = true
 
-	return tea.Batch(
-		fetchActiveStatus(m.db, 0),
-		m.saveIssuesToCache(issuecache.Snapshot{
+	cmds := []tea.Cmd{fetchActiveStatus(m.db, 0)}
+	if msg.source == issueSourceJIRA {
+		cmds = append(cmds, m.saveIssuesToCache(issuecache.Snapshot{
 			Issues:    msg.issues,
 			FetchedAt: msg.fetchedAt,
-		}),
-	)
+		}))
+	}
+
+	return tea.Batch(cmds...)
 }
 
 func (m *Model) handleIssuesSavedToCacheMsg(msg issuesSavedToCache) {

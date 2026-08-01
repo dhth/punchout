@@ -155,7 +155,7 @@ func NewRootCommand() (*cobra.Command, error) {
 
 			return ui.RenderUI(db, jiraSvc, issueStore, ui.Options{
 				Jira:              appCfg.Jira.Options,
-				UseCacheOnStartup: true,
+				UseCacheOnStartup: false,
 			})
 		},
 	}
