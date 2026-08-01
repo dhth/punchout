@@ -92,7 +92,6 @@ type Model struct {
 	activeIssue           string
 	worklogSaveType       worklogSaveType
 	message               string
-	messages              []string
 	showHelpIndicator     bool
 	terminalHeight        int
 	trackingActive        bool

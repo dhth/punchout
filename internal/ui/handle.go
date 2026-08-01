@@ -385,7 +385,6 @@ func (m *Model) getCmdToDeleteWL() tea.Cmd {
 	if !ok {
 		msg := "Couldn't delete worklog entry"
 		m.message = msg
-		m.messages = append(m.messages, msg)
 		return nil
 	}
 
@@ -426,7 +425,6 @@ func (m *Model) getCmdToToggleTracking() tea.Cmd {
 	if m.changesLocked {
 		message := "Changes locked momentarily"
 		m.message = message
-		m.messages = append(m.messages, message)
 		return nil
 	}
 
@@ -443,7 +441,6 @@ func (m *Model) getCmdToStartTracking() tea.Cmd {
 	if !ok {
 		message := "Something went horribly wrong"
 		m.message = message
-		m.messages = append(m.messages, message)
 		return nil
 	}
 
@@ -537,7 +534,6 @@ func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) tea.Cmd {
 		}
 
 		m.message = fmt.Sprintf("error fetching issues from JIRA: %s", msg.err.Error())
-		m.messages = append(m.messages, m.message)
 		m.issueList.Title = "Failure"
 		m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(failureColor))
 		return nil
@@ -572,14 +568,12 @@ func (m *Model) handleIssuesSavedToCacheMsg(msg issuesSavedToCache) {
 	}
 
 	m.message = fmt.Sprintf("error saving issues to cache: %s", msg.err.Error())
-	m.messages = append(m.messages, m.message)
 }
 
 func (m *Model) handleManualEntryInsertedInDBMsg(msg manualWLInsertedInDB) tea.Cmd {
 	if msg.err != nil {
 		message := msg.err.Error()
 		m.message = "Error inserting worklog: " + message
-		m.messages = append(m.messages, message)
 		return nil
 	}
 
@@ -593,7 +587,6 @@ func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
 	if msg.err != nil {
 		message := msg.err.Error()
 		m.message = "Error updating worklog: " + message
-		m.messages = append(m.messages, message)
 		return nil
 	}
 
@@ -608,7 +601,6 @@ func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
 	if msg.err != nil {
 		message := msg.err.Error()
 		m.message = message
-		m.messages = append(m.messages, message)
 		return
 	}
 
@@ -631,7 +623,6 @@ func (m *Model) handleSyncedWLEntriesFetchedFromDBMsg(msg syncedWLEntriesFetched
 	if msg.err != nil {
 		message := msg.err.Error()
 		m.message = "Error fetching synced worklog entries: " + message
-		m.messages = append(m.messages, message)
 		return
 	}
 
@@ -645,7 +636,6 @@ func (m *Model) handleSyncedWLEntriesFetchedFromDBMsg(msg syncedWLEntriesFetched
 func (m *Model) handleWLSyncUpdatedInDBMsg(msg wLSyncUpdatedInDB) {
 	if msg.err != nil {
 		msg.entry.Error = msg.err
-		m.messages = append(m.messages, msg.err.Error())
 		m.worklogList.SetItem(msg.index, msg.entry)
 		return
 	}
@@ -658,7 +648,6 @@ func (m *Model) handleActiveWLFetchedFromDBMsg(msg activeWLFetchedFromDB) {
 	if msg.err != nil {
 		message := msg.err.Error()
 		m.message = message
-		m.messages = append(m.messages, message)
 		return
 	}
 
@@ -687,7 +676,6 @@ func (m *Model) handleWLDeletedFromDBMsg(msg wLDeletedFromDB) tea.Cmd {
 	if msg.err != nil {
 		message := "error deleting entry: " + msg.err.Error()
 		m.message = message
-		m.messages = append(m.messages, message)
 		return nil
 	}
 
@@ -713,7 +701,6 @@ func (m *Model) handleActiveWLDeletedFromDBMsg(msg activeWLDeletedFromDB) {
 func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 	if msg.err != nil {
 		msg.entry.Error = msg.err
-		m.messages = append(m.messages, msg.err.Error())
 		return nil
 	}
 
@@ -730,7 +717,6 @@ func (m *Model) handleActiveWLUpdatedInDBMsg(msg activeWLUpdatedInDB) {
 	if msg.err != nil {
 		message := msg.err.Error()
 		m.message = message
-		m.messages = append(m.messages, message)
 		return
 	}
 
@@ -742,7 +728,6 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 	if msg.err != nil {
 		message := msg.err.Error()
 		m.message = message
-		m.messages = append(m.messages, message)
 		m.trackingActive = false
 		m.activeIssueComment = nil
 		return nil
@@ -781,7 +766,6 @@ func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
 	if msg.err != nil {
 		message := msg.err.Error()
 		m.message = message
-		m.messages = append(m.messages, message)
 		if errors.Is(msg.err, pers.ErrNoTaskIsActive) || errors.Is(msg.err, pers.ErrCouldntStartTrackingTask) {
 			m.trackingActive = false
 			m.activeIssueComment = nil
