@@ -28,8 +28,12 @@ func (m Model) View() tea.View {
 
 	var statusBar string
 	var helpMsg string
-	if m.message != "" {
-		statusBar = utils.Trim(m.message, 120)
+	if m.message.isActive() {
+		if m.message.kind == userMsgError {
+			statusBar = userMsgErrorStyle.Render(m.message.value)
+		} else {
+			statusBar = userMsgInfoStyle.Render(m.message.value)
+		}
 	}
 	var activeMsg string
 

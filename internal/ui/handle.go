@@ -18,7 +18,7 @@ import (
 func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
 	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
-		m.message = err.Error()
+		m.setErrorMsg(err.Error())
 		return nil
 	}
 	commentValue := m.trackingInputs[entryComment].Value()
@@ -35,14 +35,14 @@ func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
 func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
-		m.message = err.Error()
+		m.setErrorMsg(err.Error())
 		return nil
 	}
 	m.activeIssueBeginTS = beginTS.Local()
 
 	endTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryEndTS].Value(), time.Local)
 	if err != nil {
-		m.message = err.Error()
+		m.setErrorMsg(err.Error())
 		return nil
 	}
 	m.activeIssueEndTS = endTS.Local()
@@ -70,13 +70,13 @@ func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
-		m.message = err.Error()
+		m.setErrorMsg(err.Error())
 		return nil
 	}
 
 	endTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryEndTS].Value(), time.Local)
 	if err != nil {
-		m.message = err.Error()
+		m.setErrorMsg(err.Error())
 		return nil
 	}
 
@@ -288,7 +288,7 @@ func (m *Model) handleRequestToGoToActiveIssue() {
 				m.issueList.Select(activeIndex)
 			}
 		} else {
-			m.message = "Nothing is being tracked right now"
+			m.setInfoMsg("nothing is being tracked right now")
 		}
 	}
 }
@@ -363,7 +363,7 @@ func (m *Model) handleRequestToSyncTimestamps() {
 		tsStrToSync := m.trackingInputs[entryEndTS].Value()
 		_, err := time.ParseInLocation(timeFormat, tsStrToSync, time.Local)
 		if err != nil {
-			m.message = fmt.Sprintf("end timestamp is invalid: %s", err.Error())
+			m.setErrorMsg(fmt.Sprintf("end timestamp is invalid: %s", err.Error()))
 			return
 		}
 		m.trackingInputs[entryBeginTS].SetValue(tsStrToSync)
@@ -371,20 +371,19 @@ func (m *Model) handleRequestToSyncTimestamps() {
 		tsStrToSync := m.trackingInputs[entryBeginTS].Value()
 		_, err := time.ParseInLocation(timeFormat, tsStrToSync, time.Local)
 		if err != nil {
-			m.message = fmt.Sprintf("begin timestamp is invalid: %s", err.Error())
+			m.setErrorMsg(fmt.Sprintf("begin timestamp is invalid: %s", err.Error()))
 			return
 		}
 		m.trackingInputs[entryEndTS].SetValue(tsStrToSync)
 	default:
-		m.message = "you need to have the cursor on either one of the two timestamps to sync them"
+		m.setErrorMsg("you need to have the cursor on either one of the two timestamps to sync them")
 	}
 }
 
 func (m *Model) getCmdToDeleteWL() tea.Cmd {
 	issue, ok := m.worklogList.SelectedItem().(d.WorklogEntry)
 	if !ok {
-		msg := "Couldn't delete worklog entry"
-		m.message = msg
+		m.setErrorMsg("couldn't delete worklog entry")
 		return nil
 	}
 
@@ -394,7 +393,7 @@ func (m *Model) getCmdToDeleteWL() tea.Cmd {
 func (m *Model) getCmdToQuickSwitchTracking() tea.Cmd {
 	issue, ok := m.issueList.SelectedItem().(*d.Issue)
 	if !ok {
-		m.message = "Something went wrong"
+		m.setErrorMsg("something went wrong")
 		return nil
 	}
 
@@ -423,8 +422,7 @@ func (m *Model) getCmdToToggleTracking() tea.Cmd {
 	}
 
 	if m.changesLocked {
-		message := "Changes locked momentarily"
-		m.message = message
+		m.setInfoMsg("changes locked momentarily")
 		return nil
 	}
 
@@ -439,8 +437,7 @@ func (m *Model) getCmdToToggleTracking() tea.Cmd {
 func (m *Model) getCmdToStartTracking() tea.Cmd {
 	issue, ok := m.issueList.SelectedItem().(*d.Issue)
 	if !ok {
-		message := "Something went horribly wrong"
-		m.message = message
+		m.setErrorMsg("something went horribly wrong")
 		return nil
 	}
 
@@ -493,7 +490,7 @@ func (m *Model) getCmdToSyncWLToJIRA() []tea.Cmd {
 		}
 	}
 	if toSyncNum == 0 {
-		m.message = "nothing to sync"
+		m.setInfoMsg("nothing to sync")
 	}
 
 	return cmds
@@ -533,7 +530,7 @@ func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) tea.Cmd {
 			return m.fetchIssuesFromJIRA()
 		}
 
-		m.message = fmt.Sprintf("error fetching issues from JIRA: %s", msg.err.Error())
+		m.setErrorMsg(fmt.Sprintf("error fetching issues from JIRA: %s", msg.err.Error()))
 		m.issueList.Title = "Failure"
 		m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(failureColor))
 		return nil
@@ -567,13 +564,12 @@ func (m *Model) handleIssuesSavedToCacheMsg(msg issuesSavedToCache) {
 		return
 	}
 
-	m.message = fmt.Sprintf("error saving issues to cache: %s", msg.err.Error())
+	m.setErrorMsg(fmt.Sprintf("error saving issues to cache: %s", msg.err.Error()))
 }
 
 func (m *Model) handleManualEntryInsertedInDBMsg(msg manualWLInsertedInDB) tea.Cmd {
 	if msg.err != nil {
-		message := msg.err.Error()
-		m.message = "Error inserting worklog: " + message
+		m.setErrorMsg("error inserting worklog: " + msg.err.Error())
 		return nil
 	}
 
@@ -585,12 +581,11 @@ func (m *Model) handleManualEntryInsertedInDBMsg(msg manualWLInsertedInDB) tea.C
 
 func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
 	if msg.err != nil {
-		message := msg.err.Error()
-		m.message = "Error updating worklog: " + message
+		m.setErrorMsg("error updating worklog: " + msg.err.Error())
 		return nil
 	}
 
-	m.message = "Worklog updated"
+	m.setInfoMsg("worklog updated")
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].SetValue("")
 	}
@@ -599,8 +594,7 @@ func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
 
 func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
 	if msg.err != nil {
-		message := msg.err.Error()
-		m.message = message
+		m.setErrorMsg(msg.err.Error())
 		return
 	}
 
@@ -615,14 +609,13 @@ func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
 	m.unsyncedWLSecsSpent = secsSpent
 	m.unsyncedWLCount = uint(len(msg.entries))
 	if m.debug {
-		m.message = "[io: log entries]"
+		m.setInfoMsg("[io: log entries]")
 	}
 }
 
 func (m *Model) handleSyncedWLEntriesFetchedFromDBMsg(msg syncedWLEntriesFetchedFromDB) {
 	if msg.err != nil {
-		message := msg.err.Error()
-		m.message = "Error fetching synced worklog entries: " + message
+		m.setErrorMsg("error fetching synced worklog entries: " + msg.err.Error())
 		return
 	}
 
@@ -646,8 +639,7 @@ func (m *Model) handleWLSyncUpdatedInDBMsg(msg wLSyncUpdatedInDB) {
 
 func (m *Model) handleActiveWLFetchedFromDBMsg(msg activeWLFetchedFromDB) {
 	if msg.err != nil {
-		message := msg.err.Error()
-		m.message = message
+		m.setErrorMsg(msg.err.Error())
 		return
 	}
 
@@ -674,8 +666,7 @@ func (m *Model) handleActiveWLFetchedFromDBMsg(msg activeWLFetchedFromDB) {
 
 func (m *Model) handleWLDeletedFromDBMsg(msg wLDeletedFromDB) tea.Cmd {
 	if msg.err != nil {
-		message := "error deleting entry: " + msg.err.Error()
-		m.message = message
+		m.setErrorMsg("error deleting entry: " + msg.err.Error())
 		return nil
 	}
 
@@ -684,7 +675,7 @@ func (m *Model) handleWLDeletedFromDBMsg(msg wLDeletedFromDB) tea.Cmd {
 
 func (m *Model) handleActiveWLDeletedFromDBMsg(msg activeWLDeletedFromDB) {
 	if msg.err != nil {
-		m.message = fmt.Sprintf("Error deleting active log entry: %s", msg.err)
+		m.setErrorMsg(fmt.Sprintf("error deleting active log entry: %s", msg.err))
 		return
 	}
 
@@ -715,8 +706,7 @@ func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 
 func (m *Model) handleActiveWLUpdatedInDBMsg(msg activeWLUpdatedInDB) {
 	if msg.err != nil {
-		message := msg.err.Error()
-		m.message = message
+		m.setErrorMsg(msg.err.Error())
 		return
 	}
 
@@ -726,8 +716,7 @@ func (m *Model) handleActiveWLUpdatedInDBMsg(msg activeWLUpdatedInDB) {
 
 func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 	if msg.err != nil {
-		message := msg.err.Error()
-		m.message = message
+		m.setErrorMsg(msg.err.Error())
 		m.trackingActive = false
 		m.activeIssueComment = nil
 		return nil
@@ -764,8 +753,7 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 
 func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
 	if msg.err != nil {
-		message := msg.err.Error()
-		m.message = message
+		m.setErrorMsg(msg.err.Error())
 		if errors.Is(msg.err, pers.ErrNoTaskIsActive) || errors.Is(msg.err, pers.ErrCouldntStartTrackingTask) {
 			m.trackingActive = false
 			m.activeIssueComment = nil
@@ -825,7 +813,7 @@ func (m *Model) getCmdToQuickFinishActiveWL() tea.Cmd {
 
 func (m *Model) isDurationValid(start, end time.Time) bool {
 	if end.Sub(start).Seconds() < 60 {
-		m.message = "time spent needs to be at least a minute"
+		m.setErrorMsg("time spent needs to be at least a minute")
 		return false
 	}
 	return true
