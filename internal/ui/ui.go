@@ -5,11 +5,16 @@ import (
 	"os"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/dhth/punchout/internal/config"
+	"github.com/dhth/punchout/internal/issuecache"
 	svc "github.com/dhth/punchout/internal/service"
 )
 
-func RenderUI(db *sql.DB, jiraSvc svc.Jira, jiraOpts config.JiraOptions) error {
+func RenderUI(
+	db *sql.DB,
+	jiraSvc svc.Jira,
+	issueStore issuecache.Store,
+	opts Options,
+) error {
 	debug := os.Getenv("DEBUG") == "1"
 	if debug {
 		f, err := tea.LogToFile("debug.log", "debug")
@@ -19,7 +24,7 @@ func RenderUI(db *sql.DB, jiraSvc svc.Jira, jiraOpts config.JiraOptions) error {
 		defer f.Close()
 	}
 
-	p := tea.NewProgram(InitialModel(db, jiraSvc, jiraOpts, debug))
+	p := tea.NewProgram(InitialModel(db, jiraSvc, issueStore, opts, debug))
 	if _, err := p.Run(); err != nil {
 		return err
 	}

@@ -10,6 +10,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/dhth/punchout/internal/config"
 	d "github.com/dhth/punchout/internal/domain"
+	"github.com/dhth/punchout/internal/issuecache"
 	svc "github.com/dhth/punchout/internal/service"
 )
 
@@ -59,12 +60,18 @@ const (
 	timeOnlyFormat = "15:04"
 )
 
+type Options struct {
+	Jira              config.JiraOptions
+	UseCacheOnStartup bool
+}
+
 type Model struct {
 	activeView            stateView
 	lastView              stateView
 	db                    *sql.DB
 	jiraSvc               svc.Jira
-	jiraOpts              config.JiraOptions
+	issueStore            issuecache.Store
+	opts                  Options
 	issueList             list.Model
 	issueMap              map[string]*d.Issue
 	issueIndexMap         map[string]int

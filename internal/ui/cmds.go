@@ -10,6 +10,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	d "github.com/dhth/punchout/internal/domain"
+	"github.com/dhth/punchout/internal/issuecache"
 	pers "github.com/dhth/punchout/internal/persistence"
 
 	_ "modernc.org/sqlite" // sqlite driver
@@ -213,9 +214,21 @@ func updateSyncStatusForEntry(db *sql.DB, entry d.WorklogEntry, index int, fallb
 
 func (m Model) fetchJIRAIssues() tea.Cmd {
 	return func() tea.Msg {
-		issues, err := m.jiraSvc.GetIssues(m.jiraOpts.JQL)
+		issues, err := m.jiraSvc.GetIssues(m.opts.Jira.JQL)
+		if err != nil {
+			return issuesFetchedFromJIRA{err: err}
+		}
 
-		return issuesFetchedFromJIRA{issues, err}
+		return issuesFetchedFromJIRA{
+			issues:    issues,
+			fetchedAt: time.Now(),
+		}
+	}
+}
+
+func (m Model) saveIssuesToCache(snapshot issuecache.Snapshot) tea.Cmd {
+	return func() tea.Msg {
+		return issuesSavedToCache{err: m.issueStore.Save(snapshot)}
 	}
 }
 
@@ -227,14 +240,14 @@ func (m Model) syncWorklogWithJIRA(entry d.WorklogEntry, index int) tea.Cmd {
 		}
 
 		var comment string
-		if entry.NeedsComment() && m.jiraOpts.FallbackComment != nil {
-			comment = *m.jiraOpts.FallbackComment
+		if entry.NeedsComment() && m.opts.Jira.FallbackComment != nil {
+			comment = *m.opts.Jira.FallbackComment
 			fallbackCmtUsed = true
 		} else if entry.Comment != nil {
 			comment = *entry.Comment
 		}
 
-		err := m.jiraSvc.SyncWLToJIRA(context.TODO(), entry, comment, m.jiraOpts.TimeDeltaMins)
+		err := m.jiraSvc.SyncWLToJIRA(context.TODO(), entry, comment, m.opts.Jira.TimeDeltaMins)
 		return wLSyncedToJIRA{index, entry, fallbackCmtUsed, err}
 	}
 }
