@@ -117,6 +117,32 @@ jira_token = "minimal-token"
 					},
 				},
 			},
+			{
+				name: "when TUI cache startup is enabled",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[tui]
+use_cache_on_startup = true
+`,
+				expected: Config{
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
+						},
+					},
+					TUI: TUIConfig{
+						UseCacheOnStartup: true,
+					},
+				},
+			},
 		}
 
 		for _, tt := range tests {
@@ -132,6 +158,8 @@ jira_token = "minimal-token"
 		jqlOverride := "project = OVERRIDDEN"
 		timeDeltaMinsOverride := 0
 		fallbackCommentOverride := "overridden work"
+		useCacheOnStartupOverride := true
+		dontUseCacheOnStartupOverride := false
 		cloudInstallationType := JiraInstallationTypeCloud
 		jiraURLOverride := "https://overridden.jira.company.com"
 		jiraTokenOverride := "overridden-token"
@@ -206,6 +234,65 @@ fallback_comment = "original work"
 							URL:      "https://overridden.jira.company.com",
 							Username: "overridden-user@example.com",
 							Token:    "overridden-token",
+						},
+					},
+				},
+			},
+			{
+				name: "when TUI cache startup is enabled by an override",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[tui]
+use_cache_on_startup = false
+`,
+				overrides: Overrides{
+					TUI: TUIOverrides{
+						UseCacheOnStartup: &useCacheOnStartupOverride,
+					},
+				},
+				expected: Config{
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
+						},
+					},
+					TUI: TUIConfig{
+						UseCacheOnStartup: true,
+					},
+				},
+			},
+			{
+				name: "when TUI cache startup is explicitly disabled by an override",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[tui]
+use_cache_on_startup = true
+`,
+				overrides: Overrides{
+					TUI: TUIOverrides{
+						UseCacheOnStartup: &dontUseCacheOnStartupOverride,
+					},
+				},
+				expected: Config{
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
 						},
 					},
 				},

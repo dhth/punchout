@@ -28,6 +28,11 @@ var (
 
 type Config struct {
 	Jira JiraConfig
+	TUI  TUIConfig
+}
+
+type TUIConfig struct {
+	UseCacheOnStartup bool
 }
 
 type JiraConfig struct {
@@ -62,6 +67,11 @@ func (OnPremiseInstallation) isJiraInstallation() {}
 
 type Overrides struct {
 	Jira JiraOverrides
+	TUI  TUIOverrides
+}
+
+type TUIOverrides struct {
+	UseCacheOnStartup *bool
 }
 
 type JiraOverrides struct {
@@ -76,6 +86,11 @@ type JiraOverrides struct {
 
 type fileConfig struct {
 	Jira fileJiraConfig `toml:"jira"`
+	TUI  fileTUIConfig  `toml:"tui"`
+}
+
+type fileTUIConfig struct {
+	UseCacheOnStartup bool `toml:"use_cache_on_startup"`
 }
 
 type fileJiraConfig struct {
@@ -112,7 +127,12 @@ func decodeAndResolve(reader io.Reader, overrides Overrides) (Config, error) {
 		return Config{}, fmt.Errorf("%w: %s", ErrInvalidConfig, err.Error())
 	}
 
-	return Config{Jira: jiraCfg}, nil
+	return Config{
+		Jira: jiraCfg,
+		TUI: TUIConfig{
+			UseCacheOnStartup: effectiveCfg.TUI.UseCacheOnStartup,
+		},
+	}, nil
 }
 
 func withOverrides(cfg fileConfig, overrides Overrides) fileConfig {
@@ -138,6 +158,9 @@ func withOverrides(cfg fileConfig, overrides Overrides) fileConfig {
 	}
 	if overrides.Jira.FallbackComment != nil {
 		result.Jira.FallbackComment = overrides.Jira.FallbackComment
+	}
+	if overrides.TUI.UseCacheOnStartup != nil {
+		result.TUI.UseCacheOnStartup = *overrides.TUI.UseCacheOnStartup
 	}
 
 	return result

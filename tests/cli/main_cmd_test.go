@@ -122,6 +122,56 @@ func TestMainCmd(t *testing.T) {
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 
+	t.Run("cache startup can be enabled from config", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"--config-file-path", "config/cache-enabled.toml",
+			"--db-path", "db.db",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
+	t.Run("cache startup can be enabled by flag", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"--config-file-path", "config/good.toml",
+			"--db-path", "db.db",
+			"--use-cache-on-startup",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
+	t.Run("cache startup can be explicitly disabled by flag", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"--config-file-path", "config/cache-enabled.toml",
+			"--db-path", "db.db",
+			"--use-cache-on-startup=false",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
 	// FAILURES
 	t.Run("providing incorrect installation type fails", func(t *testing.T) {
 		// GIVEN

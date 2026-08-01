@@ -5,6 +5,9 @@ exit_code: 0
 Config File Path                        config/good.toml
 DB File Path                            db.db
 
+[TUI]
+Use Cache On Startup                    false
+
 [JIRA]
 JIRA Installation Type                  cloud
 JIRA URL                                https://jira.company.com

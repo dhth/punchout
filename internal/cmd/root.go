@@ -53,6 +53,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		flagJiraUsername         string
 		flagJQL                  string
 		flagListConfig           bool
+		flagUseCacheOnStartup    bool
 
 		flagMcpTransportStr string
 		flagMcpServerPort   uint
@@ -125,6 +126,10 @@ func NewRootCommand() (*cobra.Command, error) {
 				overrides.Jira.FallbackComment = &flagFallbackComment
 			}
 
+			if cmd.Flags().Changed("use-cache-on-startup") {
+				overrides.TUI.UseCacheOnStartup = &flagUseCacheOnStartup
+			}
+
 			appCfg, err = config.Load(configPathFull, overrides)
 			return err
 		},
@@ -155,7 +160,7 @@ func NewRootCommand() (*cobra.Command, error) {
 
 			return ui.RenderUI(db, jiraSvc, issueStore, ui.Options{
 				Jira:              appCfg.Jira.Options,
-				UseCacheOnStartup: false,
+				UseCacheOnStartup: appCfg.TUI.UseCacheOnStartup,
 			})
 		},
 	}
@@ -231,6 +236,7 @@ func NewRootCommand() (*cobra.Command, error) {
 	rootCmd.PersistentFlags().StringVarP(&flagFallbackComment, "fallback-comment", "", "", "fallback comment to use for worklog entries")
 	rootCmd.PersistentFlags().StringVarP(&flagJiraTimeDeltaMinsStr, "jira-time-delta-mins", "", "", "time delta (in minutes) between your timezone and the timezone of the JIRA server; can be +/-")
 	rootCmd.PersistentFlags().BoolVarP(&flagListConfig, "list-config", "", false, "print the config that punchout will use")
+	rootCmd.Flags().BoolVarP(&flagUseCacheOnStartup, "use-cache-on-startup", "", false, "load JIRA issues from the local cache on startup")
 
 	mcpServeCmd.Flags().StringVarP(&flagMcpTransportStr, "transport", "t", "stdio", "transport to use (possible values: [stdio, http])")
 	mcpServeCmd.Flags().UintVarP(&flagMcpServerPort, "http-port", "p", 18899, "port to use (when transport is http)")

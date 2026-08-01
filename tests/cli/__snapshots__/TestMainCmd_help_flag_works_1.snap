@@ -23,6 +23,7 @@ Flags:
       --jira-username string            username for authentication (for cloud installation)
       --jql string                      JQL to use to query issues
       --list-config                     print the config that punchout will use
+      --use-cache-on-startup            load JIRA issues from the local cache on startup
 
 Use "punchout [command] --help" for more information about a command.
 
