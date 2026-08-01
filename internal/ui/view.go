@@ -34,7 +34,7 @@ func (m Model) View() tea.View {
 	var activeMsg string
 
 	var fallbackCommentMsg string
-	if m.jiraOpts.FallbackComment != nil {
+	if m.opts.Jira.FallbackComment != nil {
 		fallbackCommentMsg = " (a fallback is configured)"
 	}
 

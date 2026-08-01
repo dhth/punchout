@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/dhth/punchout/internal/config"
+	"github.com/dhth/punchout/internal/issuecache"
 	"github.com/dhth/punchout/internal/mcp"
 	pers "github.com/dhth/punchout/internal/persistence"
 	svc "github.com/dhth/punchout/internal/service"
@@ -24,6 +25,7 @@ const (
 var (
 	errCouldntGetHomeDir   = errors.New("couldn't get your home directory")
 	errCouldntGetConfigDir = errors.New("couldn't get your config directory")
+	errCouldntGetCacheDir  = errors.New("couldn't get your cache directory")
 	errConfigFilePathEmpty = errors.New("config file path cannot be empty")
 	errDBPathEmpty         = errors.New("db file path cannot be empty")
 	errTimeDeltaIncorrect  = errors.New("couldn't convert time delta to a number")
@@ -132,6 +134,15 @@ func NewRootCommand() (*cobra.Command, error) {
 				return nil
 			}
 
+			userCacheDir, err := os.UserCacheDir()
+			if err != nil {
+				return fmt.Errorf("%w: %s", errCouldntGetCacheDir, err.Error())
+			}
+			issueStore, err := issuecache.NewStore(userCacheDir, appCfg.Jira.Installation, appCfg.Jira.Options.JQL)
+			if err != nil {
+				return fmt.Errorf("couldn't initialize issue cache: %w", err)
+			}
+
 			db, err = pers.GetDB(dbPathFull)
 			if err != nil {
 				return err
@@ -142,7 +153,10 @@ func NewRootCommand() (*cobra.Command, error) {
 				return err
 			}
 
-			return ui.RenderUI(db, jiraSvc, appCfg.Jira.Options)
+			return ui.RenderUI(db, jiraSvc, issueStore, ui.Options{
+				Jira:              appCfg.Jira.Options,
+				UseCacheOnStartup: true,
+			})
 		},
 	}
 

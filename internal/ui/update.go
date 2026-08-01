@@ -232,6 +232,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if handleCmd != nil {
 			cmds = append(cmds, handleCmd)
 		}
+	case issuesSavedToCache:
+		m.handleIssuesSavedToCacheMsg(msg)
 	case manualWLInsertedInDB:
 		handleCmd := m.handleManualEntryInsertedInDBMsg(msg)
 		if handleCmd != nil {

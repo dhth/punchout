@@ -11,6 +11,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	d "github.com/dhth/punchout/internal/domain"
+	"github.com/dhth/punchout/internal/issuecache"
 	pers "github.com/dhth/punchout/internal/persistence"
 )
 
@@ -550,7 +551,22 @@ func (m *Model) handleIssuesFetchedFromJIRAMsg(msg issuesFetchedFromJIRA) tea.Cm
 	m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListColor))
 	m.issuesFetched = true
 
-	return fetchActiveStatus(m.db, 0)
+	return tea.Batch(
+		fetchActiveStatus(m.db, 0),
+		m.saveIssuesToCache(issuecache.Snapshot{
+			Issues:    msg.issues,
+			FetchedAt: msg.fetchedAt,
+		}),
+	)
+}
+
+func (m *Model) handleIssuesSavedToCacheMsg(msg issuesSavedToCache) {
+	if msg.err == nil {
+		return
+	}
+
+	m.message = fmt.Sprintf("error saving issues to cache: %s", msg.err.Error())
+	m.messages = append(m.messages, m.message)
 }
 
 func (m *Model) handleManualEntryInsertedInDBMsg(msg manualWLInsertedInDB) tea.Cmd {
@@ -594,7 +610,7 @@ func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
 	var secsSpent int
 	for i, e := range msg.entries {
 		secsSpent += e.SecsSpent()
-		e.FallbackComment = m.jiraOpts.FallbackComment
+		e.FallbackComment = m.opts.Jira.FallbackComment
 		items[i] = list.Item(e)
 	}
 	m.worklogList.SetItems(items)
@@ -698,7 +714,7 @@ func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 	msg.entry.Synced = true
 	msg.entry.SyncInProgress = false
 	if msg.fallbackCommentUsed {
-		msg.entry.Comment = m.jiraOpts.FallbackComment
+		msg.entry.Comment = m.opts.Jira.FallbackComment
 	}
 	m.worklogList.SetItem(msg.index, msg.entry)
 	return updateSyncStatusForEntry(m.db, msg.entry, msg.index, msg.fallbackCommentUsed)
