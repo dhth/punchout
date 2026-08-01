@@ -11,6 +11,7 @@ import (
 func formatTUIConfig(configPath, dbPath string, cfg config.Config) string {
 	var result strings.Builder
 	writePathsSection(&result, configPath, dbPath)
+	writeTUISection(&result, cfg.TUI)
 	writeJiraSection(&result, cfg.Jira)
 	return result.String()
 }
@@ -27,6 +28,11 @@ func writePathsSection(result *strings.Builder, configPath, dbPath string) {
 	fmt.Fprint(result, "[Paths]\n")
 	writeField(result, "Config File Path", configPath)
 	writeField(result, "DB File Path", dbPath)
+}
+
+func writeTUISection(result *strings.Builder, cfg config.TUIConfig) {
+	fmt.Fprint(result, "\n[TUI]\n")
+	writeField(result, "Use Cache On Startup", cfg.UseCacheOnStartup)
 }
 
 func writeJiraSection(result *strings.Builder, cfg config.JiraConfig) {
