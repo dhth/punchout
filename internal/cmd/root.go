@@ -130,7 +130,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if flagListConfig {
-				printConfig(configPathFull, dbPathFull, appCfg)
+				fmt.Fprint(os.Stdout, formatTUIConfig(configPathFull, dbPathFull, appCfg))
 				return nil
 			}
 
@@ -173,13 +173,18 @@ func NewRootCommand() (*cobra.Command, error) {
 			if !ok {
 				return fmt.Errorf("%w: %q", errInvalidMCPTransport, flagMcpTransportStr)
 			}
+			mcpCfg := mcp.Config{
+				Transport: transport,
+				HTTPPort:  flagMcpServerPort,
+			}
 
 			if flagListConfig {
-				printConfig(configPathFull, dbPathFull, appCfg)
-				fmt.Fprintf(os.Stdout, "Transport                               %s\n", flagMcpTransportStr)
-				if transport == mcp.TransportHTTP {
-					fmt.Fprintf(os.Stdout, "Port                                    %d\n", flagMcpServerPort)
-				}
+				fmt.Fprint(os.Stdout, formatMCPConfig(
+					configPathFull,
+					dbPathFull,
+					appCfg,
+					mcpCfg,
+				))
 				return nil
 			}
 
@@ -191,11 +196,6 @@ func NewRootCommand() (*cobra.Command, error) {
 			jiraSvc, err = getJiraSvc(appCfg.Jira.Installation)
 			if err != nil {
 				return err
-			}
-
-			mcpCfg := mcp.Config{
-				Transport: transport,
-				HTTPPort:  flagMcpServerPort,
 			}
 
 			return mcp.Serve(cmd.Context(), db, jiraSvc, appCfg.Jira.Options, mcpCfg)
@@ -241,47 +241,6 @@ func NewRootCommand() (*cobra.Command, error) {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	return rootCmd, nil
-}
-
-func printConfig(configPath, dbPath string, cfg config.Config) {
-	var installationType string
-	var jiraURL string
-	var jiraUsername string
-
-	switch installation := cfg.Jira.Installation.(type) {
-	case config.OnPremiseInstallation:
-		installationType = config.JiraInstallationTypeOnPremise
-		jiraURL = installation.URL
-	case config.CloudInstallation:
-		installationType = config.JiraInstallationTypeCloud
-		jiraURL = installation.URL
-		jiraUsername = installation.Username
-	}
-
-	fmt.Fprintf(os.Stdout, `Config:
-
-Config File Path                        %s
-DB File Path                            %s
-JIRA Installation Type                  %s
-JIRA URL                                %s
-JIRA Token                              [REDACTED]
-JQL                                     %s
-JIRA Time Delta Mins                    %d
-`,
-		configPath,
-		dbPath,
-		installationType,
-		jiraURL,
-		cfg.Jira.Options.JQL,
-		cfg.Jira.Options.TimeDeltaMins)
-
-	if jiraUsername != "" {
-		fmt.Fprintf(os.Stdout, "JIRA Username                           %s\n", jiraUsername)
-	}
-
-	if cfg.Jira.Options.FallbackComment != nil {
-		fmt.Fprintf(os.Stdout, "Fallback Comment                        %s\n", *cfg.Jira.Options.FallbackComment)
-	}
 }
 
 func getJiraSvc(installation config.JiraInstallation) (svc.Jira, error) {
