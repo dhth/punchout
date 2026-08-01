@@ -21,18 +21,18 @@ type Snapshot struct {
 	FetchedAt time.Time      `json:"fetched_at"`
 }
 
-func NewStore(userCacheDir string, installation config.JiraInstallation, jql string) (*Store, error) {
+func NewStore(userCacheDir string, installation config.JiraInstallation, jql string) (Store, error) {
 	key, err := deriveKey(installation, jql)
 	if err != nil {
-		return nil, err
+		return Store{}, err
 	}
 
-	return &Store{
+	return Store{
 		filePath: filepath.Join(userCacheDir, "punchout", "issues", key+".json"),
 	}, nil
 }
 
-func (s *Store) Load() (Snapshot, error) {
+func (s Store) Load() (Snapshot, error) {
 	contents, err := os.ReadFile(s.filePath)
 	if err != nil {
 		return Snapshot{}, fmt.Errorf("couldn't read issue cache file: %w", err)
@@ -52,7 +52,7 @@ func (s *Store) Load() (Snapshot, error) {
 	return snapshot, nil
 }
 
-func (s *Store) Save(snapshot Snapshot) error {
+func (s Store) Save(snapshot Snapshot) error {
 	if snapshot.FetchedAt.IsZero() {
 		return errors.New("fetched-at timestamp is zero")
 	}

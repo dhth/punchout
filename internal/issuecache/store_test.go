@@ -12,7 +12,7 @@ import (
 )
 
 func TestStoreRoundTripsSnapshot(t *testing.T) {
-	store := &Store{
+	store := Store{
 		filePath: filepath.Join(t.TempDir(), "issues", "issues.json"),
 	}
 	expected := Snapshot{
@@ -44,7 +44,7 @@ func TestStoreRoundTripsSnapshot(t *testing.T) {
 }
 
 func TestStoreNormalizesNilIssues(t *testing.T) {
-	store := &Store{
+	store := Store{
 		filePath: filepath.Join(t.TempDir(), "issues", "issues.json"),
 	}
 	snapshot := Snapshot{
@@ -61,7 +61,7 @@ func TestStoreNormalizesNilIssues(t *testing.T) {
 }
 
 func TestStoreRejectsSnapshotWithZeroFetchedAt(t *testing.T) {
-	store := &Store{
+	store := Store{
 		filePath: filepath.Join(t.TempDir(), "issues", "issues.json"),
 	}
 
@@ -116,7 +116,7 @@ func TestStoreRejectsInvalidCacheFiles(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			store := &Store{
+			store := Store{
 				filePath: filepath.Join(t.TempDir(), "issues.json"),
 			}
 			err := os.WriteFile(store.filePath, []byte(tc.contents), 0o600)
@@ -130,7 +130,7 @@ func TestStoreRejectsInvalidCacheFiles(t *testing.T) {
 }
 
 func TestStoreReplacesExistingSnapshot(t *testing.T) {
-	store := &Store{
+	store := Store{
 		filePath: filepath.Join(t.TempDir(), "issues", "issues.json"),
 	}
 	initial := Snapshot{
