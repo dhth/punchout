@@ -12,6 +12,17 @@ const (
 	TransportHTTP
 )
 
+func (t Transport) String() string {
+	switch t {
+	case TransportStdio:
+		return "stdio"
+	case TransportHTTP:
+		return "http"
+	default:
+		return "unknown"
+	}
+}
+
 func ParseTransport(value string) (Transport, bool) {
 	switch value {
 	case "stdio":

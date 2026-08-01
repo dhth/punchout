@@ -1,10 +1,11 @@
 success: true
 exit_code: 0
 ----- stdout -----
-Config:
-
+[Paths]
 Config File Path                        config/good.toml
 DB File Path                            db.db
+
+[JIRA]
 JIRA Installation Type                  onpremise
 JIRA URL                                https://overridden.company.com
 JIRA Token                              [REDACTED]
