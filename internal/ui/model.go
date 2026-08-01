@@ -100,10 +100,13 @@ type Model struct {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(
-		hideHelp(time.Minute*1),
-		m.fetchJIRAIssues(),
-		fetchUnsyncedWorkLogs(m.db),
-		fetchSyncedWorkLogs(m.db),
-	)
+	cmds := []tea.Cmd{hideHelp(time.Minute * 1)}
+	if m.opts.UseCacheOnStartup {
+		cmds = append(cmds, m.loadIssuesFromCache())
+	} else {
+		cmds = append(cmds, m.fetchIssuesFromJIRA())
+	}
+	cmds = append(cmds, fetchUnsyncedWorkLogs(m.db), fetchSyncedWorkLogs(m.db))
+
+	return tea.Batch(cmds...)
 }

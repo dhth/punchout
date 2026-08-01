@@ -212,16 +212,38 @@ func updateSyncStatusForEntry(db *sql.DB, entry d.WorklogEntry, index int, fallb
 	}
 }
 
-func (m Model) fetchJIRAIssues() tea.Cmd {
+func (m Model) fetchIssuesFromJIRA() tea.Cmd {
 	return func() tea.Msg {
 		issues, err := m.jiraSvc.GetIssues(m.opts.Jira.JQL)
 		if err != nil {
-			return issuesFetchedFromJIRA{err: err}
+			return issuesLoaded{
+				source: issueSourceJIRA,
+				err:    err,
+			}
 		}
 
-		return issuesFetchedFromJIRA{
+		return issuesLoaded{
 			issues:    issues,
 			fetchedAt: time.Now(),
+			source:    issueSourceJIRA,
+		}
+	}
+}
+
+func (m Model) loadIssuesFromCache() tea.Cmd {
+	return func() tea.Msg {
+		snapshot, err := m.issueStore.Load()
+		if err != nil {
+			return issuesLoaded{
+				source: issueSourceCache,
+				err:    err,
+			}
+		}
+
+		return issuesLoaded{
+			issues:    snapshot.Issues,
+			fetchedAt: snapshot.FetchedAt,
+			source:    issueSourceCache,
 		}
 	}
 }
