@@ -21,6 +21,7 @@ const (
 	formContextColor        = "#fabd2f"
 	formHelpColor           = "#928374"
 	initialHelpMsgColor     = "#83a598"
+	userMsgInfoColor        = "#83a598"
 	helpMsgColor            = "#7c6f64"
 	helpViewTitleColor      = "#83a598"
 	helpHeaderColor         = "#83a598"
@@ -30,6 +31,12 @@ const (
 )
 
 var (
+	userMsgInfoStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color(userMsgInfoColor))
+
+	userMsgErrorStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color(failureColor))
+
 	helpMsgStyle = lipgloss.NewStyle().
 			PaddingLeft(2).
 			Bold(true).

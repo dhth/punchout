@@ -55,6 +55,23 @@ const (
 	worklogUpdate
 )
 
+type userMsgKind uint
+
+const (
+	userMsgInfo userMsgKind = iota
+	userMsgError
+)
+
+type userMsg struct {
+	id    uint64
+	value string
+	kind  userMsgKind
+}
+
+func (m userMsg) isActive() bool {
+	return m.id != 0
+}
+
 const (
 	timeFormat     = "2006/01/02 15:04"
 	timeOnlyFormat = "15:04"
@@ -91,11 +108,29 @@ type Model struct {
 	changesLocked         bool
 	activeIssue           string
 	worklogSaveType       worklogSaveType
-	message               string
+	message               userMsg
+	nextMessageID         uint64
 	showHelpIndicator     bool
 	terminalHeight        int
 	trackingActive        bool
 	debug                 bool
+}
+
+func (m *Model) setInfoMsg(value string) {
+	m.setUserMsg(value, userMsgInfo)
+}
+
+func (m *Model) setErrorMsg(value string) {
+	m.setUserMsg(value, userMsgError)
+}
+
+func (m *Model) setUserMsg(value string, kind userMsgKind) {
+	m.nextMessageID++
+	m.message = userMsg{
+		id:    m.nextMessageID,
+		value: value,
+		kind:  kind,
+	}
 }
 
 func (m Model) Init() tea.Cmd {

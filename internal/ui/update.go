@@ -10,7 +10,7 @@ import (
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
-	m.message = ""
+	m.message = userMsg{}
 
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
@@ -184,7 +184,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			if !m.trackingActive {
-				m.message = "nothing is being tracked right now"
+				m.setInfoMsg("nothing is being tracked right now")
 				break
 			}
 
@@ -277,7 +277,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.showHelpIndicator = false
 	case urlOpenedinBrowserMsg:
 		if msg.err != nil {
-			m.message = fmt.Sprintf("Error opening url: %s", msg.err.Error())
+			m.setErrorMsg(fmt.Sprintf("error opening url: %s", msg.err.Error()))
 		}
 	}
 
