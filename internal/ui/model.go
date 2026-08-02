@@ -151,7 +151,7 @@ func (m Model) Init() tea.Cmd {
 	if m.opts.UseCacheOnStartup {
 		cmds = append(cmds, m.loadIssuesFromCache())
 	} else {
-		cmds = append(cmds, m.fetchIssuesFromJIRA())
+		cmds = append(cmds, m.fetchIssuesFromJIRA(false))
 	}
 	cmds = append(cmds, fetchUnsyncedWorkLogs(m.db), fetchSyncedWorkLogs(m.db))
 
