@@ -266,7 +266,7 @@ func (m *Model) getCmdToReloadData() tea.Cmd {
 	case issueListView:
 		m.issueList.Title = "fetching..."
 		m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListUnfetchedColor))
-		cmd = m.fetchIssuesFromJIRA()
+		cmd = m.fetchIssuesFromJIRA(false)
 	case wLView:
 		cmd = fetchUnsyncedWorkLogs(m.db)
 		m.worklogList.ResetSelected()
@@ -528,10 +528,17 @@ func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
 func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) []tea.Cmd {
 	if msg.err != nil {
 		if msg.source == issueSourceCache {
-			return []tea.Cmd{m.fetchIssuesFromJIRA()}
+			return []tea.Cmd{m.fetchIssuesFromJIRA(true)}
 		}
 
-		m.setErrorMsg(fmt.Sprintf("error fetching issues from JIRA: %s", msg.err.Error()))
+		var errorMsg string
+		if msg.afterCacheLoadFailure {
+			errorMsg = fmt.Sprintf("cache unavailable and couldn't fetch issues from JIRA: %s", msg.err.Error())
+		} else {
+			errorMsg = fmt.Sprintf("couldn't fetch issues from JIRA: %s", msg.err.Error())
+		}
+
+		m.setErrorMsg(errorMsg)
 		m.issueList.Title = "Failure"
 		m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(failureColor))
 		return nil
@@ -549,26 +556,26 @@ func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) []tea.Cmd {
 	m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListColor))
 	m.issuesFetched = true
 
-	if msg.source == issueSourceCache {
-		if len(msg.issues) > 0 {
-			secondsSinceFetch := int(time.Since(msg.fetchedAt).Seconds())
-			if secondsSinceFetch < 0 {
-				secondsSinceFetch = 0
-			}
-
-			if secondsSinceFetch == 0 {
-				m.setInfoMsg("issues loaded from cache")
-			} else {
-				fetchedAgo := utils.HumanizeDuration(secondsSinceFetch)
-				m.setInfoMsg(fmt.Sprintf("issues loaded from cache • fetched %s ago", fetchedAgo))
-			}
-		} else {
-			m.setInfoMsg("no issues found in cache")
-		}
-	}
-
 	cmds := []tea.Cmd{fetchActiveStatus(m.db, 0)}
-	if msg.source == issueSourceJIRA {
+	switch msg.source {
+	case issueSourceCache:
+		if len(msg.issues) == 0 {
+			m.setInfoMsg("no issues found in cache")
+			break
+		}
+
+		secondsSinceFetch := int(time.Since(msg.fetchedAt).Seconds())
+		if secondsSinceFetch <= 0 {
+			m.setInfoMsg("issues loaded from cache")
+		} else {
+			fetchedAgo := utils.HumanizeDuration(secondsSinceFetch)
+			m.setInfoMsg(fmt.Sprintf("issues loaded from cache • fetched %s ago", fetchedAgo))
+		}
+	case issueSourceJIRA:
+		if msg.afterCacheLoadFailure {
+			m.setInfoMsg("cache unavailable • issues fetched from JIRA")
+		}
+
 		cmds = append(cmds, m.saveIssuesToCache(issuecache.Snapshot{
 			Issues:    msg.issues,
 			FetchedAt: msg.fetchedAt,

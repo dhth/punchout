@@ -81,10 +81,11 @@ const (
 )
 
 type issuesLoaded struct {
-	issues    []d.Issue
-	fetchedAt time.Time
-	source    issueSource
-	err       error
+	issues                []d.Issue
+	fetchedAt             time.Time
+	source                issueSource
+	afterCacheLoadFailure bool
+	err                   error
 }
 
 type issuesSavedToCache struct {
