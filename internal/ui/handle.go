@@ -524,10 +524,10 @@ func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
 	}
 }
 
-func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) tea.Cmd {
+func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) []tea.Cmd {
 	if msg.err != nil {
 		if msg.source == issueSourceCache {
-			return m.fetchIssuesFromJIRA()
+			return []tea.Cmd{m.fetchIssuesFromJIRA()}
 		}
 
 		m.setErrorMsg(fmt.Sprintf("error fetching issues from JIRA: %s", msg.err.Error()))
@@ -556,7 +556,7 @@ func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) tea.Cmd {
 		}))
 	}
 
-	return tea.Batch(cmds...)
+	return cmds
 }
 
 func (m *Model) handleIssuesSavedToCacheMsg(msg issuesSavedToCache) {

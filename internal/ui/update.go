@@ -8,16 +8,33 @@ import (
 )
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	previousMessageID := m.message.id
+	cmds := m.processMessage(msg)
+	if m.message.isActive() && m.message.id != previousMessageID {
+		cmds = append(cmds, clearUserMsgAfter(m.message))
+	}
+
+	return m, tea.Batch(cmds...)
+}
+
+func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
+	if msg, ok := msg.(clearUserMsgMsg); ok {
+		if m.message.id == msg.id {
+			m.message = userMsg{}
+		}
+
+		return nil
+	}
+
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
-	m.message = userMsg{}
 
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		if m.issueList.FilterState() == list.Filtering {
 			m.issueList, cmd = m.issueList.Update(msg)
 			cmds = append(cmds, cmd)
-			return m, tea.Batch(cmds...)
+			return cmds
 		}
 	}
 
@@ -42,7 +59,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, saveCmd)
 			}
 			if ret {
-				return m, tea.Batch(cmds...)
+				return cmds
 			}
 		case "ctrl+s":
 			switch m.activeView {
@@ -52,7 +69,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "esc":
 			quit := m.handleEscape()
 			if quit {
-				return m, tea.Quit
+				return append(cmds, tea.Quit)
 			}
 		case "tab":
 			viewSwitchCmd := m.getCmdToGoForwardsInViews()
@@ -67,32 +84,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "k":
 			err := m.shiftTime(shiftBackward, shiftMinute)
 			if err != nil {
-				return m, tea.Batch(cmds...)
+				return cmds
 			}
 		case "j":
 			err := m.shiftTime(shiftForward, shiftMinute)
 			if err != nil {
-				return m, tea.Batch(cmds...)
+				return cmds
 			}
 		case "K":
 			err := m.shiftTime(shiftBackward, shiftFiveMinutes)
 			if err != nil {
-				return m, tea.Batch(cmds...)
+				return cmds
 			}
 		case "J":
 			err := m.shiftTime(shiftForward, shiftFiveMinutes)
 			if err != nil {
-				return m, tea.Batch(cmds...)
+				return cmds
 			}
 		case "h":
 			err := m.shiftTime(shiftBackward, shiftDay)
 			if err != nil {
-				return m, tea.Batch(cmds...)
+				return cmds
 			}
 		case "l":
 			err := m.shiftTime(shiftForward, shiftDay)
 			if err != nil {
-				return m, tea.Batch(cmds...)
+				return cmds
 			}
 		}
 	}
@@ -103,7 +120,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.trackingInputs[i], cmd = m.trackingInputs[i].Update(msg)
 			cmds = append(cmds, cmd)
 		}
-		return m, tea.Batch(cmds...)
+		return cmds
 	}
 
 	switch msg := msg.(type) {
@@ -112,7 +129,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			quit := m.handleRequestToGoBackOrQuit()
 			if quit {
-				return m, tea.Quit
+				return append(cmds, tea.Quit)
 			}
 		case "1":
 			if m.activeView != issueListView {
@@ -228,10 +245,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.handleWindowResizing(msg)
 	case issuesLoaded:
-		handleCmd := m.handleIssuesLoadedMsg(msg)
-		if handleCmd != nil {
-			cmds = append(cmds, handleCmd)
-		}
+		cmds = append(cmds, m.handleIssuesLoadedMsg(msg)...)
 	case issuesSavedToCache:
 		m.handleIssuesSavedToCacheMsg(msg)
 	case manualWLInsertedInDB:
@@ -296,5 +310,5 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 
-	return m, tea.Batch(cmds...)
+	return cmds
 }

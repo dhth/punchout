@@ -280,6 +280,12 @@ func hideHelp(interval time.Duration) tea.Cmd {
 	})
 }
 
+func clearUserMsgAfter(message userMsg) tea.Cmd {
+	return tea.Tick(message.duration(), func(time.Time) tea.Msg {
+		return clearUserMsgMsg{id: message.id}
+	})
+}
+
 func openURLInBrowser(url string) tea.Cmd {
 	return func() tea.Msg {
 		var openCmd string
