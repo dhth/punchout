@@ -8,6 +8,10 @@ import (
 
 type hideHelpMsg struct{}
 
+type clearUserMsgMsg struct {
+	id uint64
+}
+
 type trackingToggledInDB struct {
 	activeIssue string
 	finished    bool

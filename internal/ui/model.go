@@ -62,6 +62,11 @@ const (
 	userMsgError
 )
 
+const (
+	userMsgInfoDuration  = 3 * time.Second
+	userMsgErrorDuration = 5 * time.Second
+)
+
 type userMsg struct {
 	id    uint64
 	value string
@@ -70,6 +75,14 @@ type userMsg struct {
 
 func (m userMsg) isActive() bool {
 	return m.id != 0
+}
+
+func (m userMsg) duration() time.Duration {
+	if m.kind == userMsgError {
+		return userMsgErrorDuration
+	}
+
+	return userMsgInfoDuration
 }
 
 const (
