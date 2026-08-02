@@ -13,6 +13,7 @@ import (
 	d "github.com/dhth/punchout/internal/domain"
 	"github.com/dhth/punchout/internal/issuecache"
 	pers "github.com/dhth/punchout/internal/persistence"
+	"github.com/dhth/punchout/internal/utils"
 )
 
 func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
@@ -547,6 +548,24 @@ func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) []tea.Cmd {
 	m.issueList.Title = "▪▫▫ Issues"
 	m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListColor))
 	m.issuesFetched = true
+
+	if msg.source == issueSourceCache {
+		if len(msg.issues) > 0 {
+			secondsSinceFetch := int(time.Since(msg.fetchedAt).Seconds())
+			if secondsSinceFetch < 0 {
+				secondsSinceFetch = 0
+			}
+
+			if secondsSinceFetch == 0 {
+				m.setInfoMsg("issues loaded from cache")
+			} else {
+				fetchedAgo := utils.HumanizeDuration(secondsSinceFetch)
+				m.setInfoMsg(fmt.Sprintf("issues loaded from cache • fetched %s ago", fetchedAgo))
+			}
+		} else {
+			m.setInfoMsg("no issues found in cache")
+		}
+	}
 
 	cmds := []tea.Cmd{fetchActiveStatus(m.db, 0)}
 	if msg.source == issueSourceJIRA {
