@@ -224,7 +224,7 @@ func (m Model) fetchIssuesFromJIRA() tea.Cmd {
 
 		return issuesLoaded{
 			issues:    issues,
-			fetchedAt: time.Now(),
+			fetchedAt: time.Now().UTC(),
 			source:    issueSourceJIRA,
 		}
 	}
