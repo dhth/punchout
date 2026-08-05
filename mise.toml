@@ -2,12 +2,14 @@
 task.run_auto_install = false
 
 [tools]
+actionlint = "1.7.12"
 cosign = "2.5.0"
 go = "1.26.5"
 "go:golang.org/x/vuln/cmd/govulncheck" = "latest"
 gofumpt = "0.11.0"
 golangci-lint = "2.12.2"
 goreleaser = "2.14.1"
+yamlfmt = "0.21.0"
 
 [tasks.all]
 description = "Format, lint, test, and build"
@@ -42,6 +44,22 @@ run = 'go install -ldflags "-w -s" .'
 alias = ["l", "check", "c"]
 description = "Lint the codebase"
 run = "golangci-lint run"
+
+[tasks."lint:actions"]
+alias = ["l:a"]
+description = "Lint GitHub Actions workflows"
+run = "actionlint"
+
+[tasks."lint:yaml"]
+alias = ["l:y"]
+description = "Lint YAML files"
+run = '''
+yamlfmt \
+	-lint \
+	-quiet \
+	-formatter 'retain_line_breaks_single=true' \
+	$(git ls-files '*.yml' '*.yaml')
+'''
 
 [tasks.test]
 alias = "t"
