@@ -12,6 +12,7 @@ import (
 	d "github.com/dhth/punchout/internal/domain"
 	"github.com/dhth/punchout/internal/issuecache"
 	svc "github.com/dhth/punchout/internal/service"
+	"github.com/dhth/punchout/internal/ui/theme"
 )
 
 type trackingStatus uint
@@ -86,8 +87,10 @@ func (m userMsg) duration() time.Duration {
 }
 
 const (
-	timeFormat     = "2006/01/02 15:04"
-	timeOnlyFormat = "15:04"
+	timeFormat             = "2006/01/02 15:04"
+	timeOnlyFormat         = "15:04"
+	issueListFetchingTitle = "fetching..."
+	failureTitle           = "Failure"
 )
 
 type Options struct {
@@ -96,6 +99,8 @@ type Options struct {
 }
 
 type Model struct {
+	theme                 theme.Theme
+	styles                styles
 	activeView            stateView
 	lastView              stateView
 	db                    *sql.DB
@@ -129,6 +134,18 @@ type Model struct {
 	debug                 bool
 }
 
+func (m Model) Init() tea.Cmd {
+	cmds := []tea.Cmd{hideHelp(time.Minute * 1)}
+	if m.opts.UseCacheOnStartup {
+		cmds = append(cmds, m.loadIssuesFromCache())
+	} else {
+		cmds = append(cmds, m.fetchIssuesFromJIRA(false))
+	}
+	cmds = append(cmds, fetchUnsyncedWorkLogs(m.db), fetchSyncedWorkLogs(m.db))
+
+	return tea.Batch(cmds...)
+}
+
 func (m *Model) setInfoMsg(value string) {
 	m.setUserMsg(value, userMsgInfo)
 }
@@ -146,14 +163,26 @@ func (m *Model) setUserMsg(value string, kind userMsgKind) {
 	}
 }
 
-func (m Model) Init() tea.Cmd {
-	cmds := []tea.Cmd{hideHelp(time.Minute * 1)}
-	if m.opts.UseCacheOnStartup {
-		cmds = append(cmds, m.loadIssuesFromCache())
-	} else {
-		cmds = append(cmds, m.fetchIssuesFromJIRA(false))
-	}
-	cmds = append(cmds, fetchUnsyncedWorkLogs(m.db), fetchSyncedWorkLogs(m.db))
+func (m *Model) applyTheme(thm theme.Theme) {
+	m.theme = thm
+	m.styles = newStyles(thm)
 
-	return tea.Batch(cmds...)
+	m.issueList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent1))
+	m.worklogList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent2))
+	m.syncedWorklogList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent4))
+
+	switch m.issueList.Title {
+	case issueListFetchingTitle:
+		m.issueList.Styles.Title = m.styles.issueListUnfetchedTitle
+	case failureTitle:
+		m.issueList.Styles.Title = m.styles.issueListFailureTitle
+	default:
+		m.issueList.Styles.Title = m.styles.issueListTitle
+	}
+	m.worklogList.Styles.Title = m.styles.worklogListTitle
+	m.syncedWorklogList.Styles.Title = m.styles.syncedWorklogListTitle
+
+	if m.helpVPReady {
+		m.helpVP.SetContent(renderHelp(m.styles))
+	}
 }

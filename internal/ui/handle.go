@@ -9,7 +9,6 @@ import (
 	"charm.land/bubbles/v2/list"
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	d "github.com/dhth/punchout/internal/domain"
 	"github.com/dhth/punchout/internal/issuecache"
 	pers "github.com/dhth/punchout/internal/persistence"
@@ -264,8 +263,8 @@ func (m *Model) getCmdToReloadData() tea.Cmd {
 	var cmd tea.Cmd
 	switch m.activeView {
 	case issueListView:
-		m.issueList.Title = "fetching..."
-		m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListUnfetchedColor))
+		m.issueList.Title = issueListFetchingTitle
+		m.issueList.Styles.Title = m.styles.issueListUnfetchedTitle
 		cmd = m.fetchIssuesFromJIRA(false)
 	case wLView:
 		cmd = fetchUnsyncedWorkLogs(m.db)
@@ -505,7 +504,7 @@ func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
 }
 
 func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
-	w, h := listStyle.GetFrameSize()
+	w, h := m.styles.list.GetFrameSize()
 	m.terminalHeight = msg.Height
 	m.issueList.SetWidth(msg.Width - w)
 	m.worklogList.SetWidth(msg.Width - w)
@@ -514,10 +513,10 @@ func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
 	m.worklogList.SetHeight(msg.Height - h - 2)
 	m.syncedWorklogList.SetHeight(msg.Height - h - 2)
 
-	vw, vh := viewPortStyle.GetFrameSize()
+	vw, vh := m.styles.viewPort.GetFrameSize()
 	if !m.helpVPReady {
 		m.helpVP = viewport.New(viewport.WithWidth(msg.Width-vw), viewport.WithHeight(m.terminalHeight-vh-5))
-		m.helpVP.SetContent(helpText)
+		m.helpVP.SetContent(renderHelp(m.styles))
 		m.helpVPReady = true
 	} else {
 		m.helpVP.SetHeight(m.terminalHeight - vh - 5)
@@ -539,21 +538,20 @@ func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) []tea.Cmd {
 		}
 
 		m.setErrorMsg(errorMsg)
-		m.issueList.Title = "Failure"
-		m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(failureColor))
+		m.issueList.Title = failureTitle
+		m.issueList.Styles.Title = m.styles.issueListFailureTitle
 		return nil
 	}
 
 	issues := make([]list.Item, 0, len(msg.issues))
 	for i, issue := range msg.issues {
-		issue.SetDesc()
 		issues = append(issues, &issue)
 		m.issueMap[issue.IssueKey] = &issue
 		m.issueIndexMap[issue.IssueKey] = i
 	}
 	m.issueList.SetItems(issues)
 	m.issueList.Title = "▪▫▫ Issues"
-	m.issueList.Styles.Title = m.issueList.Styles.Title.Background(lipgloss.Color(issueListColor))
+	m.issueList.Styles.Title = m.styles.issueListTitle
 	m.issuesFetched = true
 
 	cmds := []tea.Cmd{fetchActiveStatus(m.db, 0)}

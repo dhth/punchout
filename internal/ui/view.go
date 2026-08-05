@@ -30,9 +30,9 @@ func (m Model) View() tea.View {
 	var helpMsg string
 	if m.message.isActive() {
 		if m.message.kind == userMsgError {
-			statusBar = userMsgErrorStyle.Render(m.message.value)
+			statusBar = m.styles.userMsgError.Render(m.message.value)
 		} else {
-			statusBar = userMsgInfoStyle.Render(m.message.value)
+			statusBar = m.styles.userMsgInfo.Render(m.message.value)
 		}
 	}
 	var activeMsg string
@@ -54,10 +54,10 @@ func (m Model) View() tea.View {
 			}
 			activeMsg = fmt.Sprintf(
 				"%s%s%s%s",
-				trackingStyle.Render("tracking:"),
-				activeIssueKeyMsgStyle.Render(m.activeIssue),
-				activeIssueSummaryMsgStyle.Render(issueSummaryMsg),
-				trackingBeganStyle.Render(trackingSinceMsg),
+				m.styles.tracking.Render("tracking:"),
+				m.styles.activeIssueKeyMsg.Render(m.activeIssue),
+				m.styles.activeIssueSummaryMsg.Render(issueSummaryMsg),
+				m.styles.trackingBegan.Render(trackingSinceMsg),
 			)
 		}
 
@@ -65,9 +65,9 @@ func (m Model) View() tea.View {
 			// first time help
 			if m.activeView == issueListView && len(m.syncedWorklogList.Items()) == 0 && m.unsyncedWLCount == 0 {
 				if m.trackingActive {
-					helpMsg += initialHelpMsgStyle.Render("Press s to stop tracking time")
+					helpMsg += m.styles.initialHelpMsg.Render("Press s to stop tracking time")
 				} else {
-					helpMsg += initialHelpMsgStyle.Render("Press s to start tracking time")
+					helpMsg += m.styles.initialHelpMsg.Render("Press s to start tracking time")
 				}
 			}
 		}
@@ -88,26 +88,26 @@ func (m Model) View() tea.View {
 
 		switch submissionValidity {
 		case wlSubmitOk:
-			submissionCtx = wLFormOkStyle.Render(durationCtx)
+			submissionCtx = m.styles.wLFormOK.Render(durationCtx)
 		case wlSubmitWarn:
-			submissionCtx = wLFormWarnStyle.Render(durationCtx)
+			submissionCtx = m.styles.wLFormWarning.Render(durationCtx)
 		case wlSubmitErr:
-			submissionCtx = wLFormErrStyle.Render(durationCtx)
+			submissionCtx = m.styles.wLFormError.Render(durationCtx)
 		}
 	}
 
 	var formSubmitHelp string
 	if submissionValidity != wlSubmitErr {
-		formSubmitHelp = formContextStyle.Render("Press enter to submit")
+		formSubmitHelp = m.styles.formContext.Render("Press enter to submit")
 	}
 
 	switch m.activeView {
 	case issueListView:
-		content = listStyle.Render(m.issueList.View())
+		content = m.styles.list.Render(m.issueList.View())
 	case wLView:
-		content = listStyle.Render(m.worklogList.View())
+		content = m.styles.list.Render(m.worklogList.View())
 	case syncedWLView:
-		content = listStyle.Render(m.syncedWorklogList.View())
+		content = m.styles.list.Render(m.syncedWorklogList.View())
 	case editActiveWLView:
 		content = fmt.Sprintf(
 			`
@@ -128,13 +128,13 @@ func (m Model) View() tea.View {
 
   %s
 `,
-			workLogEntryHeadingStyle.Render("Edit Active Worklog"),
-			formContextStyle.Render(formHeadingText),
-			formHelpStyle.Render(formHelp),
-			formFieldNameStyle.Render(formBeginTimeHelp),
+			m.styles.workLogEntryHeading.Render("Edit Active Worklog"),
+			m.styles.formContext.Render(formHeadingText),
+			m.styles.formHelp.Render(formHelp),
+			m.styles.formFieldName.Render(formBeginTimeHelp),
 			m.trackingInputs[entryBeginTS].View(),
-			formHelpStyle.Render(formTimeShiftHelp),
-			formFieldNameStyle.Render(formCommentHelp),
+			m.styles.formHelp.Render(formTimeShiftHelp),
+			m.styles.formFieldName.Render(formCommentHelp),
 			m.trackingInputs[entryComment].View(),
 			formSubmitHelp,
 		)
@@ -167,16 +167,16 @@ func (m Model) View() tea.View {
 
   %s
 `,
-			workLogEntryHeadingStyle.Render("Save Worklog"),
-			formContextStyle.Render(formHeadingText),
-			formHelpStyle.Render(formHelp),
-			formFieldNameStyle.Render(formBeginTimeHelp),
+			m.styles.workLogEntryHeading.Render("Save Worklog"),
+			m.styles.formContext.Render(formHeadingText),
+			m.styles.formHelp.Render(formHelp),
+			m.styles.formFieldName.Render(formBeginTimeHelp),
 			m.trackingInputs[entryBeginTS].View(),
-			formHelpStyle.Render(formTimeShiftHelp),
-			formFieldNameStyle.Render(formEndTimeHelp),
+			m.styles.formHelp.Render(formTimeShiftHelp),
+			m.styles.formFieldName.Render(formEndTimeHelp),
 			m.trackingInputs[entryEndTS].View(),
-			formHelpStyle.Render(formTimeShiftHelp),
-			formFieldNameStyle.Render(formCommentHelp),
+			m.styles.formHelp.Render(formTimeShiftHelp),
+			m.styles.formFieldName.Render(formCommentHelp),
 			m.trackingInputs[entryComment].View(),
 			submissionCtx,
 			formSubmitHelp,
@@ -218,16 +218,16 @@ func (m Model) View() tea.View {
 
   %s
 `,
-			workLogEntryHeadingStyle.Render(formHeading),
-			formContextStyle.Render(formHeadingText),
-			formHelpStyle.Render(formHelp),
-			formFieldNameStyle.Render(formBeginTimeHelp),
+			m.styles.workLogEntryHeading.Render(formHeading),
+			m.styles.formContext.Render(formHeadingText),
+			m.styles.formHelp.Render(formHelp),
+			m.styles.formFieldName.Render(formBeginTimeHelp),
 			m.trackingInputs[entryBeginTS].View(),
-			formHelpStyle.Render(formTimeShiftHelp),
-			formFieldNameStyle.Render(formEndTimeHelp),
+			m.styles.formHelp.Render(formTimeShiftHelp),
+			m.styles.formFieldName.Render(formEndTimeHelp),
 			m.trackingInputs[entryEndTS].View(),
-			formHelpStyle.Render(formTimeShiftHelp),
-			formFieldNameStyle.Render(formCommentHelp),
+			m.styles.formHelp.Render(formTimeShiftHelp),
+			m.styles.formFieldName.Render(formCommentHelp),
 			m.trackingInputs[entryComment].View(),
 			submissionCtx,
 			formSubmitHelp,
@@ -239,16 +239,12 @@ func (m Model) View() tea.View {
 		if !m.helpVPReady {
 			content = "\n  Initializing..."
 		} else {
-			content = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n", helpTitleStyle.Render("Help"), m.helpVP.View()))
+			content = m.styles.viewPort.Render(fmt.Sprintf("  %s\n\n%s\n", m.styles.helpTitle.Render("Help"), m.helpVP.View()))
 		}
 	}
 
-	footerStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#282828")).
-		Background(lipgloss.Color("#7c6f64"))
-
 	if m.showHelpIndicator {
-		helpMsg += helpMsgStyle.Render("Press ? for help")
+		helpMsg += m.styles.helpMsg.Render("Press ? for help")
 	}
 
 	var unsyncedMsg string
@@ -258,17 +254,17 @@ func (m Model) View() tea.View {
 			entryWord = "entry"
 		}
 		unsyncedTimeMsg := utils.HumanizeDuration(m.unsyncedWLSecsSpent)
-		unsyncedMsg = unsyncedCountStyle.Render(fmt.Sprintf("%d unsynced %s (%s)", m.unsyncedWLCount, entryWord, unsyncedTimeMsg))
+		unsyncedMsg = m.styles.unsyncedCount.Render(fmt.Sprintf("%d unsynced %s (%s)", m.unsyncedWLCount, entryWord, unsyncedTimeMsg))
 	}
 
 	footerStr := fmt.Sprintf(
 		"%s%s%s%s",
-		modeStyle.Render("punchout"),
+		m.styles.mode.Render("punchout"),
 		helpMsg,
 		unsyncedMsg,
 		activeMsg,
 	)
-	footer = footerStyle.Render(footerStr)
+	footer = m.styles.footer.Render(footerStr)
 
 	v := tea.NewView(lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -277,6 +273,8 @@ func (m Model) View() tea.View {
 		footer,
 	))
 	v.AltScreen = true
+	v.BackgroundColor = lipgloss.Color(m.theme.Background)
+	v.ForegroundColor = lipgloss.Color(m.theme.Foreground)
 
 	return v
 }

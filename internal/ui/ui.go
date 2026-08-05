@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/dhth/punchout/internal/issuecache"
 	svc "github.com/dhth/punchout/internal/service"
+	"github.com/dhth/punchout/internal/ui/theme"
 )
 
 func RenderUI(
@@ -14,6 +15,7 @@ func RenderUI(
 	jiraSvc svc.Jira,
 	issueStore issuecache.Store,
 	opts Options,
+	thm theme.Theme,
 ) error {
 	debug := os.Getenv("DEBUG") == "1"
 	if debug {
@@ -24,7 +26,7 @@ func RenderUI(
 		defer f.Close()
 	}
 
-	p := tea.NewProgram(InitialModel(db, jiraSvc, issueStore, opts, debug))
+	p := tea.NewProgram(InitialModel(db, jiraSvc, issueStore, opts, thm, debug))
 	if _, err := p.Run(); err != nil {
 		return err
 	}

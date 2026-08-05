@@ -5,6 +5,7 @@ import (
 
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
+	"github.com/dhth/punchout/internal/ui/theme"
 )
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -227,6 +228,24 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 					cmds = append(cmds, syncCmds...)
 				}
 			}
+		case "]":
+			nextTheme, err := theme.NextTheme(m.theme.Name)
+			if err != nil {
+				m.setErrorMsg(fmt.Sprintf("error switching theme: %s", err))
+				break
+			}
+
+			m.applyTheme(nextTheme)
+			m.setInfoMsg(fmt.Sprintf("theme set to %s", nextTheme.Name))
+		case "[":
+			previousTheme, err := theme.PreviousTheme(m.theme.Name)
+			if err != nil {
+				m.setErrorMsg(fmt.Sprintf("error switching theme: %s", err))
+				break
+			}
+
+			m.applyTheme(previousTheme)
+			m.setInfoMsg(fmt.Sprintf("theme set to %s", previousTheme.Name))
 		case "?":
 			if m.activeView == issueListView || m.activeView == wLView || m.activeView == syncedWLView {
 				m.lastView = m.activeView

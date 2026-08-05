@@ -1,0 +1,52 @@
+package theme
+
+const themeNameTokyonight = "tokyonight"
+
+func tokyonight() Theme {
+	return Theme{
+		Name:       themeNameTokyonight,
+		Accent1:    "#f7768e",
+		Accent2:    "#7aa2f7",
+		Accent3:    "#9ece6a",
+		Accent4:    "#bb9af7",
+		Accent5:    "#e0af68",
+		Accent6:    "#7dcfff",
+		Success:    "#9ece6a",
+		Danger:     "#f7768e",
+		Muted:      "#5e6791",
+		Foreground: "#c0caf5",
+		Background: "#1a1b26",
+		CategoricalColors: []string{
+			"#ce896a",
+			"#f7b476",
+			"#e0af68",
+			"#cebb6a",
+			"#f7f576",
+			"#9ece6a",
+			"#85e068",
+			"#7dff97",
+			"#6ace92",
+			"#a9d6c7",
+			"#7af7d9",
+			"#7dcfff",
+			"#7aa2f7",
+			"#a9b1d6",
+			"#bb9af7",
+			"#bfa9d6",
+			"#d6a9d6",
+			"#f79af5",
+			"#e068ad",
+			"#f7768e",
+			"#f28fad",
+			"#ff9e64",
+			"#faba4a",
+			"#c3e88d",
+			"#73daca",
+			"#86e1fc",
+			"#9aa5ce",
+			"#89a6fb",
+			"#c0a3ff",
+			"#f0a6ca",
+		},
+	}
+}

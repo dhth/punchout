@@ -1,0 +1,52 @@
+package theme
+
+const themeNameMonokaiClassic = "monokai-classic"
+
+func monokaiClassic() Theme {
+	return Theme{
+		Name:       themeNameMonokaiClassic,
+		Accent1:    "#66d9ef",
+		Accent2:    "#ae81ff",
+		Accent3:    "#a6e22e",
+		Accent4:    "#fd971f",
+		Accent5:    "#e6db74",
+		Accent6:    "#ff81ca",
+		Success:    "#a6e22e",
+		Danger:     "#f9347b",
+		Muted:      "#75715e",
+		Foreground: "#fdfff1",
+		Background: "#272822",
+		CategoricalColors: []string{
+			"#f9347b",
+			"#e85d8f",
+			"#fd971f",
+			"#e6a245",
+			"#e6db74",
+			"#d6e26e",
+			"#c0e85a",
+			"#a6e22e",
+			"#92d26a",
+			"#78d381",
+			"#66d9ef",
+			"#74dbe2",
+			"#7fd6d6",
+			"#a0cce8",
+			"#ae81ff",
+			"#c792ff",
+			"#d78bff",
+			"#ff81ca",
+			"#fd5da8",
+			"#f4477b",
+			"#ffb3da",
+			"#f2a2c1",
+			"#ffd08a",
+			"#f0e07e",
+			"#d3ef73",
+			"#b9e87c",
+			"#8ee6d6",
+			"#9db8ff",
+			"#b89bff",
+			"#f06db5",
+		},
+	}
+}

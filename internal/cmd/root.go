@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/dhth/punchout/internal/config"
 	"github.com/dhth/punchout/internal/issuecache"
@@ -15,6 +16,7 @@ import (
 	pers "github.com/dhth/punchout/internal/persistence"
 	svc "github.com/dhth/punchout/internal/service"
 	"github.com/dhth/punchout/internal/ui"
+	"github.com/dhth/punchout/internal/ui/theme"
 	"github.com/spf13/cobra"
 )
 
@@ -53,6 +55,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		flagJiraUsername         string
 		flagJQL                  string
 		flagListConfig           bool
+		flagTheme                string
 		flagUseCacheOnStartup    bool
 
 		flagMcpTransportStr string
@@ -63,6 +66,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		dbPathFull     string
 		db             *sql.DB
 		jiraSvc        svc.Jira
+		resolvedTheme  theme.Theme
 	)
 
 	userHomeDir, err := os.UserHomeDir()
@@ -130,8 +134,22 @@ func NewRootCommand() (*cobra.Command, error) {
 				overrides.TUI.UseCacheOnStartup = &flagUseCacheOnStartup
 			}
 
+			if cmd.Flags().Changed("theme") {
+				overrides.TUI.ThemeName = &flagTheme
+			}
+
 			appCfg, err = config.Load(configPathFull, overrides)
-			return err
+			if err != nil {
+				return err
+			}
+
+			// this validates the theme for all subcommands, which is intentional
+			resolvedTheme, err = theme.Get(appCfg.TUI.ThemeName)
+			if err != nil {
+				return fmt.Errorf("%w; available themes: [%s]", err, strings.Join(theme.All(), ", "))
+			}
+
+			return nil
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if flagListConfig {
@@ -161,7 +179,7 @@ func NewRootCommand() (*cobra.Command, error) {
 			return ui.RenderUI(db, jiraSvc, issueStore, ui.Options{
 				Jira:              appCfg.Jira.Options,
 				UseCacheOnStartup: appCfg.TUI.UseCacheOnStartup,
-			})
+			}, resolvedTheme)
 		},
 	}
 
@@ -236,6 +254,8 @@ func NewRootCommand() (*cobra.Command, error) {
 	rootCmd.PersistentFlags().StringVarP(&flagFallbackComment, "fallback-comment", "", "", "fallback comment to use for worklog entries")
 	rootCmd.PersistentFlags().StringVarP(&flagJiraTimeDeltaMinsStr, "jira-time-delta-mins", "", "", "time delta (in minutes) between your timezone and the timezone of the JIRA server; can be +/-")
 	rootCmd.PersistentFlags().BoolVarP(&flagListConfig, "list-config", "", false, "print the config that punchout will use")
+	themeFlagUsage := fmt.Sprintf("theme to use; possible values: [%s]", strings.Join(theme.All(), ", "))
+	rootCmd.Flags().StringVarP(&flagTheme, "theme", "t", theme.DefaultName, themeFlagUsage)
 	rootCmd.Flags().BoolVarP(&flagUseCacheOnStartup, "use-cache-on-startup", "", false, "load JIRA issues from the local cache on startup")
 
 	mcpServeCmd.Flags().StringVarP(&flagMcpTransportStr, "transport", "t", "stdio", "transport to use (possible values: [stdio, http])")

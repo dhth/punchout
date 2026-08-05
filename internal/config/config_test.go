@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/dhth/punchout/internal/ui/theme"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,6 +46,7 @@ fallback_comment = "cloud work"
 							Token:    "cloud-token",
 						},
 					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
 				},
 			},
 			{
@@ -70,6 +72,7 @@ fallback_comment = "on-premise work"
 							Token: "on-premise-token",
 						},
 					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
 				},
 			},
 			{
@@ -94,6 +97,7 @@ fallback_comment = "default installation work"
 							Token: "default-token",
 						},
 					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
 				},
 			},
 			{
@@ -115,6 +119,7 @@ jira_token = "minimal-token"
 							Token: "minimal-token",
 						},
 					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
 				},
 			},
 			{
@@ -140,6 +145,33 @@ use_cache_on_startup = true
 					},
 					TUI: TUIConfig{
 						UseCacheOnStartup: true,
+						ThemeName:         theme.DefaultName,
+					},
+				},
+			},
+			{
+				name: "when a TUI theme is selected",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[tui]
+theme = "catppuccin-mocha"
+`,
+				expected: Config{
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
+						},
+					},
+					TUI: TUIConfig{
+						ThemeName: "catppuccin-mocha",
 					},
 				},
 			},
@@ -158,6 +190,7 @@ use_cache_on_startup = true
 		jqlOverride := "project = OVERRIDDEN"
 		timeDeltaMinsOverride := 0
 		fallbackCommentOverride := "overridden work"
+		themeNameOverride := "catppuccin-mocha"
 		useCacheOnStartupOverride := true
 		dontUseCacheOnStartupOverride := false
 		cloudInstallationType := JiraInstallationTypeCloud
@@ -202,6 +235,7 @@ fallback_comment = "original work"
 							Token: "token",
 						},
 					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
 				},
 			},
 			{
@@ -236,6 +270,7 @@ fallback_comment = "original work"
 							Token:    "overridden-token",
 						},
 					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
 				},
 			},
 			{
@@ -266,6 +301,7 @@ use_cache_on_startup = false
 					},
 					TUI: TUIConfig{
 						UseCacheOnStartup: true,
+						ThemeName:         theme.DefaultName,
 					},
 				},
 			},
@@ -295,6 +331,36 @@ use_cache_on_startup = true
 							Token: "token",
 						},
 					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
+				},
+			},
+			{
+				name: "when a TUI theme is provided by an override",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[tui]
+theme = "gruvbox-light"
+`,
+				overrides: Overrides{
+					TUI: TUIOverrides{
+						ThemeName: &themeNameOverride,
+					},
+				},
+				expected: Config{
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
+						},
+					},
+					TUI: TUIConfig{ThemeName: themeNameOverride},
 				},
 			},
 		}

@@ -122,6 +122,39 @@ func TestMainCmd(t *testing.T) {
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 
+	t.Run("theme can be selected from config", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"--config-file-path", "config/theme-enabled.toml",
+			"--db-path", "db.db",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
+	t.Run("theme flag overrides config", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"--config-file-path", "config/theme-enabled.toml",
+			"--db-path", "db.db",
+			"--theme", "catppuccin-mocha",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
 	t.Run("cache startup can be enabled from config", func(t *testing.T) {
 		// GIVEN
 		args := []string{
@@ -173,6 +206,23 @@ func TestMainCmd(t *testing.T) {
 	})
 
 	// FAILURES
+	t.Run("providing an invalid theme fails", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"--config-file-path", "config/good.toml",
+			"--db-path", "db.db",
+			"--theme", "invalid",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
 	t.Run("providing incorrect installation type fails", func(t *testing.T) {
 		// GIVEN
 		args := []string{
