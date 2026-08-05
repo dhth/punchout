@@ -29,6 +29,8 @@ jobs:
               - "tests/**"
               - "**/*.go"
               - "go.*"
+              - "mise.toml"
+              - "mise.lock"
               - ".golangci.yml"
               - "main.go"
               - ".github/actions/**"
@@ -36,9 +38,13 @@ jobs:
             deps:
               - "go.mod"
               - "go.sum"
+              - "mise.toml"
+              - "mise.lock"
               - ".github/workflows/main.yml"
             release:
               - ".goreleaser.yml"
+              - "mise.toml"
+              - "mise.lock"
               - ".github/workflows/main.yml"
             workflows:
               - ".github/workflows/**.yml"
@@ -52,14 +58,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - name: Set up mise
+        uses: jdx/mise-action@v4
         with:
-          go-version-file: 'go.mod'
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.12
+          install_args: go golangci-lint
+      - name: Lint
+        run: mise run lint
 
   build:
     needs: changes
@@ -70,12 +74,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - name: Set up mise
+        uses: jdx/mise-action@v4
         with:
-          go-version-file: 'go.mod'
-      - name: go build
-        run: go build -v ./...
+          install_args: go
+      - name: Build
+        run: mise run build
 
   test:
     needs: changes
@@ -86,12 +90,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - name: Set up mise
+        uses: jdx/mise-action@v4
         with:
-          go-version-file: 'go.mod'
-      - name: go test
-        run: go test -v ./...
+          install_args: go
+      - name: Test
+        run: mise run test
 
   lint-yaml:
     needs: changes
@@ -117,15 +121,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - name: Set up mise
+        uses: jdx/mise-action@v4
         with:
-          go-version-file: 'go.mod'
+          install_args: go goreleaser
       - name: Release check
-        uses: goreleaser/goreleaser-action@v7
-        with:
-          version: 'v2.9.0'
-          args: check
+        run: mise run release:check
 
   vulncheck:
     needs: changes
@@ -133,11 +134,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - name: Set up mise
+        uses: jdx/mise-action@v4
         with:
-          go-version-file: 'go.mod'
-      - name: install govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
-      - name: govulncheck
-        run: govulncheck ./...
+          install_args: go go:golang.org/x/vuln/cmd/govulncheck
+      - name: Vulnerability check
+        run: mise run vulncheck
