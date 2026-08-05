@@ -1,0 +1,52 @@
+package theme
+
+const themeNameXcodeDark = "xcode-dark"
+
+func xcodeDark() Theme {
+	return Theme{
+		Name:       themeNameXcodeDark,
+		Accent1:    "#ff7ab2",
+		Accent2:    "#4eb0cc",
+		Accent3:    "#ff8170",
+		Accent4:    "#b281eb",
+		Accent5:    "#d9c97c",
+		Accent6:    "#abd97c",
+		Success:    "#78c2b3",
+		Danger:     "#ff7ab2",
+		Muted:      "#7f8c98",
+		Foreground: "#dfdfe0",
+		Background: "#292a30",
+		CategoricalColors: []string{
+			"#ff8170",
+			"#ffa14f",
+			"#d9c97c",
+			"#d6ff70",
+			"#abd97c",
+			"#93c278",
+			"#7cd97c",
+			"#6bff72",
+			"#6bffbc",
+			"#4ecc94",
+			"#78c2b3",
+			"#6bdfff",
+			"#4eb0cc",
+			"#78a0c2",
+			"#81b1eb",
+			"#b281eb",
+			"#d27aff",
+			"#eb81dd",
+			"#ff7ab2",
+			"#d97c9b",
+			"#ff9e8a",
+			"#ffb86b",
+			"#e6d68f",
+			"#b8e697",
+			"#9fe8cf",
+			"#5fd3c6",
+			"#7bc6e8",
+			"#98b8f0",
+			"#c09cf2",
+			"#f29ad0",
+		},
+	}
+}

@@ -6,6 +6,7 @@ Config File Path                        config/cache-enabled.toml
 DB File Path                            db.db
 
 [TUI]
+Theme                                   gruvbox-dark
 Use Cache On Startup                    false
 
 [JIRA]

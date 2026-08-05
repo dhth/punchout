@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/dhth/punchout/internal/ui/theme"
 )
 
 const (
@@ -33,6 +34,7 @@ type Config struct {
 
 type TUIConfig struct {
 	UseCacheOnStartup bool
+	ThemeName         string
 }
 
 type JiraConfig struct {
@@ -72,6 +74,7 @@ type Overrides struct {
 
 type TUIOverrides struct {
 	UseCacheOnStartup *bool
+	ThemeName         *string
 }
 
 type JiraOverrides struct {
@@ -90,7 +93,8 @@ type fileConfig struct {
 }
 
 type fileTUIConfig struct {
-	UseCacheOnStartup bool `toml:"use_cache_on_startup"`
+	UseCacheOnStartup bool    `toml:"use_cache_on_startup"`
+	ThemeName         *string `toml:"theme"`
 }
 
 type fileJiraConfig struct {
@@ -129,9 +133,7 @@ func decodeAndResolve(reader io.Reader, overrides Overrides) (Config, error) {
 
 	return Config{
 		Jira: jiraCfg,
-		TUI: TUIConfig{
-			UseCacheOnStartup: effectiveCfg.TUI.UseCacheOnStartup,
-		},
+		TUI:  resolveTUIConfig(effectiveCfg.TUI),
 	}, nil
 }
 
@@ -162,8 +164,23 @@ func withOverrides(cfg fileConfig, overrides Overrides) fileConfig {
 	if overrides.TUI.UseCacheOnStartup != nil {
 		result.TUI.UseCacheOnStartup = *overrides.TUI.UseCacheOnStartup
 	}
+	if overrides.TUI.ThemeName != nil {
+		result.TUI.ThemeName = overrides.TUI.ThemeName
+	}
 
 	return result
+}
+
+func resolveTUIConfig(cfg fileTUIConfig) TUIConfig {
+	themeName := theme.DefaultName
+	if cfg.ThemeName != nil {
+		themeName = *cfg.ThemeName
+	}
+
+	return TUIConfig{
+		UseCacheOnStartup: cfg.UseCacheOnStartup,
+		ThemeName:         themeName,
+	}
 }
 
 func resolveJiraConfig(cfg fileJiraConfig) (JiraConfig, error) {

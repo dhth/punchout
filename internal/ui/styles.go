@@ -2,124 +2,149 @@ package ui
 
 import (
 	"charm.land/lipgloss/v2"
-	d "github.com/dhth/punchout/internal/domain"
+	"github.com/dhth/punchout/internal/ui/theme"
 )
 
-const (
-	issueListUnfetchedColor = "#928374"
-	failureColor            = "#fb4934"
-	issueListColor          = "#fe8019"
-	worklogListColor        = "#fabd2f"
-	syncedWorklogListColor  = "#b8bb26"
-	trackingColor           = "#fe8019"
-	unsyncedCountColor      = "#fabd2f"
-	activeIssueKeyColor     = "#d3869b"
-	activeIssueSummaryColor = "#8ec07c"
-	trackingBeganColor      = "#fabd2f"
-	toolNameColor           = "#b8bb26"
-	formFieldNameColor      = "#8ec07c"
-	formContextColor        = "#fabd2f"
-	formHelpColor           = "#928374"
-	initialHelpMsgColor     = "#83a598"
-	userMsgInfoColor        = "#83a598"
-	helpMsgColor            = "#7c6f64"
-	helpViewTitleColor      = "#83a598"
-	helpHeaderColor         = "#83a598"
-	helpSectionColor        = "#fabd2f"
-	wlDurationColor         = "#d3869b"
-	wlLongDurationColor     = "#fe8019"
-)
+type styles struct {
+	userMsgInfo             lipgloss.Style
+	userMsgError            lipgloss.Style
+	helpMsg                 lipgloss.Style
+	initialHelpMsg          lipgloss.Style
+	list                    lipgloss.Style
+	viewPort                lipgloss.Style
+	footer                  lipgloss.Style
+	mode                    lipgloss.Style
+	workLogEntryHeading     lipgloss.Style
+	formContext             lipgloss.Style
+	formFieldName           lipgloss.Style
+	formHelp                lipgloss.Style
+	tracking                lipgloss.Style
+	activeIssueKeyMsg       lipgloss.Style
+	activeIssueSummaryMsg   lipgloss.Style
+	trackingBegan           lipgloss.Style
+	unsyncedCount           lipgloss.Style
+	helpTitle               lipgloss.Style
+	helpHeader              lipgloss.Style
+	helpSection             lipgloss.Style
+	wLFormOK                lipgloss.Style
+	wLFormError             lipgloss.Style
+	wLFormWarning           lipgloss.Style
+	issueListTitle          lipgloss.Style
+	issueListUnfetchedTitle lipgloss.Style
+	issueListFailureTitle   lipgloss.Style
+	worklogListTitle        lipgloss.Style
+	syncedWorklogListTitle  lipgloss.Style
+	fallbackCommentBadge    lipgloss.Style
+	syncedBadge             lipgloss.Style
+	syncingBadge            lipgloss.Style
+	notSyncedBadge          lipgloss.Style
+	issueTypeBadge          lipgloss.Style
+	issueStatus             lipgloss.Style
+	aggTimeSpent            lipgloss.Style
+}
 
-var (
-	userMsgInfoStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(userMsgInfoColor))
+func newStyles(thm theme.Theme) styles {
+	background := lipgloss.Color(thm.Background)
+	accent1 := lipgloss.Color(thm.Accent1)
+	accent2 := lipgloss.Color(thm.Accent2)
+	accent3 := lipgloss.Color(thm.Accent3)
+	accent4 := lipgloss.Color(thm.Accent4)
+	accent5 := lipgloss.Color(thm.Accent5)
+	accent6 := lipgloss.Color(thm.Accent6)
+	success := lipgloss.Color(thm.Success)
+	danger := lipgloss.Color(thm.Danger)
+	muted := lipgloss.Color(thm.Muted)
 
-	userMsgErrorStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(failureColor))
+	baseBadge := lipgloss.NewStyle().
+		PaddingLeft(1).
+		PaddingRight(1).
+		Foreground(background)
 
-	helpMsgStyle = lipgloss.NewStyle().
+	listTitle := baseBadge.Bold(true)
+
+	baseHeading := baseBadge.Bold(true)
+
+	tracking := lipgloss.NewStyle().
+		PaddingLeft(2).
+		Bold(true).
+		Foreground(accent1)
+
+	statusBadge := baseBadge.
+		Bold(true).
+		Align(lipgloss.Center).
+		Width(14)
+
+	return styles{
+		userMsgInfo:  lipgloss.NewStyle().Foreground(accent5),
+		userMsgError: lipgloss.NewStyle().Foreground(danger),
+		helpMsg: lipgloss.NewStyle().
 			PaddingLeft(2).
 			Bold(true).
-			Foreground(lipgloss.Color(helpMsgColor))
-
-	baseListStyle = lipgloss.NewStyle().
+			Foreground(accent3),
+		initialHelpMsg: lipgloss.NewStyle().
+			PaddingLeft(2).
+			Bold(true).
+			Foreground(accent6),
+		list: lipgloss.NewStyle().
 			PaddingTop(1).
 			PaddingRight(2).
-			PaddingBottom(1)
-
-	viewPortStyle = lipgloss.NewStyle().
+			PaddingBottom(1),
+		viewPort: lipgloss.NewStyle().
 			PaddingTop(1).
 			PaddingRight(2).
-			PaddingBottom(1)
-
-	listStyle = baseListStyle
-
-	modeStyle = d.BaseStyle.
+			PaddingBottom(1),
+		footer: lipgloss.NewStyle().
+			Foreground(background).
+			Background(muted),
+		mode: baseBadge.
 			Align(lipgloss.Center).
 			Bold(true).
-			Background(lipgloss.Color(toolNameColor))
-
-	baseHeadingStyle = lipgloss.NewStyle().
-				Bold(true).
-				PaddingLeft(1).
-				PaddingRight(1).
-				Foreground(lipgloss.Color(d.DefaultBackgroundColor))
-
-	workLogEntryHeadingStyle = baseHeadingStyle.
-					Background(lipgloss.Color(worklogListColor))
-
-	formContextStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(formContextColor))
-
-	formFieldNameStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(formFieldNameColor))
-
-	formHelpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(formHelpColor))
-
-	trackingStyle = lipgloss.NewStyle().
+			Background(accent4),
+		workLogEntryHeading: baseHeading.Background(accent2),
+		formContext:         lipgloss.NewStyle().Foreground(accent2),
+		formFieldName:       lipgloss.NewStyle().Foreground(accent4),
+		formHelp:            lipgloss.NewStyle().Foreground(muted),
+		tracking:            tracking,
+		activeIssueKeyMsg: tracking.
+			PaddingLeft(1).
+			Foreground(accent5),
+		activeIssueSummaryMsg: tracking.
+			PaddingLeft(1).
+			Foreground(accent6),
+		trackingBegan: tracking.
+			PaddingLeft(1).
+			Foreground(accent2),
+		unsyncedCount: lipgloss.NewStyle().
 			PaddingLeft(2).
 			Bold(true).
-			Foreground(lipgloss.Color(trackingColor))
-
-	activeIssueKeyMsgStyle = trackingStyle.
-				PaddingLeft(1).
-				Foreground(lipgloss.Color(activeIssueKeyColor))
-
-	activeIssueSummaryMsgStyle = trackingStyle.
-					PaddingLeft(1).
-					Foreground(lipgloss.Color(activeIssueSummaryColor))
-
-	trackingBeganStyle = trackingStyle.
-				PaddingLeft(1).
-				Foreground(lipgloss.Color(trackingBeganColor))
-
-	unsyncedCountStyle = lipgloss.NewStyle().
-				PaddingLeft(2).
-				Bold(true).
-				Foreground(lipgloss.Color(unsyncedCountColor))
-
-	initialHelpMsgStyle = helpMsgStyle.
-				Foreground(lipgloss.Color(initialHelpMsgColor))
-
-	helpTitleStyle = d.BaseStyle.
+			Foreground(accent2),
+		helpTitle: baseBadge.
 			Bold(true).
-			Background(lipgloss.Color(helpViewTitleColor)).
-			Align(lipgloss.Left)
-
-	helpHeaderStyle = lipgloss.NewStyle().
+			Background(accent3).
+			Align(lipgloss.Left),
+		helpHeader:              lipgloss.NewStyle().Bold(true).Foreground(accent3),
+		helpSection:             lipgloss.NewStyle().Foreground(accent2),
+		wLFormOK:                lipgloss.NewStyle().Foreground(success),
+		wLFormError:             lipgloss.NewStyle().Foreground(danger),
+		wLFormWarning:           lipgloss.NewStyle().Foreground(accent1),
+		issueListTitle:          listTitle.Background(accent1),
+		issueListUnfetchedTitle: listTitle.Background(muted),
+		issueListFailureTitle:   listTitle.Background(danger),
+		worklogListTitle:        listTitle.Background(accent2),
+		syncedWorklogListTitle:  listTitle.Background(accent4),
+		fallbackCommentBadge: statusBadge.
+			Width(20).
+			MarginLeft(2).
+			Background(accent3),
+		syncedBadge:    statusBadge.Background(success),
+		syncingBadge:   statusBadge.Background(accent2),
+		notSyncedBadge: statusBadge.Background(muted),
+		issueTypeBadge: lipgloss.NewStyle().
+			Foreground(background).
 			Bold(true).
-			Foreground(lipgloss.Color(helpHeaderColor))
-
-	helpSectionStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(helpSectionColor))
-
-	wLFormOkStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(wlDurationColor))
-
-	wLFormErrStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(failureColor))
-
-	wLFormWarnStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(wlLongDurationColor))
-)
+			Align(lipgloss.Center).
+			Width(20),
+		issueStatus:  lipgloss.NewStyle().Foreground(muted),
+		aggTimeSpent: lipgloss.NewStyle().PaddingLeft(2).Foreground(muted),
+	}
+}

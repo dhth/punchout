@@ -2,8 +2,8 @@ package ui
 
 import "fmt"
 
-var helpText = fmt.Sprintf(
-	`
+func renderHelp(styles styles) string {
+	return fmt.Sprintf(`
   %s
 %s
   %s
@@ -21,8 +21,8 @@ var helpText = fmt.Sprintf(
   %s
 %s
 `,
-	helpHeaderStyle.Render("punchout Reference Manual"),
-	helpSectionStyle.Render(`
+		styles.helpHeader.Render("punchout Reference Manual"),
+		styles.helpSection.Render(`
   (scroll line by line with j/k/arrow keys or by half a page with <c-d>/<c-u>)
 
   punchout has 5 panes:
@@ -33,9 +33,9 @@ var helpText = fmt.Sprintf(
     - Synced Worklog List View              You view the worklog entries synced to JIRA here
     - Help View (this one)
 `),
-	helpHeaderStyle.Render("Keyboard Shortcuts"),
-	helpHeaderStyle.Render("General"),
-	helpSectionStyle.Render(`
+		styles.helpHeader.Render("Keyboard Shortcuts"),
+		styles.helpHeader.Render("General"),
+		styles.helpSection.Render(`
     1                                       Switch to Issues List View
     2                                       Switch to Worklog List View
     3                                       Switch to Synced Worklog List View
@@ -43,18 +43,20 @@ var helpText = fmt.Sprintf(
     <shift+tab>                             Go to previous view/form entry
     q/<ctrl+c>                              Go back/reset filtering/quit
     <esc>                                   Cancel form/quit
+    [                                       Switch to previous theme
+    ]                                       Switch to next theme
     ?                                       Show help view
 `),
-	helpHeaderStyle.Render("General List Controls"),
-	helpSectionStyle.Render(`
+		styles.helpHeader.Render("General List Controls"),
+		styles.helpSection.Render(`
     k/<Up>                                  Move cursor up
     j/<Down>                                Move cursor down
     h<Left>                                 Go to previous page
     l<Right>                                Go to next page
     /                                       Start filtering
 `),
-	helpHeaderStyle.Render("Issue List View"),
-	helpSectionStyle.Render(`
+		styles.helpHeader.Render("Issue List View"),
+		styles.helpSection.Render(`
     s                                       Toggle recording time on the currently selected issue,
                                                 will open up a form to record a comment on the second
                                                 "s" keypress
@@ -68,15 +70,15 @@ var helpText = fmt.Sprintf(
     <ctrl+x>                                Discard currently active recording
     <ctrl+b>                                Open issue in browser
 `),
-	helpHeaderStyle.Render("Worklog List View"),
-	helpSectionStyle.Render(`
+		styles.helpHeader.Render("Worklog List View"),
+		styles.helpSection.Render(`
     <ctrl+s>/u                              Update worklog entry
     <ctrl+d>                                Delete worklog entry
     s                                       Sync all visible entries to JIRA
     <ctrl+r>                                Refresh list
 `),
-	helpHeaderStyle.Render("Worklog Entry/Update View"),
-	helpSectionStyle.Render(`
+		styles.helpHeader.Render("Worklog Entry/Update View"),
+		styles.helpSection.Render(`
     enter                                   Save worklog entry
     k                                       Move timestamp backwards by one minute
     j                                       Move timestamp forwards by one minute
@@ -87,8 +89,9 @@ var helpText = fmt.Sprintf(
     ctrl+s                                  Sync timestamp under cursor with the other (when
                                                 applicable)
 `),
-	helpHeaderStyle.Render("Synced Worklog List View"),
-	helpSectionStyle.Render(`
+		styles.helpHeader.Render("Synced Worklog List View"),
+		styles.helpSection.Render(`
     <ctrl+r>                                Refresh list
 `),
-)
+	)
+}

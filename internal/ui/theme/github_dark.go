@@ -1,0 +1,52 @@
+package theme
+
+const themeNameGithubDark = "github-dark"
+
+func githubDark() Theme {
+	return Theme{
+		Name:       themeNameGithubDark,
+		Accent1:    "#f78166",
+		Accent2:    "#56d364",
+		Accent3:    "#6ca4f8",
+		Accent4:    "#db61a2",
+		Accent5:    "#e3b341",
+		Accent6:    "#a371f7",
+		Success:    "#56d364",
+		Danger:     "#db61a2",
+		Muted:      "#8b949e",
+		Foreground: "#c9d1d9",
+		Background: "#101216",
+		CategoricalColors: []string{
+			"#f78166",
+			"#e06f5a",
+			"#e3b341",
+			"#caa03e",
+			"#a9b04e",
+			"#82bc56",
+			"#56d364",
+			"#4fbd67",
+			"#3d9f74",
+			"#2b7489",
+			"#3d89a3",
+			"#56a4bf",
+			"#6ca4f8",
+			"#7a95de",
+			"#8a87c5",
+			"#a06fb5",
+			"#db61a2",
+			"#bf5f98",
+			"#8b949e",
+			"#c9d1d9",
+			"#ffa28b",
+			"#f2c14e",
+			"#d4d97a",
+			"#9ecb5f",
+			"#6ddc88",
+			"#48c0a0",
+			"#4c89b3",
+			"#7f8ef5",
+			"#b07ad1",
+			"#e07ab8",
+		},
+	}
+}

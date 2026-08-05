@@ -5,10 +5,10 @@ import (
 
 	"charm.land/bubbles/v2/list"
 	"charm.land/bubbles/v2/textinput"
-	"charm.land/lipgloss/v2"
 	d "github.com/dhth/punchout/internal/domain"
 	"github.com/dhth/punchout/internal/issuecache"
 	svc "github.com/dhth/punchout/internal/service"
+	"github.com/dhth/punchout/internal/ui/theme"
 )
 
 func InitialModel(
@@ -16,8 +16,10 @@ func InitialModel(
 	jiraSvc svc.Jira,
 	issueStore issuecache.Store,
 	opts Options,
+	thm theme.Theme,
 	debug bool,
 ) Model {
+	styles := newStyles(thm)
 	var stackItems []list.Item
 	var worklogListItems []list.Item
 	var syncedWorklogListItems []list.Item
@@ -42,26 +44,26 @@ func InitialModel(
 	trackingInputs[entryComment].SetWidth(60)
 
 	m := Model{
+		theme:             thm,
+		styles:            styles,
 		db:                db,
 		jiraSvc:           jiraSvc,
 		issueStore:        issueStore,
 		opts:              opts,
-		issueList:         list.New(stackItems, newItemDelegate(lipgloss.Color(issueListColor)), listWidth, 0),
+		issueList:         list.New(stackItems, newItemDelegate(thm, styles, thm.Accent1), listWidth, 0),
 		issueMap:          make(map[string]*d.Issue),
 		issueIndexMap:     make(map[string]int),
-		worklogList:       list.New(worklogListItems, newItemDelegate(lipgloss.Color(worklogListColor)), listWidth, 0),
-		syncedWorklogList: list.New(syncedWorklogListItems, newItemDelegate(lipgloss.Color(syncedWorklogListColor)), listWidth, 0),
+		worklogList:       list.New(worklogListItems, newItemDelegate(thm, styles, thm.Accent2), listWidth, 0),
+		syncedWorklogList: list.New(syncedWorklogListItems, newItemDelegate(thm, styles, thm.Accent4), listWidth, 0),
 		showHelpIndicator: true,
 		trackingInputs:    trackingInputs,
 		debug:             debug,
 	}
-	m.issueList.Title = "fetching..."
+	m.issueList.Title = issueListFetchingTitle
 	m.issueList.SetStatusBarItemName("issue", "issues")
 	m.issueList.DisableQuitKeybindings()
 	m.issueList.SetShowHelp(false)
-	m.issueList.Styles.Title = m.issueList.Styles.Title.Foreground(lipgloss.Color(d.DefaultBackgroundColor)).
-		Background(lipgloss.Color(issueListUnfetchedColor)).
-		Bold(true)
+	m.issueList.Styles.Title = styles.issueListUnfetchedTitle
 	m.issueList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
 	m.issueList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 
@@ -70,9 +72,7 @@ func InitialModel(
 	m.worklogList.SetFilteringEnabled(false)
 	m.worklogList.DisableQuitKeybindings()
 	m.worklogList.SetShowHelp(false)
-	m.worklogList.Styles.Title = m.worklogList.Styles.Title.Foreground(lipgloss.Color(d.DefaultBackgroundColor)).
-		Background(lipgloss.Color(worklogListColor)).
-		Bold(true)
+	m.worklogList.Styles.Title = styles.worklogListTitle
 	m.worklogList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
 	m.worklogList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 
@@ -81,9 +81,7 @@ func InitialModel(
 	m.syncedWorklogList.SetFilteringEnabled(false)
 	m.syncedWorklogList.DisableQuitKeybindings()
 	m.syncedWorklogList.SetShowHelp(false)
-	m.syncedWorklogList.Styles.Title = m.syncedWorklogList.Styles.Title.Foreground(lipgloss.Color(d.DefaultBackgroundColor)).
-		Background(lipgloss.Color(syncedWorklogListColor)).
-		Bold(true)
+	m.syncedWorklogList.Styles.Title = styles.syncedWorklogListTitle
 	m.syncedWorklogList.KeyMap.PrevPage.SetKeys("left", "h", "pgup")
 	m.syncedWorklogList.KeyMap.NextPage.SetKeys("right", "l", "pgdown")
 

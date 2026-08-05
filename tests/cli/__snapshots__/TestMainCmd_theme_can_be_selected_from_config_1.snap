@@ -2,20 +2,19 @@ success: true
 exit_code: 0
 ----- stdout -----
 [Paths]
-Config File Path                        config/good.toml
+Config File Path                        config/theme-enabled.toml
 DB File Path                            db.db
 
 [TUI]
-Theme                                   gruvbox-dark
+Theme                                   gruvbox-light
 Use Cache On Startup                    false
 
 [JIRA]
-JIRA Installation Type                  cloud
+JIRA Installation Type                  onpremise
 JIRA URL                                https://jira.company.com
 JIRA Token                              [REDACTED]
 JQL                                     project = BLAH AND sprint in openSprints ()
 JIRA Time Delta Mins                    300
-JIRA Username                           example@example.com
 Fallback Comment                        work
 
 ----- stderr -----

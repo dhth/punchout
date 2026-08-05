@@ -32,6 +32,7 @@ func writePathsSection(result *strings.Builder, configPath, dbPath string) {
 
 func writeTUISection(result *strings.Builder, cfg config.TUIConfig) {
 	fmt.Fprint(result, "\n[TUI]\n")
+	writeField(result, "Theme", cfg.ThemeName)
 	writeField(result, "Use Cache On Startup", cfg.UseCacheOnStartup)
 }
 
