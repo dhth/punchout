@@ -5,4 +5,8 @@ set -euo pipefail
 curl -fsSL https://mise.run/bash | sh
 
 "$HOME/.local/bin/mise" trust
-"$HOME/.local/bin/mise" install --locked
+"$HOME/.local/bin/mise" install --locked \
+	go \
+	"go:golang.org/x/vuln/cmd/govulncheck" \
+	gofumpt \
+	golangci-lint
