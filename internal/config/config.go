@@ -15,6 +15,8 @@ const (
 	JiraInstallationTypeOnPremise = "onpremise"
 	JiraInstallationTypeCloud     = "cloud"
 	DefaultMCPHTTPPort            = 18899
+	mcpTransportNameStdio         = "stdio"
+	mcpTransportNameHTTP          = "http"
 )
 
 var (
@@ -49,9 +51,9 @@ const (
 func (t MCPTransport) String() string {
 	switch t {
 	case MCPTransportStdio:
-		return "stdio"
+		return mcpTransportNameStdio
 	case MCPTransportHTTP:
-		return "http"
+		return mcpTransportNameHTTP
 	default:
 		return "unknown"
 	}
@@ -223,8 +225,8 @@ func resolveMCPConfig(cfg fileMCPConfig) (MCPConfig, error) {
 	transport := MCPTransportStdio
 	if cfg.Transport != nil {
 		switch *cfg.Transport {
-		case "stdio":
-		case "http":
+		case mcpTransportNameStdio:
+		case mcpTransportNameHTTP:
 			transport = MCPTransportHTTP
 		default:
 			return MCPConfig{}, fmt.Errorf("invalid value for MCP transport: %q", *cfg.Transport)
