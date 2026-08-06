@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/dhth/punchout/internal/config"
-	"github.com/dhth/punchout/internal/mcp"
 )
 
 func formatTUIConfig(configPath, dbPath string, cfg config.Config) string {
@@ -16,11 +15,11 @@ func formatTUIConfig(configPath, dbPath string, cfg config.Config) string {
 	return result.String()
 }
 
-func formatMCPConfig(configPath, dbPath string, cfg config.Config, mcpCfg mcp.Config) string {
+func formatMCPConfig(configPath, dbPath string, cfg config.Config) string {
 	var result strings.Builder
 	writePathsSection(&result, configPath, dbPath)
 	writeJiraSection(&result, cfg.Jira)
-	writeMCPSection(&result, mcpCfg)
+	writeMCPSection(&result, cfg.MCP)
 	return result.String()
 }
 
@@ -67,10 +66,10 @@ func writeJiraSection(result *strings.Builder, cfg config.JiraConfig) {
 	}
 }
 
-func writeMCPSection(result *strings.Builder, cfg mcp.Config) {
+func writeMCPSection(result *strings.Builder, cfg config.MCPConfig) {
 	fmt.Fprint(result, "\n[MCP]\n")
 	writeField(result, "Transport", cfg.Transport)
-	if cfg.Transport == mcp.TransportHTTP {
+	if cfg.Transport == config.MCPTransportHTTP {
 		writeField(result, "Port", cfg.HTTPPort)
 	}
 }

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Built-in themes
+- Support TUI and MCP settings in `punchout.toml`
 
 ## [v1.4.0] - Mar 17, 2026
 

@@ -11,6 +11,11 @@ import (
 )
 
 func TestDecodeAndResolve(t *testing.T) {
+	defaultMCPConfig := MCPConfig{
+		Transport: MCPTransportStdio,
+		HTTPPort:  DefaultMCPHTTPPort,
+	}
+
 	t.Run("works with valid configurations", func(t *testing.T) {
 		cloudFallbackComment := "cloud work"
 		onPremiseFallbackComment := "on-premise work"
@@ -34,6 +39,7 @@ jira_username = "user@example.com"
 fallback_comment = "cloud work"
 `,
 				expected: Config{
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = CLOUD",
@@ -61,6 +67,7 @@ jira_token = "on-premise-token"
 fallback_comment = "on-premise work"
 `,
 				expected: Config{
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = ONPREM",
@@ -86,6 +93,7 @@ jira_token = "default-token"
 fallback_comment = "default installation work"
 `,
 				expected: Config{
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = DEFAULT",
@@ -110,6 +118,7 @@ jql = "project = MINIMAL"
 jira_token = "minimal-token"
 `,
 				expected: Config{
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = MINIMAL",
@@ -134,6 +143,7 @@ jira_token = "token"
 use_cache_on_startup = true
 `,
 				expected: Config{
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -161,6 +171,7 @@ jira_token = "token"
 theme = "catppuccin-mocha"
 `,
 				expected: Config{
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -172,6 +183,64 @@ theme = "catppuccin-mocha"
 					},
 					TUI: TUIConfig{
 						ThemeName: "catppuccin-mocha",
+					},
+				},
+			},
+			{
+				name: "when MCP settings are provided",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[mcp]
+transport = "http"
+http_port = 3000
+`,
+				expected: Config{
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
+						},
+					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
+					MCP: MCPConfig{
+						Transport: MCPTransportHTTP,
+						HTTPPort:  3000,
+					},
+				},
+			},
+			{
+				name: "when MCP HTTP port is at its upper boundary",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[mcp]
+transport = "http"
+http_port = 65535
+`,
+				expected: Config{
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
+						},
+					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
+					MCP: MCPConfig{
+						Transport: MCPTransportHTTP,
+						HTTPPort:  65535,
 					},
 				},
 			},
@@ -198,6 +267,8 @@ theme = "catppuccin-mocha"
 		jiraTokenOverride := "overridden-token"
 		jiraUsernameOverride := "overridden-user@example.com"
 		installationOverrideFallbackComment := "original work"
+		mcpTransportOverride := "stdio"
+		mcpHTTPPortOverride := uint16(4000)
 
 		tests := []struct {
 			name      string
@@ -224,6 +295,7 @@ fallback_comment = "original work"
 					},
 				},
 				expected: Config{
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = OVERRIDDEN",
@@ -258,6 +330,7 @@ fallback_comment = "original work"
 					},
 				},
 				expected: Config{
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = ORIGINAL",
@@ -290,6 +363,7 @@ use_cache_on_startup = false
 					},
 				},
 				expected: Config{
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -322,6 +396,7 @@ use_cache_on_startup = true
 					},
 				},
 				expected: Config{
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -351,6 +426,7 @@ theme = "gruvbox-light"
 					},
 				},
 				expected: Config{
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -361,6 +437,41 @@ theme = "gruvbox-light"
 						},
 					},
 					TUI: TUIConfig{ThemeName: themeNameOverride},
+				},
+			},
+			{
+				name: "when MCP settings are provided by overrides",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[mcp]
+transport = "http"
+http_port = 3000
+`,
+				overrides: Overrides{
+					MCP: MCPOverrides{
+						Transport: &mcpTransportOverride,
+						HTTPPort:  &mcpHTTPPortOverride,
+					},
+				},
+				expected: Config{
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
+						},
+					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
+					MCP: MCPConfig{
+						Transport: MCPTransportStdio,
+						HTTPPort:  mcpHTTPPortOverride,
+					},
 				},
 			},
 		}
@@ -377,6 +488,8 @@ theme = "gruvbox-light"
 	t.Run("rejects invalid overrides", func(t *testing.T) {
 		emptyOverride := ""
 		invalidInstallationType := "serverless"
+		invalidMCPTransport := "websocket"
+		invalidMCPHTTPPort := uint16(0)
 		cloudInstallationType := JiraInstallationTypeCloud
 		cloudInput := `
 [jira]
@@ -455,6 +568,20 @@ jira_token = "original-token"
 				input: onPremiseInput,
 				overrides: Overrides{Jira: JiraOverrides{
 					InstallationType: &cloudInstallationType,
+				}},
+			},
+			{
+				name:  "when MCP transport is invalid",
+				input: onPremiseInput,
+				overrides: Overrides{MCP: MCPOverrides{
+					Transport: &invalidMCPTransport,
+				}},
+			},
+			{
+				name:  "when MCP HTTP port is zero",
+				input: onPremiseInput,
+				overrides: Overrides{MCP: MCPOverrides{
+					HTTPPort: &invalidMCPHTTPPort,
 				}},
 			},
 		}
@@ -609,6 +736,45 @@ jira_token = "token"
 fallback_comment = "   "
 `,
 				expectedError: ErrInvalidConfig,
+			},
+			{
+				name: "when MCP transport is invalid",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[mcp]
+transport = "websocket"
+`,
+				expectedError: ErrInvalidConfig,
+			},
+			{
+				name: "when MCP HTTP port is zero",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[mcp]
+http_port = 0
+`,
+				expectedError: ErrInvalidConfig,
+			},
+			{
+				name: "when MCP HTTP port exceeds its upper boundary",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[mcp]
+http_port = 65536
+`,
+				expectedError: ErrParseConfigFile,
 			},
 		}
 
