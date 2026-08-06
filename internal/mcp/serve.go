@@ -19,7 +19,7 @@ var (
 	errCouldntListenOnAddr = errors.New("MCP server couldn't listen on address")
 )
 
-func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraOpts config.JiraOptions, mcpCfg Config) error {
+func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraOpts config.JiraOptions, mcpCfg config.MCPConfig) error {
 	opts := &mcp.ServerOptions{
 		Instructions: "Use this server for creating worklogs and syncing them to JIRA. You can also use it to fetch issues from JIRA, and view unsynced worklogs.",
 	}
@@ -36,7 +36,7 @@ func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraOpts config.Ji
 		return err
 	}
 
-	if mcpCfg.Transport == TransportStdio {
+	if mcpCfg.Transport == config.MCPTransportStdio {
 		err := server.Run(ctx, &mcp.StdioTransport{})
 		if err != nil {
 			return fmt.Errorf("%w: %w", errCouldntRunServer, err)

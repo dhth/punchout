@@ -14,6 +14,7 @@ import (
 const (
 	JiraInstallationTypeOnPremise = "onpremise"
 	JiraInstallationTypeCloud     = "cloud"
+	DefaultMCPHTTPPort            = 18899
 )
 
 var (
@@ -30,6 +31,30 @@ var (
 type Config struct {
 	Jira JiraConfig
 	TUI  TUIConfig
+	MCP  MCPConfig
+}
+
+type MCPConfig struct {
+	Transport MCPTransport
+	HTTPPort  uint
+}
+
+type MCPTransport uint8
+
+const (
+	MCPTransportStdio MCPTransport = iota
+	MCPTransportHTTP
+)
+
+func (t MCPTransport) String() string {
+	switch t {
+	case MCPTransportStdio:
+		return "stdio"
+	case MCPTransportHTTP:
+		return "http"
+	default:
+		return "unknown"
+	}
 }
 
 type TUIConfig struct {
@@ -70,6 +95,12 @@ func (OnPremiseInstallation) isJiraInstallation() {}
 type Overrides struct {
 	Jira JiraOverrides
 	TUI  TUIOverrides
+	MCP  MCPOverrides
+}
+
+type MCPOverrides struct {
+	Transport *string
+	HTTPPort  *uint
 }
 
 type TUIOverrides struct {
@@ -90,6 +121,12 @@ type JiraOverrides struct {
 type fileConfig struct {
 	Jira fileJiraConfig `toml:"jira"`
 	TUI  fileTUIConfig  `toml:"tui"`
+	MCP  fileMCPConfig  `toml:"mcp"`
+}
+
+type fileMCPConfig struct {
+	Transport *string `toml:"transport"`
+	HTTPPort  *uint   `toml:"http_port"`
 }
 
 type fileTUIConfig struct {
@@ -130,10 +167,15 @@ func decodeAndResolve(reader io.Reader, overrides Overrides) (Config, error) {
 	if err != nil {
 		return Config{}, fmt.Errorf("%w: %s", ErrInvalidConfig, err.Error())
 	}
+	mcpCfg, err := resolveMCPConfig(effectiveCfg.MCP)
+	if err != nil {
+		return Config{}, fmt.Errorf("%w: %s", ErrInvalidConfig, err.Error())
+	}
 
 	return Config{
 		Jira: jiraCfg,
 		TUI:  resolveTUIConfig(effectiveCfg.TUI),
+		MCP:  mcpCfg,
 	}, nil
 }
 
@@ -167,8 +209,37 @@ func withOverrides(cfg fileConfig, overrides Overrides) fileConfig {
 	if overrides.TUI.ThemeName != nil {
 		result.TUI.ThemeName = overrides.TUI.ThemeName
 	}
+	if overrides.MCP.Transport != nil {
+		result.MCP.Transport = overrides.MCP.Transport
+	}
+	if overrides.MCP.HTTPPort != nil {
+		result.MCP.HTTPPort = overrides.MCP.HTTPPort
+	}
 
 	return result
+}
+
+func resolveMCPConfig(cfg fileMCPConfig) (MCPConfig, error) {
+	transport := MCPTransportStdio
+	if cfg.Transport != nil {
+		switch *cfg.Transport {
+		case "stdio":
+		case "http":
+			transport = MCPTransportHTTP
+		default:
+			return MCPConfig{}, fmt.Errorf("invalid value for MCP transport: %q", *cfg.Transport)
+		}
+	}
+
+	httpPort := uint(DefaultMCPHTTPPort)
+	if cfg.HTTPPort != nil {
+		httpPort = *cfg.HTTPPort
+	}
+
+	return MCPConfig{
+		Transport: transport,
+		HTTPPort:  httpPort,
+	}, nil
 }
 
 func resolveTUIConfig(cfg fileTUIConfig) TUIConfig {

@@ -31,7 +31,6 @@ var (
 	errConfigFilePathEmpty = errors.New("config file path cannot be empty")
 	errDBPathEmpty         = errors.New("db file path cannot be empty")
 	errTimeDeltaIncorrect  = errors.New("couldn't convert time delta to a number")
-	errInvalidMCPTransport = fmt.Errorf("invalid value provided for MCP transport")
 )
 
 func Execute() error {
@@ -138,6 +137,14 @@ func NewRootCommand() (*cobra.Command, error) {
 				overrides.TUI.ThemeName = &flagTheme
 			}
 
+			if cmd.Flags().Changed("transport") {
+				overrides.MCP.Transport = &flagMcpTransportStr
+			}
+
+			if cmd.Flags().Changed("http-port") {
+				overrides.MCP.HTTPPort = &flagMcpServerPort
+			}
+
 			appCfg, err = config.Load(configPathFull, overrides)
 			if err != nil {
 				return err
@@ -192,21 +199,11 @@ func NewRootCommand() (*cobra.Command, error) {
 		Use:   "serve",
 		Short: "Run punchout's MCP server",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			transport, ok := mcp.ParseTransport(flagMcpTransportStr)
-			if !ok {
-				return fmt.Errorf("%w: %q", errInvalidMCPTransport, flagMcpTransportStr)
-			}
-			mcpCfg := mcp.Config{
-				Transport: transport,
-				HTTPPort:  flagMcpServerPort,
-			}
-
 			if flagListConfig {
 				fmt.Fprint(os.Stdout, formatMCPConfig(
 					configPathFull,
 					dbPathFull,
 					appCfg,
-					mcpCfg,
 				))
 				return nil
 			}
@@ -221,7 +218,7 @@ func NewRootCommand() (*cobra.Command, error) {
 				return err
 			}
 
-			return mcp.Serve(cmd.Context(), db, jiraSvc, appCfg.Jira.Options, mcpCfg)
+			return mcp.Serve(cmd.Context(), db, jiraSvc, appCfg.Jira.Options, appCfg.MCP)
 		},
 	}
 
@@ -259,7 +256,7 @@ func NewRootCommand() (*cobra.Command, error) {
 	rootCmd.Flags().BoolVarP(&flagUseCacheOnStartup, "use-cache-on-startup", "", false, "load JIRA issues from the local cache on startup")
 
 	mcpServeCmd.Flags().StringVarP(&flagMcpTransportStr, "transport", "t", "stdio", "transport to use (possible values: [stdio, http])")
-	mcpServeCmd.Flags().UintVarP(&flagMcpServerPort, "http-port", "p", 18899, "port to use (when transport is http)")
+	mcpServeCmd.Flags().UintVarP(&flagMcpServerPort, "http-port", "p", config.DefaultMCPHTTPPort, "port to use (when transport is http)")
 
 	mcpCmd.AddCommand(mcpServeCmd)
 	rootCmd.AddCommand(mcpCmd)
