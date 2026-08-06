@@ -38,7 +38,7 @@ type Config struct {
 
 type MCPConfig struct {
 	Transport MCPTransport
-	HTTPPort  uint
+	HTTPPort  uint16
 }
 
 type MCPTransport uint8
@@ -102,7 +102,7 @@ type Overrides struct {
 
 type MCPOverrides struct {
 	Transport *string
-	HTTPPort  *uint
+	HTTPPort  *uint16
 }
 
 type TUIOverrides struct {
@@ -128,7 +128,7 @@ type fileConfig struct {
 
 type fileMCPConfig struct {
 	Transport *string `toml:"transport"`
-	HTTPPort  *uint   `toml:"http_port"`
+	HTTPPort  *uint16 `toml:"http_port"`
 }
 
 type fileTUIConfig struct {
@@ -233,9 +233,12 @@ func resolveMCPConfig(cfg fileMCPConfig) (MCPConfig, error) {
 		}
 	}
 
-	httpPort := uint(DefaultMCPHTTPPort)
+	httpPort := uint16(DefaultMCPHTTPPort)
 	if cfg.HTTPPort != nil {
 		httpPort = *cfg.HTTPPort
+	}
+	if httpPort == 0 {
+		return MCPConfig{}, fmt.Errorf("mcp http port must be greater than zero")
 	}
 
 	return MCPConfig{

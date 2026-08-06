@@ -215,6 +215,35 @@ http_port = 3000
 					},
 				},
 			},
+			{
+				name: "when MCP HTTP port is at its upper boundary",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[mcp]
+transport = "http"
+http_port = 65535
+`,
+				expected: Config{
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
+						},
+					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
+					MCP: MCPConfig{
+						Transport: MCPTransportHTTP,
+						HTTPPort:  65535,
+					},
+				},
+			},
 		}
 
 		for _, tt := range tests {
@@ -239,7 +268,7 @@ http_port = 3000
 		jiraUsernameOverride := "overridden-user@example.com"
 		installationOverrideFallbackComment := "original work"
 		mcpTransportOverride := "stdio"
-		mcpHTTPPortOverride := uint(4000)
+		mcpHTTPPortOverride := uint16(4000)
 
 		tests := []struct {
 			name      string
@@ -460,6 +489,7 @@ http_port = 3000
 		emptyOverride := ""
 		invalidInstallationType := "serverless"
 		invalidMCPTransport := "websocket"
+		invalidMCPHTTPPort := uint16(0)
 		cloudInstallationType := JiraInstallationTypeCloud
 		cloudInput := `
 [jira]
@@ -545,6 +575,13 @@ jira_token = "original-token"
 				input: onPremiseInput,
 				overrides: Overrides{MCP: MCPOverrides{
 					Transport: &invalidMCPTransport,
+				}},
+			},
+			{
+				name:  "when MCP HTTP port is zero",
+				input: onPremiseInput,
+				overrides: Overrides{MCP: MCPOverrides{
+					HTTPPort: &invalidMCPHTTPPort,
 				}},
 			},
 		}
@@ -712,6 +749,32 @@ jira_token = "token"
 transport = "websocket"
 `,
 				expectedError: ErrInvalidConfig,
+			},
+			{
+				name: "when MCP HTTP port is zero",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[mcp]
+http_port = 0
+`,
+				expectedError: ErrInvalidConfig,
+			},
+			{
+				name: "when MCP HTTP port exceeds its upper boundary",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+
+[mcp]
+http_port = 65536
+`,
+				expectedError: ErrParseConfigFile,
 			},
 		}
 

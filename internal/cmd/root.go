@@ -58,7 +58,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		flagUseCacheOnStartup    bool
 
 		flagMcpTransportStr string
-		flagMcpServerPort   uint
+		flagMcpServerPort   uint16
 
 		appCfg         config.Config
 		configPathFull string
@@ -256,7 +256,7 @@ func NewRootCommand() (*cobra.Command, error) {
 	rootCmd.Flags().BoolVarP(&flagUseCacheOnStartup, "use-cache-on-startup", "", false, "load JIRA issues from the local cache on startup")
 
 	mcpServeCmd.Flags().StringVarP(&flagMcpTransportStr, "transport", "t", "stdio", "transport to use (possible values: [stdio, http])")
-	mcpServeCmd.Flags().UintVarP(&flagMcpServerPort, "http-port", "p", config.DefaultMCPHTTPPort, "port to use (when transport is http)")
+	mcpServeCmd.Flags().Uint16VarP(&flagMcpServerPort, "http-port", "p", config.DefaultMCPHTTPPort, "port to use (when transport is http)")
 
 	mcpCmd.AddCommand(mcpServeCmd)
 	rootCmd.AddCommand(mcpCmd)

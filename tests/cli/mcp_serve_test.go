@@ -187,4 +187,24 @@ func TestMCPServeCmd(t *testing.T) {
 		require.NoError(t, err)
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
+
+	t.Run("fails if HTTP port exceeds its upper boundary", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"mcp",
+			"serve",
+			"--config-file-path", "config/good.toml",
+			"--db-path", "db.db",
+			"--transport", "http",
+			"--http-port", "65536",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
 }

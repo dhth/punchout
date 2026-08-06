@@ -8,7 +8,7 @@ Usage:
 
 Flags:
   -h, --help               help for serve
-  -p, --http-port uint     port to use (when transport is http) (default 18899)
+  -p, --http-port uint16   port to use (when transport is http) (default 18899)
   -t, --transport string   transport to use (possible values: [stdio, http]) (default "stdio")
 
 Global Flags:
