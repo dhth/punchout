@@ -53,6 +53,24 @@ func TestMCPServeCmd(t *testing.T) {
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 
+	t.Run("listing config uses MCP settings from config file", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"mcp",
+			"serve",
+			"--config-file-path", "config/mcp.toml",
+			"--db-path", "db.db",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
 	t.Run("changing transport works", func(t *testing.T) {
 		// GIVEN
 		args := []string{
@@ -73,6 +91,45 @@ func TestMCPServeCmd(t *testing.T) {
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 
+	t.Run("flags override MCP config file settings", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"mcp",
+			"serve",
+			"--config-file-path", "config/mcp.toml",
+			"--db-path", "db.db",
+			"--transport", "http",
+			"--http-port", "4000",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
+	t.Run("transport flag overrides MCP config file setting", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"mcp",
+			"serve",
+			"--config-file-path", "config/mcp.toml",
+			"--db-path", "db.db",
+			"--transport", "stdio",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
 	// FAILURES
 	t.Run("fails if invalid transport provided", func(t *testing.T) {
 		// GIVEN
@@ -82,6 +139,24 @@ func TestMCPServeCmd(t *testing.T) {
 			"--config-file-path", "config/good.toml",
 			"--db-path", "db.db",
 			"--transport", "blah",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
+	t.Run("fails if config file contains invalid MCP transport", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"mcp",
+			"serve",
+			"--config-file-path", "config/mcp-invalid.toml",
+			"--db-path", "db.db",
 			"--list-config",
 		}
 
