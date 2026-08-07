@@ -81,6 +81,35 @@ ORDER BY
 	return logEntries, nil
 }
 
+func FetchActiveWLFromDB(db *sql.DB) (string, time.Time, *string, error) {
+	row := db.QueryRow(`
+SELECT
+    issue_key,
+    begin_ts,
+    COMMENT
+FROM
+    issue_log
+WHERE
+    active = 1
+ORDER BY
+    begin_ts DESC
+LIMIT
+    1;
+`)
+
+	var issueKey string
+	var beginTS time.Time
+	var comment *string
+	if err := row.Scan(&issueKey, &beginTS, &comment); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", time.Time{}, nil, nil
+		}
+		return "", time.Time{}, nil, err
+	}
+
+	return issueKey, beginTS.Local(), comment, nil
+}
+
 func InsertNewActiveWLInDB(db *sql.DB, issueKey string, beginTS time.Time) error {
 	stmt, err := db.Prepare(`
 INSERT INTO
@@ -120,7 +149,14 @@ VALUES
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(worklog.IssueKey, worklog.BeginTS, worklog.EndTS, worklog.Comment, false, false)
+	_, err = stmt.Exec(
+		worklog.IssueKey,
+		worklog.BeginTS.UTC(),
+		worklog.EndTS.UTC(),
+		worklog.Comment,
+		false,
+		false,
+	)
 
 	return err
 }

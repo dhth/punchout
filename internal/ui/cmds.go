@@ -133,27 +133,7 @@ WHERE
 
 func fetchActiveStatus(db *sql.DB, interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
-		row := db.QueryRow(`
-SELECT
-    issue_key,
-    begin_ts,
-    COMMENT
-FROM
-    issue_log
-WHERE
-    active = 1
-ORDER BY
-    begin_ts DESC
-LIMIT
-    1;
-`)
-		var activeIssue string
-		var beginTS time.Time
-		var comment *string
-		err := row.Scan(&activeIssue, &beginTS, &comment)
-		if err == sql.ErrNoRows {
-			return activeWLFetchedFromDB{activeIssue: activeIssue}
-		}
+		activeIssue, beginTS, comment, err := pers.FetchActiveWLFromDB(db)
 		if err != nil {
 			return activeWLFetchedFromDB{err: err}
 		}
