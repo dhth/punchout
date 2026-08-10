@@ -1,0 +1,6 @@
+db_path = "~/$PUNCHOUT_DB_DIR/punchout.db"
+
+[jira]
+jira_url = "https://jira.company.com"
+jira_token = "XXX"
+jql = "project = BLAH"

@@ -1,0 +1,20 @@
+success: true
+exit_code: 0
+----- stdout -----
+[Paths]
+Config File Path                        config/db-path.toml
+DB File Path                            /home/user/data-dir/punchout.db
+
+[TUI]
+Theme                                   gruvbox-dark
+Use Cache On Startup                    false
+
+[JIRA]
+JIRA Installation Type                  onpremise
+JIRA URL                                https://jira.company.com
+JIRA Token                              [REDACTED]
+JQL                                     project = BLAH
+JIRA Time Delta Mins                    0
+
+----- stderr -----
+
