@@ -11,6 +11,10 @@ import (
 )
 
 func TestDecodeAndResolve(t *testing.T) {
+	homeDir := "/home/user"
+	defaults := Defaults{DBPath: "default.db"}
+	t.Setenv("PUNCHOUT_DB_DIR", "data-dir")
+	t.Setenv("EMPTY_DB_PATH", "")
 	defaultMCPConfig := MCPConfig{
 		Transport: MCPTransportStdio,
 		HTTPPort:  DefaultMCPHTTPPort,
@@ -39,7 +43,8 @@ jira_username = "user@example.com"
 fallback_comment = "cloud work"
 `,
 				expected: Config{
-					MCP: defaultMCPConfig,
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = CLOUD",
@@ -67,7 +72,8 @@ jira_token = "on-premise-token"
 fallback_comment = "on-premise work"
 `,
 				expected: Config{
-					MCP: defaultMCPConfig,
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = ONPREM",
@@ -93,7 +99,8 @@ jira_token = "default-token"
 fallback_comment = "default installation work"
 `,
 				expected: Config{
-					MCP: defaultMCPConfig,
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = DEFAULT",
@@ -118,7 +125,8 @@ jql = "project = MINIMAL"
 jira_token = "minimal-token"
 `,
 				expected: Config{
-					MCP: defaultMCPConfig,
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = MINIMAL",
@@ -126,6 +134,56 @@ jira_token = "minimal-token"
 						Installation: OnPremiseInstallation{
 							URL:   "https://minimal.jira.company.com",
 							Token: "minimal-token",
+						},
+					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
+				},
+			},
+			{
+				name: "when DB path is provided",
+				input: `
+db_path = "configured.db"
+
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+`,
+				expected: Config{
+					DBPath: "configured.db",
+					MCP:    defaultMCPConfig,
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
+						},
+					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
+				},
+			},
+			{
+				name: "when DB path contains environment variable and tilde",
+				input: `
+db_path = "~/$PUNCHOUT_DB_DIR/punchout.db"
+
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+`,
+				expected: Config{
+					DBPath: filepath.Join(homeDir, "data-dir", "punchout.db"),
+					MCP:    defaultMCPConfig,
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
 						},
 					},
 					TUI: TUIConfig{ThemeName: theme.DefaultName},
@@ -143,7 +201,8 @@ jira_token = "token"
 use_cache_on_startup = true
 `,
 				expected: Config{
-					MCP: defaultMCPConfig,
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -171,7 +230,8 @@ jira_token = "token"
 theme = "catppuccin-mocha"
 `,
 				expected: Config{
-					MCP: defaultMCPConfig,
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -199,6 +259,7 @@ transport = "http"
 http_port = 3000
 `,
 				expected: Config{
+					DBPath: defaults.DBPath,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -228,6 +289,7 @@ transport = "http"
 http_port = 65535
 `,
 				expected: Config{
+					DBPath: defaults.DBPath,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -248,7 +310,10 @@ http_port = 65535
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				actual, err := decodeAndResolve(strings.NewReader(tt.input), Overrides{})
+				actual, err := decodeAndResolve(strings.NewReader(tt.input), LoadOptions{
+					HomeDir:  homeDir,
+					Defaults: defaults,
+				})
 				require.NoError(t, err)
 				assert.Equal(t, tt.expected, actual)
 			})
@@ -269,6 +334,7 @@ http_port = 65535
 		installationOverrideFallbackComment := "original work"
 		mcpTransportOverride := "stdio"
 		mcpHTTPPortOverride := uint16(4000)
+		dbPathOverride := "~/override.db"
 
 		tests := []struct {
 			name      string
@@ -295,7 +361,8 @@ fallback_comment = "original work"
 					},
 				},
 				expected: Config{
-					MCP: defaultMCPConfig,
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = OVERRIDDEN",
@@ -330,7 +397,8 @@ fallback_comment = "original work"
 					},
 				},
 				expected: Config{
-					MCP: defaultMCPConfig,
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = ORIGINAL",
@@ -363,7 +431,8 @@ use_cache_on_startup = false
 					},
 				},
 				expected: Config{
-					MCP: defaultMCPConfig,
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -396,7 +465,8 @@ use_cache_on_startup = true
 					},
 				},
 				expected: Config{
-					MCP: defaultMCPConfig,
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -426,7 +496,8 @@ theme = "gruvbox-light"
 					},
 				},
 				expected: Config{
-					MCP: defaultMCPConfig,
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -437,6 +508,34 @@ theme = "gruvbox-light"
 						},
 					},
 					TUI: TUIConfig{ThemeName: themeNameOverride},
+				},
+			},
+			{
+				name: "when DB path is provided by an override",
+				input: `
+db_path = "config.db"
+
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+`,
+				overrides: Overrides{
+					DBPath: &dbPathOverride,
+				},
+				expected: Config{
+					DBPath: filepath.Join(homeDir, "override.db"),
+					MCP:    defaultMCPConfig,
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL: "project = PUNCH",
+						},
+						Installation: OnPremiseInstallation{
+							URL:   "https://jira.company.com",
+							Token: "token",
+						},
+					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
 				},
 			},
 			{
@@ -458,6 +557,7 @@ http_port = 3000
 					},
 				},
 				expected: Config{
+					DBPath: defaults.DBPath,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -478,7 +578,11 @@ http_port = 3000
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				actual, err := decodeAndResolve(strings.NewReader(tt.input), tt.overrides)
+				actual, err := decodeAndResolve(strings.NewReader(tt.input), LoadOptions{
+					HomeDir:   homeDir,
+					Defaults:  defaults,
+					Overrides: tt.overrides,
+				})
 				require.NoError(t, err)
 				assert.Equal(t, tt.expected, actual)
 			})
@@ -564,6 +668,13 @@ jira_token = "original-token"
 				}},
 			},
 			{
+				name:  "when DB path override is empty",
+				input: "db_path = \"configured.db\"\n" + onPremiseInput,
+				overrides: Overrides{
+					DBPath: &emptyOverride,
+				},
+			},
+			{
 				name:  "when switching to cloud without a username",
 				input: onPremiseInput,
 				overrides: Overrides{Jira: JiraOverrides{
@@ -588,7 +699,11 @@ jira_token = "original-token"
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				_, err := decodeAndResolve(strings.NewReader(tt.input), tt.overrides)
+				_, err := decodeAndResolve(strings.NewReader(tt.input), LoadOptions{
+					HomeDir:   homeDir,
+					Defaults:  defaults,
+					Overrides: tt.overrides,
+				})
 				require.ErrorIs(t, err, ErrInvalidConfig)
 			})
 		}
@@ -596,14 +711,78 @@ jira_token = "original-token"
 
 	t.Run("rejects invalid file configurations", func(t *testing.T) {
 		tests := []struct {
-			name          string
-			input         string
-			expectedError error
+			name                  string
+			input                 string
+			expectedError         error
+			expectedErrorContains string
 		}{
 			{
 				name:          "when TOML is malformed",
 				input:         "[jira",
 				expectedError: ErrParseConfigFile,
+			},
+			{
+				name: "when DB path is empty",
+				input: `
+db_path = ""
+
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+`,
+				expectedError: ErrInvalidConfig,
+			},
+			{
+				name: "when DB path references an unset environment variable",
+				input: `
+db_path = "$PUNCHOUT_TEST_SHOULD_BE_UNSET_1/punchout.db"
+
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+`,
+				expectedError:         ErrInvalidConfig,
+				expectedErrorContains: `couldn't expand db_path: environment variable "PUNCHOUT_TEST_SHOULD_BE_UNSET_1" is not set`,
+			},
+			{
+				name: "when DB path references multiple unset environment variables",
+				input: `
+db_path = "$PUNCHOUT_TEST_SHOULD_BE_UNSET_1/$PUNCHOUT_TEST_SHOULD_BE_UNSET_2/punchout.db"
+
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+`,
+				expectedError:         ErrInvalidConfig,
+				expectedErrorContains: `couldn't expand db_path: environment variables ["PUNCHOUT_TEST_SHOULD_BE_UNSET_1" "PUNCHOUT_TEST_SHOULD_BE_UNSET_2"] are not set`,
+			},
+			{
+				name: "when DB path contains only whitespace",
+				input: `
+db_path = "   "
+
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+`,
+				expectedError: ErrInvalidConfig,
+			},
+			{
+				name: "when DB path environment variable expands to empty",
+				input: `
+db_path = "$EMPTY_DB_PATH"
+
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+`,
+				expectedError:         ErrInvalidConfig,
+				expectedErrorContains: "db file path cannot be empty",
 			},
 			{
 				name: "when installation type is invalid",
@@ -780,8 +959,14 @@ http_port = 65536
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				_, err := decodeAndResolve(strings.NewReader(tt.input), Overrides{})
+				_, err := decodeAndResolve(strings.NewReader(tt.input), LoadOptions{
+					HomeDir:  homeDir,
+					Defaults: defaults,
+				})
 				require.ErrorIs(t, err, tt.expectedError)
+				if tt.expectedErrorContains != "" {
+					require.ErrorContains(t, err, tt.expectedErrorContains)
+				}
 			})
 		}
 	})
@@ -790,6 +975,6 @@ http_port = 65536
 func TestLoadReturnsErrorWhenFileDoesNotExist(t *testing.T) {
 	filePath := filepath.Join(t.TempDir(), "does-not-exist.toml")
 
-	_, err := Load(filePath, Overrides{})
+	_, err := Load(filePath, LoadOptions{Defaults: Defaults{DBPath: "default.db"}})
 	require.ErrorIs(t, err, ErrOpenConfigFile)
 }

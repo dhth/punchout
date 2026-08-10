@@ -122,6 +122,57 @@ func TestMainCmd(t *testing.T) {
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 
+	t.Run("db path can be set from config", func(t *testing.T) {
+		// GIVEN
+		t.Setenv("HOME", "/home/user")
+		t.Setenv("PUNCHOUT_DB_DIR", "data-dir")
+		args := []string{
+			"--config-file-path", "config/db-path.toml",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
+	t.Run("db path flag overrides config", func(t *testing.T) {
+		// GIVEN
+		t.Setenv("HOME", "/home/user")
+		t.Setenv("PUNCHOUT_DB_DIR", "data-dir")
+		args := []string{
+			"--config-file-path", "config/db-path.toml",
+			"--db-path", "override.db",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
+	t.Run("db path falls back to default", func(t *testing.T) {
+		// GIVEN
+		t.Setenv("HOME", "/home/user")
+		args := []string{
+			"--config-file-path", "config/good.toml",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
 	t.Run("theme can be selected from config", func(t *testing.T) {
 		// GIVEN
 		args := []string{
@@ -206,6 +257,24 @@ func TestMainCmd(t *testing.T) {
 	})
 
 	// FAILURES
+	t.Run("empty db path flag fails validation", func(t *testing.T) {
+		// GIVEN
+		t.Setenv("HOME", "/home/user")
+		t.Setenv("PUNCHOUT_DB_DIR", "data-dir")
+		args := []string{
+			"--config-file-path", "config/db-path.toml",
+			"--db-path", "",
+			"--list-config",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
 	t.Run("providing an invalid theme fails", func(t *testing.T) {
 		// GIVEN
 		args := []string{
