@@ -17,7 +17,6 @@ import (
 	svc "github.com/dhth/punchout/internal/service"
 	"github.com/dhth/punchout/internal/ui"
 	"github.com/dhth/punchout/internal/ui/theme"
-	"github.com/dhth/punchout/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -30,6 +29,7 @@ var (
 	errCouldntGetConfigDir = errors.New("couldn't get your config directory")
 	errCouldntGetCacheDir  = errors.New("couldn't get your cache directory")
 	errConfigFilePathEmpty = errors.New("config file path cannot be empty")
+	errDBPathEmpty         = errors.New("db file path cannot be empty")
 	errTimeDeltaIncorrect  = errors.New("couldn't convert time delta to a number")
 )
 
@@ -62,6 +62,7 @@ func NewRootCommand() (*cobra.Command, error) {
 
 		appCfg         config.Config
 		configPathFull string
+		dbPathFull     string
 		db             *sql.DB
 		jiraSvc        svc.Jira
 		resolvedTheme  theme.Theme
@@ -71,8 +72,6 @@ func NewRootCommand() (*cobra.Command, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", errCouldntGetHomeDir, err.Error())
 	}
-	dbFileName := fmt.Sprintf("punchout.v%s.db", pers.DBVersion)
-	defaultDBPath := filepath.Join(userHomeDir, dbFileName)
 
 	rootCmd := &cobra.Command{
 		Use:           "punchout",
@@ -84,6 +83,12 @@ func NewRootCommand() (*cobra.Command, error) {
 				return errConfigFilePathEmpty
 			}
 
+			if flagDBPath == "" {
+				return errDBPathEmpty
+			}
+
+			dbPathFull = expandTilde(flagDBPath, userHomeDir)
+
 			var jiraTimeDeltaMins int
 			if cmd.Flags().Changed("jira-time-delta-mins") {
 				jiraTimeDeltaMins, err = strconv.Atoi(flagJiraTimeDeltaMinsStr)
@@ -92,12 +97,9 @@ func NewRootCommand() (*cobra.Command, error) {
 				}
 			}
 
-			configPathFull = utils.ExpandTilde(flagConfigFilePath, userHomeDir)
+			configPathFull = expandTilde(flagConfigFilePath, userHomeDir)
 
 			overrides := config.Overrides{}
-			if cmd.Flags().Changed("db-path") {
-				overrides.DBPath = &flagDBPath
-			}
 
 			if cmd.Flags().Changed("jira-installation-type") {
 				overrides.Jira.InstallationType = &flagJiraInstallationType
@@ -143,16 +145,7 @@ func NewRootCommand() (*cobra.Command, error) {
 				overrides.MCP.HTTPPort = &flagMcpServerPort
 			}
 
-			appCfg, err = config.Load(
-				configPathFull,
-				config.LoadOptions{
-					HomeDir: userHomeDir,
-					Defaults: config.Defaults{
-						DBPath: defaultDBPath,
-					},
-					Overrides: overrides,
-				},
-			)
+			appCfg, err = config.Load(configPathFull, overrides)
 			if err != nil {
 				return err
 			}
@@ -167,7 +160,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if flagListConfig {
-				fmt.Fprint(os.Stdout, formatTUIConfig(configPathFull, appCfg))
+				fmt.Fprint(os.Stdout, formatTUIConfig(configPathFull, dbPathFull, appCfg))
 				return nil
 			}
 
@@ -180,7 +173,7 @@ func NewRootCommand() (*cobra.Command, error) {
 				return fmt.Errorf("couldn't initialize issue cache: %w", err)
 			}
 
-			db, err = pers.GetDB(appCfg.DBPath)
+			db, err = pers.GetDB(dbPathFull)
 			if err != nil {
 				return err
 			}
@@ -209,12 +202,13 @@ func NewRootCommand() (*cobra.Command, error) {
 			if flagListConfig {
 				fmt.Fprint(os.Stdout, formatMCPConfig(
 					configPathFull,
+					dbPathFull,
 					appCfg,
 				))
 				return nil
 			}
 
-			db, err = pers.GetDB(appCfg.DBPath)
+			db, err = pers.GetDB(dbPathFull)
 			if err != nil {
 				return err
 			}
@@ -244,8 +238,11 @@ func NewRootCommand() (*cobra.Command, error) {
 		defaultConfigFilePath = filepath.Join(userConfigDir, configFileName)
 	}
 
+	dbFileName := fmt.Sprintf("punchout.v%s.db", pers.DBVersion)
+	defaultDBPath := filepath.Join(userHomeDir, dbFileName)
+
 	rootCmd.PersistentFlags().StringVarP(&flagConfigFilePath, "config-file-path", "", defaultConfigFilePath, "location of punchout's config file")
-	rootCmd.PersistentFlags().StringVarP(&flagDBPath, "db-path", "", "", "override the location of punchout's local database")
+	rootCmd.PersistentFlags().StringVarP(&flagDBPath, "db-path", "", defaultDBPath, "location of punchout's local database")
 	rootCmd.PersistentFlags().StringVarP(&flagJiraInstallationType, "jira-installation-type", "", "", "JIRA installation type; allowed values: [cloud, onpremise]")
 	rootCmd.PersistentFlags().StringVarP(&flagJiraURL, "jira-url", "", "", "URL of the JIRA server")
 	rootCmd.PersistentFlags().StringVarP(&flagJiraToken, "jira-token", "", "", "jira token (PAT for on-premise installation, API token for cloud installation)")

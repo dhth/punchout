@@ -7,17 +7,17 @@ import (
 	"github.com/dhth/punchout/internal/config"
 )
 
-func formatTUIConfig(configPath string, cfg config.Config) string {
+func formatTUIConfig(configPath, dbPath string, cfg config.Config) string {
 	var result strings.Builder
-	writePathsSection(&result, configPath, cfg.DBPath)
+	writePathsSection(&result, configPath, dbPath)
 	writeTUISection(&result, cfg.TUI)
 	writeJiraSection(&result, cfg.Jira)
 	return result.String()
 }
 
-func formatMCPConfig(configPath string, cfg config.Config) string {
+func formatMCPConfig(configPath, dbPath string, cfg config.Config) string {
 	var result strings.Builder
-	writePathsSection(&result, configPath, cfg.DBPath)
+	writePathsSection(&result, configPath, dbPath)
 	writeJiraSection(&result, cfg.Jira)
 	writeMCPSection(&result, cfg.MCP)
 	return result.String()

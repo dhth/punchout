@@ -11,7 +11,6 @@ import (
 )
 
 func TestDecodeAndResolve(t *testing.T) {
-	defaults := Defaults{DBPath: "default.db"}
 	defaultMCPConfig := MCPConfig{
 		Transport: MCPTransportStdio,
 		HTTPPort:  DefaultMCPHTTPPort,
@@ -40,8 +39,7 @@ jira_username = "user@example.com"
 fallback_comment = "cloud work"
 `,
 				expected: Config{
-					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = CLOUD",
@@ -69,8 +67,7 @@ jira_token = "on-premise-token"
 fallback_comment = "on-premise work"
 `,
 				expected: Config{
-					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = ONPREM",
@@ -96,8 +93,7 @@ jira_token = "default-token"
 fallback_comment = "default installation work"
 `,
 				expected: Config{
-					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = DEFAULT",
@@ -122,8 +118,7 @@ jql = "project = MINIMAL"
 jira_token = "minimal-token"
 `,
 				expected: Config{
-					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = MINIMAL",
@@ -148,8 +143,7 @@ jira_token = "token"
 use_cache_on_startup = true
 `,
 				expected: Config{
-					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -177,8 +171,7 @@ jira_token = "token"
 theme = "catppuccin-mocha"
 `,
 				expected: Config{
-					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -206,7 +199,6 @@ transport = "http"
 http_port = 3000
 `,
 				expected: Config{
-					DBPath: defaults.DBPath,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -236,7 +228,6 @@ transport = "http"
 http_port = 65535
 `,
 				expected: Config{
-					DBPath: defaults.DBPath,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -257,7 +248,7 @@ http_port = 65535
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				actual, err := decodeAndResolve(strings.NewReader(tt.input), LoadOptions{Defaults: defaults})
+				actual, err := decodeAndResolve(strings.NewReader(tt.input), Overrides{})
 				require.NoError(t, err)
 				assert.Equal(t, tt.expected, actual)
 			})
@@ -304,8 +295,7 @@ fallback_comment = "original work"
 					},
 				},
 				expected: Config{
-					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = OVERRIDDEN",
@@ -340,8 +330,7 @@ fallback_comment = "original work"
 					},
 				},
 				expected: Config{
-					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = ORIGINAL",
@@ -374,8 +363,7 @@ use_cache_on_startup = false
 					},
 				},
 				expected: Config{
-					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -408,8 +396,7 @@ use_cache_on_startup = true
 					},
 				},
 				expected: Config{
-					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -439,8 +426,7 @@ theme = "gruvbox-light"
 					},
 				},
 				expected: Config{
-					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -472,7 +458,6 @@ http_port = 3000
 					},
 				},
 				expected: Config{
-					DBPath: defaults.DBPath,
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL: "project = PUNCH",
@@ -493,10 +478,7 @@ http_port = 3000
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				actual, err := decodeAndResolve(strings.NewReader(tt.input), LoadOptions{
-					Defaults:  defaults,
-					Overrides: tt.overrides,
-				})
+				actual, err := decodeAndResolve(strings.NewReader(tt.input), tt.overrides)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expected, actual)
 			})
@@ -606,10 +588,7 @@ jira_token = "original-token"
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				_, err := decodeAndResolve(strings.NewReader(tt.input), LoadOptions{
-					Defaults:  defaults,
-					Overrides: tt.overrides,
-				})
+				_, err := decodeAndResolve(strings.NewReader(tt.input), tt.overrides)
 				require.ErrorIs(t, err, ErrInvalidConfig)
 			})
 		}
@@ -801,7 +780,7 @@ http_port = 65536
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				_, err := decodeAndResolve(strings.NewReader(tt.input), LoadOptions{Defaults: defaults})
+				_, err := decodeAndResolve(strings.NewReader(tt.input), Overrides{})
 				require.ErrorIs(t, err, tt.expectedError)
 			})
 		}
@@ -811,6 +790,6 @@ http_port = 65536
 func TestLoadReturnsErrorWhenFileDoesNotExist(t *testing.T) {
 	filePath := filepath.Join(t.TempDir(), "does-not-exist.toml")
 
-	_, err := Load(filePath, LoadOptions{Defaults: Defaults{DBPath: "default.db"}})
+	_, err := Load(filePath, Overrides{})
 	require.ErrorIs(t, err, ErrOpenConfigFile)
 }

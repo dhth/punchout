@@ -3,17 +3,9 @@ package utils
 import (
 	"fmt"
 	"math"
-	"path/filepath"
 	"strings"
 	"time"
 )
-
-func ExpandTilde(path, homeDir string) string {
-	if strings.HasPrefix(path, "~/") {
-		return filepath.Join(homeDir, path[2:])
-	}
-	return path
-}
 
 func RightPadTrim(s string, length int) string {
 	if len(s) >= length {

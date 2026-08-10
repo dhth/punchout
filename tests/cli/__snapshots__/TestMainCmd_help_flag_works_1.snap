@@ -13,7 +13,7 @@ Available Commands:
 
 Flags:
       --config-file-path string         location of punchout's config file (default "[PATH]")
-      --db-path string                  override the location of punchout's local database
+      --db-path string                  location of punchout's local database (default "[PATH]")
       --fallback-comment string         fallback comment to use for worklog entries
   -h, --help                            help for punchout
       --jira-installation-type string   JIRA installation type; allowed values: [cloud, onpremise]
