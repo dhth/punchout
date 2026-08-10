@@ -334,7 +334,7 @@ http_port = 65535
 		installationOverrideFallbackComment := "original work"
 		mcpTransportOverride := "stdio"
 		mcpHTTPPortOverride := uint16(4000)
-		dbPathOverride := "~/$PUNCHOUT_DB_DIR/override.db"
+		dbPathOverride := "~/override.db"
 
 		tests := []struct {
 			name      string
@@ -513,7 +513,7 @@ theme = "gruvbox-light"
 			{
 				name: "when DB path is provided by an override",
 				input: `
-db_path = "~/$PUNCHOUT_DB_DIR/config.db"
+db_path = "config.db"
 
 [jira]
 jira_url = "https://jira.company.com"
@@ -524,7 +524,7 @@ jira_token = "token"
 					DBPath: &dbPathOverride,
 				},
 				expected: Config{
-					DBPath: filepath.Join(homeDir, "$PUNCHOUT_DB_DIR", "override.db"),
+					DBPath: filepath.Join(homeDir, "override.db"),
 					MCP:    defaultMCPConfig,
 					Jira: JiraConfig{
 						Options: JiraOptions{
@@ -711,9 +711,10 @@ jira_token = "original-token"
 
 	t.Run("rejects invalid file configurations", func(t *testing.T) {
 		tests := []struct {
-			name          string
-			input         string
-			expectedError error
+			name                  string
+			input                 string
+			expectedError         error
+			expectedErrorContains string
 		}{
 			{
 				name:          "when TOML is malformed",
@@ -731,6 +732,32 @@ jql = "project = PUNCH"
 jira_token = "token"
 `,
 				expectedError: ErrInvalidConfig,
+			},
+			{
+				name: "when DB path references an unset environment variable",
+				input: `
+db_path = "$PUNCHOUT_TEST_SHOULD_BE_UNSET_1/punchout.db"
+
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+`,
+				expectedError:         ErrInvalidConfig,
+				expectedErrorContains: `couldn't expand db_path: environment variable "PUNCHOUT_TEST_SHOULD_BE_UNSET_1" is not set`,
+			},
+			{
+				name: "when DB path references multiple unset environment variables",
+				input: `
+db_path = "$PUNCHOUT_TEST_SHOULD_BE_UNSET_1/$PUNCHOUT_TEST_SHOULD_BE_UNSET_2/punchout.db"
+
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "token"
+`,
+				expectedError:         ErrInvalidConfig,
+				expectedErrorContains: `couldn't expand db_path: environment variables ["PUNCHOUT_TEST_SHOULD_BE_UNSET_1" "PUNCHOUT_TEST_SHOULD_BE_UNSET_2"] are not set`,
 			},
 			{
 				name: "when DB path contains only whitespace",
@@ -754,7 +781,8 @@ jira_url = "https://jira.company.com"
 jql = "project = PUNCH"
 jira_token = "token"
 `,
-				expectedError: ErrInvalidConfig,
+				expectedError:         ErrInvalidConfig,
+				expectedErrorContains: "db file path cannot be empty",
 			},
 			{
 				name: "when installation type is invalid",
@@ -936,6 +964,9 @@ http_port = 65536
 					Defaults: defaults,
 				})
 				require.ErrorIs(t, err, tt.expectedError)
+				if tt.expectedErrorContains != "" {
+					require.ErrorContains(t, err, tt.expectedErrorContains)
+				}
 			})
 		}
 	})

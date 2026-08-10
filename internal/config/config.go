@@ -177,8 +177,11 @@ func decodeAndResolve(reader io.Reader, options LoadOptions) (Config, error) {
 		return Config{}, fmt.Errorf("%w: %s", ErrParseConfigFile, err.Error())
 	}
 
-	if fileCfg.DBPath != nil {
-		expandedDBPath := os.ExpandEnv(*fileCfg.DBPath)
+	if fileCfg.DBPath != nil && options.Overrides.DBPath == nil {
+		expandedDBPath, err := expandEnv(*fileCfg.DBPath)
+		if err != nil {
+			return Config{}, fmt.Errorf("%w: couldn't expand db_path: %s", ErrInvalidConfig, err.Error())
+		}
 		fileCfg.DBPath = &expandedDBPath
 	}
 	effectiveCfg := withOverrides(fileCfg, options.Overrides)
@@ -249,6 +252,34 @@ func withOverrides(cfg fileConfig, overrides Overrides) fileConfig {
 	}
 
 	return result
+}
+
+func expandEnv(value string) (string, error) {
+	var unset []string
+	seen := make(map[string]struct{})
+
+	expanded := os.Expand(value, func(name string) string {
+		envValue, ok := os.LookupEnv(name)
+		if ok {
+			return envValue
+		}
+
+		if _, exists := seen[name]; !exists {
+			seen[name] = struct{}{}
+			unset = append(unset, name)
+		}
+
+		return ""
+	})
+
+	switch len(unset) {
+	case 0:
+		return expanded, nil
+	case 1:
+		return "", fmt.Errorf("environment variable %q is not set", unset[0])
+	default:
+		return "", fmt.Errorf("environment variables %q are not set", unset)
+	}
 }
 
 func resolveDBPath(dbPath *string, defaultDBPath, homeDir string) (string, error) {
