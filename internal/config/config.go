@@ -9,6 +9,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/dhth/punchout/internal/ui/theme"
+	"github.com/dhth/punchout/internal/utils"
 )
 
 const (
@@ -31,9 +32,20 @@ var (
 )
 
 type Config struct {
-	Jira JiraConfig
-	TUI  TUIConfig
-	MCP  MCPConfig
+	DBPath string
+	Jira   JiraConfig
+	TUI    TUIConfig
+	MCP    MCPConfig
+}
+
+type Defaults struct {
+	DBPath string
+}
+
+type LoadOptions struct {
+	HomeDir   string
+	Defaults  Defaults
+	Overrides Overrides
 }
 
 type MCPConfig struct {
@@ -95,9 +107,10 @@ type OnPremiseInstallation struct {
 func (OnPremiseInstallation) isJiraInstallation() {}
 
 type Overrides struct {
-	Jira JiraOverrides
-	TUI  TUIOverrides
-	MCP  MCPOverrides
+	DBPath *string
+	Jira   JiraOverrides
+	TUI    TUIOverrides
+	MCP    MCPOverrides
 }
 
 type MCPOverrides struct {
@@ -121,9 +134,10 @@ type JiraOverrides struct {
 }
 
 type fileConfig struct {
-	Jira fileJiraConfig `toml:"jira"`
-	TUI  fileTUIConfig  `toml:"tui"`
-	MCP  fileMCPConfig  `toml:"mcp"`
+	DBPath *string        `toml:"db_path"`
+	Jira   fileJiraConfig `toml:"jira"`
+	TUI    fileTUIConfig  `toml:"tui"`
+	MCP    fileMCPConfig  `toml:"mcp"`
 }
 
 type fileMCPConfig struct {
@@ -146,24 +160,36 @@ type fileJiraConfig struct {
 	FallbackComment  *string `toml:"fallback_comment"`
 }
 
-func Load(filePath string, overrides Overrides) (Config, error) {
+func Load(filePath string, options LoadOptions) (Config, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return Config{}, fmt.Errorf("%w: %s", ErrOpenConfigFile, err.Error())
 	}
 	defer file.Close()
 
-	return decodeAndResolve(file, overrides)
+	return decodeAndResolve(file, options)
 }
 
-func decodeAndResolve(reader io.Reader, overrides Overrides) (Config, error) {
+func decodeAndResolve(reader io.Reader, options LoadOptions) (Config, error) {
 	var fileCfg fileConfig
 	_, err := toml.NewDecoder(reader).Decode(&fileCfg)
 	if err != nil {
 		return Config{}, fmt.Errorf("%w: %s", ErrParseConfigFile, err.Error())
 	}
 
-	effectiveCfg := withOverrides(fileCfg, overrides)
+	if fileCfg.DBPath != nil {
+		expandedDBPath := os.ExpandEnv(*fileCfg.DBPath)
+		fileCfg.DBPath = &expandedDBPath
+	}
+	effectiveCfg := withOverrides(fileCfg, options.Overrides)
+	dbPath, err := resolveDBPath(
+		effectiveCfg.DBPath,
+		options.Defaults.DBPath,
+		options.HomeDir,
+	)
+	if err != nil {
+		return Config{}, fmt.Errorf("%w: %s", ErrInvalidConfig, err.Error())
+	}
 
 	jiraCfg, err := resolveJiraConfig(effectiveCfg.Jira)
 	if err != nil {
@@ -175,15 +201,19 @@ func decodeAndResolve(reader io.Reader, overrides Overrides) (Config, error) {
 	}
 
 	return Config{
-		Jira: jiraCfg,
-		TUI:  resolveTUIConfig(effectiveCfg.TUI),
-		MCP:  mcpCfg,
+		DBPath: dbPath,
+		Jira:   jiraCfg,
+		TUI:    resolveTUIConfig(effectiveCfg.TUI),
+		MCP:    mcpCfg,
 	}, nil
 }
 
 func withOverrides(cfg fileConfig, overrides Overrides) fileConfig {
 	result := cfg
 
+	if overrides.DBPath != nil {
+		result.DBPath = overrides.DBPath
+	}
 	if overrides.Jira.InstallationType != nil {
 		result.Jira.InstallationType = overrides.Jira.InstallationType
 	}
@@ -219,6 +249,19 @@ func withOverrides(cfg fileConfig, overrides Overrides) fileConfig {
 	}
 
 	return result
+}
+
+func resolveDBPath(dbPath *string, defaultDBPath, homeDir string) (string, error) {
+	result := defaultDBPath
+	if dbPath != nil {
+		result = *dbPath
+	}
+	result = utils.ExpandTilde(result, homeDir)
+	if strings.TrimSpace(result) == "" {
+		return "", fmt.Errorf("db file path cannot be empty")
+	}
+
+	return result, nil
 }
 
 func resolveMCPConfig(cfg fileMCPConfig) (MCPConfig, error) {
