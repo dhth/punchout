@@ -39,10 +39,22 @@ func HumanizeDuration(durationInSecs int) string {
 	}
 
 	modMins := int(math.Mod(duration.Minutes(), 60))
+	hours := int(duration.Hours())
 
-	if modMins == 0 {
-		return fmt.Sprintf("%dh", int(duration.Hours()))
+	if hours > 24 {
+		days := hours / 24
+		modHours := hours % 24
+
+		if modHours == 0 {
+			return fmt.Sprintf("%dd", days)
+		}
+
+		return fmt.Sprintf("%dd %dh", days, modHours)
 	}
 
-	return fmt.Sprintf("%dh %dm", int(duration.Hours()), modMins)
+	if modMins == 0 {
+		return fmt.Sprintf("%dh", hours)
+	}
+
+	return fmt.Sprintf("%dh %dm", hours, modMins)
 }

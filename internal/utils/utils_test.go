@@ -23,7 +23,11 @@ func TestHumanizeDuration(t *testing.T) {
 		{name: "hours and minutes", seconds: 3660, expected: "1h 1m"},
 		{name: "truncate seconds after hour", seconds: 3661, expected: "1h 1m"},
 		{name: "exact multiple of hours", seconds: 7200, expected: "2h"},
-		{name: "duration over one day", seconds: 90000, expected: "25h"},
+		{name: "exactly one day", seconds: 86400, expected: "24h"},
+		{name: "days and hours", seconds: 90000, expected: "1d 1h"},
+		{name: "truncate minutes after days and hours", seconds: 93780, expected: "1d 2h"},
+		{name: "truncate minutes after days", seconds: 172980, expected: "2d"},
+		{name: "exact multiple of days", seconds: 172800, expected: "2d"},
 	}
 
 	for _, tt := range tests {
