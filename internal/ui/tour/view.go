@@ -2,6 +2,7 @@ package tour
 
 import (
 	"fmt"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -9,20 +10,19 @@ import (
 )
 
 type styles struct {
-	titleBadge  lipgloss.Style
-	product     lipgloss.Style
-	lead        lipgloss.Style
-	record      lipgloss.Style
-	review      lipgloss.Style
-	sync        lipgloss.Style
-	configPath  lipgloss.Style
-	command     lipgloss.Style
-	muted       lipgloss.Style
-	pagination  lipgloss.Style
-	footer      lipgloss.Style
-	footerMode  lipgloss.Style
-	footerKey   lipgloss.Style
-	footerLabel lipgloss.Style
+	titleBadge lipgloss.Style
+	product    lipgloss.Style
+	lead       lipgloss.Style
+	record     lipgloss.Style
+	review     lipgloss.Style
+	sync       lipgloss.Style
+	configPath lipgloss.Style
+	command    lipgloss.Style
+	muted      lipgloss.Style
+	pagination lipgloss.Style
+	footer     lipgloss.Style
+	footerMode lipgloss.Style
+	footerHint lipgloss.Style
 }
 
 var pages = []func(model) string{
@@ -60,10 +60,9 @@ func newStyles(thm theme.Theme) styles {
 			Padding(0, 1).
 			Foreground(background).
 			Background(lipgloss.Color(thm.Accent4)),
-		footerKey: lipgloss.NewStyle().
-			Bold(true).
-			Foreground(background),
-		footerLabel: lipgloss.NewStyle().Foreground(background),
+		footerHint: lipgloss.NewStyle().
+			Foreground(background).
+			Background(muted),
 	}
 }
 
@@ -155,14 +154,14 @@ func (m model) renderFooter() string {
 		m.styles.footerMode.Render("punchout"),
 		hints,
 	)
+	remainingWidth := m.width - lipgloss.Width(footerContent)
+	if remainingWidth > 0 {
+		footerContent += m.styles.footer.Render(strings.Repeat(" ", remainingWidth))
+	}
 
-	return m.styles.footer.Width(m.width).Render(footerContent)
+	return footerContent
 }
 
 func (m model) renderHint(key, label string) string {
-	return fmt.Sprintf(
-		"  %s %s  ",
-		m.styles.footerKey.Render(key),
-		m.styles.footerLabel.Render(label),
-	)
+	return m.styles.footerHint.Render(fmt.Sprintf("  %s %s  ", key, label))
 }
