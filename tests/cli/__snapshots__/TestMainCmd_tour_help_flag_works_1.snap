@@ -1,22 +1,18 @@
 success: true
 exit_code: 0
 ----- stdout -----
-punchout takes the suck out of logging time on JIRA.
+Take a quick tour of punchout
 
 Usage:
-  punchout [flags]
-  punchout [command]
-
-Available Commands:
-  help        Help about any command
-  mcp         Interact with punchout's MCP server
-  tour        Take a quick tour of punchout
+  punchout tour [flags]
 
 Flags:
-      --config-file-path string         location of punchout's config file (default "[PATH]")
+  -h, --help   help for tour
+
+Global Flags:
+      --config-file-path string         location of punchout's config file (default "/home/user/.config/punchout/punchout.toml")
       --db-path string                  override the location of punchout's local database
       --fallback-comment string         fallback comment to use for worklog entries
-  -h, --help                            help for punchout
       --jira-installation-type string   JIRA installation type; allowed values: [cloud, onpremise]
       --jira-time-delta-mins string     time delta (in minutes) between your timezone and the timezone of the JIRA server; can be +/-
       --jira-token string               jira token (PAT for on-premise installation, API token for cloud installation)
@@ -24,10 +20,6 @@ Flags:
       --jira-username string            username for authentication (for cloud installation)
       --jql string                      JQL to use to query issues
       --list-config                     print the config that punchout will use
-  -t, --theme string                    theme to use; possible values: [catppuccin-latte, catppuccin-mocha, dracula, github-dark, github-light, gruvbox-dark, gruvbox-dark-hard, gruvbox-light, monokai-classic, onedark, rose-pine-moon, solarized-light, tokyonight, xcode-dark] (default "gruvbox-dark")
-      --use-cache-on-startup            load JIRA issues from the local cache on startup
-
-Use "punchout [command] --help" for more information about a command.
 
 ----- stderr -----
 

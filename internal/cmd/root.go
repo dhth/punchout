@@ -17,6 +17,7 @@ import (
 	svc "github.com/dhth/punchout/internal/service"
 	"github.com/dhth/punchout/internal/ui"
 	"github.com/dhth/punchout/internal/ui/theme"
+	"github.com/dhth/punchout/internal/ui/tour"
 	"github.com/dhth/punchout/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -262,7 +263,7 @@ func NewRootCommand() (*cobra.Command, error) {
 	mcpServeCmd.Flags().Uint16VarP(&flagMcpServerPort, "http-port", "p", config.DefaultMCPHTTPPort, "port to use (when transport is http)")
 
 	mcpCmd.AddCommand(mcpServeCmd)
-	rootCmd.AddCommand(mcpCmd)
+	rootCmd.AddCommand(mcpCmd, newTourCommand(tour.Run))
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
