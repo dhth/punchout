@@ -2,7 +2,6 @@ package tour
 
 import (
 	"fmt"
-	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -20,7 +19,6 @@ type styles struct {
 	command    lipgloss.Style
 	muted      lipgloss.Style
 	pagination lipgloss.Style
-	footer     lipgloss.Style
 	footerMode lipgloss.Style
 	footerHint lipgloss.Style
 }
@@ -52,17 +50,14 @@ func newStyles(thm theme.Theme) styles {
 		command:    lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent1)),
 		muted:      lipgloss.NewStyle().Foreground(muted),
 		pagination: lipgloss.NewStyle().Foreground(muted),
-		footer: lipgloss.NewStyle().
-			Foreground(background).
-			Background(muted),
 		footerMode: lipgloss.NewStyle().
 			Bold(true).
 			Padding(0, 1).
 			Foreground(background).
 			Background(lipgloss.Color(thm.Accent4)),
 		footerHint: lipgloss.NewStyle().
-			Foreground(background).
-			Background(muted),
+			Foreground(foreground).
+			Background(background),
 	}
 }
 
@@ -154,10 +149,6 @@ func (m model) renderFooter() string {
 		m.styles.footerMode.Render("punchout"),
 		hints,
 	)
-	remainingWidth := m.width - lipgloss.Width(footerContent)
-	if remainingWidth > 0 {
-		footerContent += m.styles.footer.Render(strings.Repeat(" ", remainingWidth))
-	}
 
 	return footerContent
 }
