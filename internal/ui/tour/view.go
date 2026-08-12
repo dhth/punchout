@@ -25,8 +25,8 @@ type styles struct {
 }
 
 type page struct {
-	title   string
-	content func(styles) string
+	title      string
+	renderBody func(styles) string
 }
 
 func newStyles(thm theme.Theme) styles {
@@ -115,7 +115,7 @@ func renderPage(page page, styles styles) string {
 		lipgloss.Center,
 		styles.titleBadge.Render(page.title),
 		"",
-		page.content(styles),
+		page.renderBody(styles),
 	)
 }
 

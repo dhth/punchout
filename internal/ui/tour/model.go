@@ -33,20 +33,20 @@ func newModel(thm theme.Theme) model {
 		styles: newStyles(thm),
 		pages: []page{
 			{
-				title:   "WELCOME",
-				content: renderIntro,
+				title:      "WELCOME",
+				renderBody: renderIntro,
 			},
 			{
-				title:   "CONFIGURE PUNCHOUT",
-				content: renderConfiguration,
+				title:      "CONFIGURE PUNCHOUT",
+				renderBody: renderConfiguration,
 			},
 			{
-				title:   "TRACK YOUR TIME",
-				content: renderTimeTracking,
+				title:      "TRACK YOUR TIME",
+				renderBody: renderTimeTracking,
 			},
 			{
-				title:   "THAT'S IT",
-				content: renderCompletion,
+				title:      "THAT'S IT",
+				renderBody: renderCompletion,
 			},
 		},
 		width:  minWidth,
