@@ -266,7 +266,7 @@ func renderMCPServer(styles styles) string {
 		"",
 		interfacePanel.Render(styles.secondary.Render("MCP client")),
 	)
-	junction := styles.muted.Render("───┐\n   │\n   │\n   ├──▶\n   │\n   │\n───┘")
+	junction := styles.muted.Render("   \n───┐\n   │\n   ├──▶\n   │\n───┘\n   ")
 	worklogStore := styles.panel.Width(23).Height(1).Render(styles.body.Render("Local worklog store"))
 	jira := styles.panel.Width(12).Height(1).Render(styles.success.Render("JIRA"))
 	flow := lipgloss.JoinHorizontal(
