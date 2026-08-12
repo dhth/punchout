@@ -1,8 +1,6 @@
 package tour
 
 import (
-	"fmt"
-
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/dhth/punchout/internal/ui/theme"
@@ -19,7 +17,8 @@ type styles struct {
 	code       lipgloss.Style
 	pagination lipgloss.Style
 	footerMode lipgloss.Style
-	footerHint lipgloss.Style
+	footerKey  lipgloss.Style
+	footerHelp lipgloss.Style
 }
 
 type page struct {
@@ -52,26 +51,35 @@ func newStyles(thm theme.Theme) styles {
 		heading: lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color(thm.Accent5)),
-		body:       lipgloss.NewStyle().Foreground(foreground),
-		primary:    lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent1)),
-		secondary:  lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent2)),
-		success:    lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Success)),
-		muted:      lipgloss.NewStyle().Foreground(muted),
-		code:       lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(thm.Accent5)),
-		pagination: lipgloss.NewStyle().Foreground(muted),
+		body:      lipgloss.NewStyle().Foreground(foreground),
+		primary:   lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent1)),
+		secondary: lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent2)),
+		success:   lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Success)),
+		muted:     lipgloss.NewStyle().Foreground(muted),
+		code:      lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(thm.Accent5)),
+		pagination: lipgloss.NewStyle().
+			Bold(true).
+			PaddingLeft(2).
+			PaddingRight(6).
+			Foreground(lipgloss.Color(thm.Accent2)).
+			Background(background),
 		footerMode: lipgloss.NewStyle().
 			Bold(true).
 			Padding(0, 1).
 			Foreground(background).
 			Background(lipgloss.Color(thm.Accent4)),
-		footerHint: lipgloss.NewStyle().
-			Foreground(foreground).
+		footerKey: lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color(thm.Accent5)).
+			Background(background),
+		footerHelp: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(thm.Accent6)).
 			Background(background),
 	}
 }
 
 func (m model) View() tea.View {
-	page := renderPage(pages[m.page], m.styles, m.pagination())
+	page := renderPage(pages[m.page], m.styles)
 
 	footer := m.renderFooter()
 	contentHeight := m.height - lipgloss.Height(footer)
@@ -87,14 +95,12 @@ func (m model) View() tea.View {
 	return v
 }
 
-func renderPage(page page, styles styles, pagination string) string {
+func renderPage(page page, styles styles) string {
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
 		styles.titleBadge.Render(page.title),
 		"",
 		page.content(styles),
-		"",
-		styles.pagination.Render(pagination),
 	)
 }
 
@@ -157,6 +163,7 @@ func (m model) renderFooter() string {
 	footerContent := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		m.styles.footerMode.Render("punchout"),
+		m.styles.pagination.Render(m.pagination()),
 		hints,
 	)
 
@@ -164,5 +171,11 @@ func (m model) renderFooter() string {
 }
 
 func (m model) renderHint(key, label string) string {
-	return m.styles.footerHint.Render(fmt.Sprintf("  %s %s  ", key, label))
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		m.styles.footerKey.Render(key),
+		" ",
+		m.styles.footerHelp.Render(label),
+		"    ",
+	)
 }
