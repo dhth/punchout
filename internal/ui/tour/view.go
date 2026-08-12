@@ -17,6 +17,7 @@ type styles struct {
 	success    lipgloss.Style
 	muted      lipgloss.Style
 	code       lipgloss.Style
+	panel      lipgloss.Style
 	pagination lipgloss.Style
 	footerMode lipgloss.Style
 	footerKey  lipgloss.Style
@@ -48,6 +49,12 @@ func newStyles(thm theme.Theme) styles {
 		success:   lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Success)),
 		muted:     lipgloss.NewStyle().Foreground(muted),
 		code:      lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(thm.Accent5)),
+		panel: lipgloss.NewStyle().
+			Width(24).
+			Height(3).
+			Padding(0, 1).
+			Border(lipgloss.NormalBorder()).
+			BorderForeground(muted),
 		pagination: lipgloss.NewStyle().
 			PaddingLeft(2).
 			PaddingRight(6).
@@ -147,6 +154,63 @@ func renderConfiguration(styles styles) string {
 		"",
 		command,
 		styles.muted.Render("Inspect the resolved configuration. Tokens stay redacted."),
+	)
+}
+
+func renderTimeTracking(styles styles) string {
+	issue := lipgloss.JoinVertical(
+		lipgloss.Left,
+		styles.primary.Render("▸ PROJ-142"),
+		styles.body.Render("  Improve auth flow"),
+		"",
+	)
+	timer := lipgloss.JoinVertical(
+		lipgloss.Left,
+		styles.muted.Render("tracking"),
+		styles.primary.Render("PROJ-142"),
+		styles.code.Render("00:42:16"),
+	)
+	worklog := lipgloss.JoinVertical(
+		lipgloss.Left,
+		styles.body.Render("Local worklog"),
+		styles.muted.Render("Review, then sync"),
+		"",
+	)
+
+	issueColumn := lipgloss.JoinVertical(
+		lipgloss.Center,
+		styles.muted.Render("Choose an issue"),
+		"",
+		styles.panel.Render(issue),
+	)
+	timerColumn := lipgloss.JoinVertical(
+		lipgloss.Center,
+		styles.muted.Render("Track your work"),
+		"",
+		styles.panel.Render(timer),
+	)
+	connector := styles.muted.Render("    ───▶    ")
+	top := lipgloss.JoinHorizontal(lipgloss.Center, issueColumn, connector, timerColumn)
+	worklogColumn := lipgloss.JoinVertical(
+		lipgloss.Center,
+		styles.muted.Render("│\n▼"),
+		styles.panel.Render(worklog),
+	)
+	bottom := lipgloss.PlaceHorizontal(lipgloss.Width(top), lipgloss.Right, worklogColumn)
+
+	keyHint := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		styles.code.Render("s"),
+		styles.muted.Render("  starts and stops tracking"),
+	)
+
+	return lipgloss.JoinVertical(
+		lipgloss.Center,
+		top,
+		bottom,
+		"",
+		keyHint,
+		styles.muted.Render("Punchout keeps one active timer at a time."),
 	)
 }
 

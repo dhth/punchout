@@ -40,6 +40,10 @@ func newModel(thm theme.Theme) model {
 				title:   "CONFIGURE PUNCHOUT",
 				content: renderConfiguration,
 			},
+			{
+				title:   "TRACK YOUR TIME",
+				content: renderTimeTracking,
+			},
 		},
 		width:  minWidth,
 		height: minHeight,
