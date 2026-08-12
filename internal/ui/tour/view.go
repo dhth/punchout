@@ -1,6 +1,8 @@
 package tour
 
 import (
+	"fmt"
+
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/dhth/punchout/internal/ui/theme"
@@ -78,20 +80,38 @@ func newStyles(thm theme.Theme) styles {
 }
 
 func (m model) View() tea.View {
-	page := renderPage(pages[m.page], m.styles)
-
-	footer := m.renderFooter()
-	contentHeight := m.height - lipgloss.Height(footer)
-	if contentHeight < lipgloss.Height(page) {
-		contentHeight = lipgloss.Height(page)
+	var content string
+	if m.dimensionsInsufficient() {
+		content = m.renderInsufficientDimensions()
+	} else {
+		page := renderPage(pages[m.page], m.styles)
+		footer := m.renderFooter()
+		contentHeight := m.height - lipgloss.Height(footer)
+		if contentHeight < lipgloss.Height(page) {
+			contentHeight = lipgloss.Height(page)
+		}
+		page = lipgloss.Place(m.width, contentHeight, lipgloss.Center, lipgloss.Center, page)
+		content = lipgloss.JoinVertical(lipgloss.Left, page, footer)
 	}
-	content := lipgloss.Place(m.width, contentHeight, lipgloss.Center, lipgloss.Center, page)
 
-	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Left, content, footer))
+	v := tea.NewView(content)
 	v.AltScreen = true
 	v.BackgroundColor = lipgloss.Color(m.theme.Background)
 	v.ForegroundColor = lipgloss.Color(m.theme.Foreground)
 	return v
+}
+
+func (m model) renderInsufficientDimensions() string {
+	return fmt.Sprintf(`
+  Terminal size too small
+
+  Current:  %d × %d
+  Required: %d × %d
+
+  Resize the terminal to continue.
+
+  Press q, esc, or ctrl+c to exit.
+`, m.width, m.height, minWidth, minHeight)
 }
 
 func renderPage(page page, styles styles) string {

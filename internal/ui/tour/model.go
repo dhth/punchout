@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	defaultWidth  = 80
-	defaultHeight = 24
+	minWidth  = 80
+	minHeight = 24
 )
 
 type model struct {
@@ -30,8 +30,8 @@ func newModel(thm theme.Theme) model {
 	return model{
 		theme:  thm,
 		styles: newStyles(thm),
-		width:  defaultWidth,
-		height: defaultHeight,
+		width:  minWidth,
+		height: minHeight,
 	}
 }
 
@@ -41,10 +41,23 @@ func (model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc", "q":
 			return m, tea.Quit
+		}
+	}
+
+	if m.dimensionsInsufficient() {
+		return m, nil
+	}
+
+	switch msg := msg.(type) {
+	case tea.KeyPressMsg:
+		switch msg.String() {
 		case "left", "h":
 			if m.page > 0 {
 				m.page--
@@ -65,12 +78,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.applyTheme(nextTheme)
 			}
 		}
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
 	}
 
 	return m, nil
+}
+
+func (m model) dimensionsInsufficient() bool {
+	return m.width < minWidth || m.height < minHeight
 }
 
 func (m *model) applyTheme(thm theme.Theme) {
