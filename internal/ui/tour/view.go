@@ -28,17 +28,6 @@ type page struct {
 	content func(styles) string
 }
 
-var pages = []page{
-	{
-		title:   "WELCOME",
-		content: renderIntro,
-	},
-	{
-		title:   "CONFIGURE PUNCHOUT",
-		content: renderConfiguration,
-	},
-}
-
 func newStyles(thm theme.Theme) styles {
 	background := lipgloss.Color(thm.Background)
 	foreground := lipgloss.Color(thm.Foreground)
@@ -84,7 +73,7 @@ func (m model) View() tea.View {
 	if m.dimensionsInsufficient() {
 		content = m.renderInsufficientDimensions()
 	} else {
-		page := renderPage(pages[m.page], m.styles)
+		page := renderPage(m.pages[m.page], m.styles)
 		footer := m.renderFooter()
 		contentHeight := m.height - lipgloss.Height(footer)
 		if contentHeight < lipgloss.Height(page) {

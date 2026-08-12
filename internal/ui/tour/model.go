@@ -15,6 +15,7 @@ const (
 type model struct {
 	theme  theme.Theme
 	styles styles
+	pages  []page
 	page   int
 	width  int
 	height int
@@ -30,6 +31,16 @@ func newModel(thm theme.Theme) model {
 	return model{
 		theme:  thm,
 		styles: newStyles(thm),
+		pages: []page{
+			{
+				title:   "WELCOME",
+				content: renderIntro,
+			},
+			{
+				title:   "CONFIGURE PUNCHOUT",
+				content: renderConfiguration,
+			},
+		},
 		width:  minWidth,
 		height: minHeight,
 	}
@@ -63,7 +74,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.page--
 			}
 		case "right", "l":
-			if m.page == len(pages)-1 {
+			if m.page == len(m.pages)-1 {
 				return m, tea.Quit
 			}
 			m.page++
@@ -93,5 +104,5 @@ func (m *model) applyTheme(thm theme.Theme) {
 }
 
 func (m model) pagination() string {
-	return fmt.Sprintf("%d / %d", m.page+1, len(pages))
+	return fmt.Sprintf("%d / %d", m.page+1, len(m.pages))
 }
