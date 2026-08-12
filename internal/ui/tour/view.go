@@ -191,7 +191,7 @@ func renderTimeTracking(styles styles) string {
 		"",
 		styles.panel.Render(timer),
 	)
-	connector := styles.muted.Render("    ───▶    ")
+	connector := styles.muted.PaddingTop(2).Render("    ───▶    ")
 	top := lipgloss.JoinHorizontal(lipgloss.Center, issueColumn, connector, timerColumn)
 	worklogColumn := lipgloss.JoinVertical(
 		lipgloss.Center,
