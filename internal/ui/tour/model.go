@@ -45,7 +45,7 @@ func newModel(thm theme.Theme) model {
 				content: renderTimeTracking,
 			},
 			{
-				title:   "YOU'RE READY",
+				title:   "THAT'S IT",
 				content: renderCompletion,
 			},
 		},

@@ -217,16 +217,6 @@ func renderTimeTracking(styles styles) string {
 }
 
 func renderCompletion(styles styles) string {
-	workflow := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		styles.primary.Render("Configure."),
-		" ",
-		styles.secondary.Render("Track."),
-		" ",
-		styles.body.Render("Review."),
-		" ",
-		styles.success.Render("Sync."),
-	)
 	finish := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		styles.muted.Render("Press "),
@@ -236,9 +226,7 @@ func renderCompletion(styles styles) string {
 
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
-		styles.heading.Render("That's the whole loop."),
-		"",
-		workflow,
+		styles.heading.Render("Happy time tracking!"),
 		"",
 		finish,
 	)
@@ -250,11 +238,11 @@ func (m model) renderFooter() string {
 	case m.page == 0:
 		navigation = m.renderHint("l/→/space", "next")
 	case m.page == len(m.pages)-1:
-		navigation = m.renderHint("h/←", "back")
+		navigation = m.renderHint("h/←", "previous")
 	default:
 		navigation = lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			m.renderHint("h/←", "back"),
+			m.renderHint("h/←", "previous"),
 			m.renderHint("l/→/space", "next"),
 		)
 	}
@@ -263,7 +251,7 @@ func (m model) renderFooter() string {
 		lipgloss.Top,
 		navigation,
 		m.renderHint("esc/q", "quit"),
-		m.renderHint("[/]", "theme"),
+		m.renderHint("]", "change theme"),
 	)
 	footerContent := lipgloss.JoinHorizontal(
 		lipgloss.Top,
