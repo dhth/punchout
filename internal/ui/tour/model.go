@@ -78,10 +78,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.page--
 			}
 		case "right", "l":
-			if m.page == len(m.pages)-1 {
-				return m, tea.Quit
+			if m.page < len(m.pages)-1 {
+				m.page++
 			}
-			m.page++
 		case "[":
 			previousTheme, err := theme.PreviousTheme(m.theme.Name)
 			if err == nil {
