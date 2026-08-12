@@ -136,6 +136,8 @@ func renderIntro(styles styles) string {
 		styles.body.Render("Track time against JIRA issues without breaking your flow."),
 		"",
 		journey,
+		"",
+		styles.muted.Render("Press space to continue"),
 	)
 }
 
@@ -214,15 +216,46 @@ func renderTimeTracking(styles styles) string {
 	)
 }
 
+func renderCompletion(styles styles) string {
+	workflow := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		styles.primary.Render("Configure."),
+		" ",
+		styles.secondary.Render("Track."),
+		" ",
+		styles.body.Render("Review."),
+		" ",
+		styles.success.Render("Sync."),
+	)
+	finish := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		styles.muted.Render("Press "),
+		styles.code.Render("space"),
+		styles.muted.Render(" to finish the tour"),
+	)
+
+	return lipgloss.JoinVertical(
+		lipgloss.Center,
+		styles.heading.Render("That's the whole loop."),
+		"",
+		workflow,
+		"",
+		finish,
+	)
+}
+
 func (m model) renderFooter() string {
 	var navigation string
-	if m.page == 0 {
-		navigation = m.renderHint("l/→", "next")
-	} else {
+	switch {
+	case m.page == 0:
+		navigation = m.renderHint("l/→/space", "next")
+	case m.page == len(m.pages)-1:
+		navigation = m.renderHint("h/←", "back")
+	default:
 		navigation = lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			m.renderHint("h/←", "back"),
-			m.renderHint("l/→", "finish"),
+			m.renderHint("l/→/space", "next"),
 		)
 	}
 

@@ -44,6 +44,10 @@ func newModel(thm theme.Theme) model {
 				title:   "TRACK YOUR TIME",
 				content: renderTimeTracking,
 			},
+			{
+				title:   "YOU'RE READY",
+				content: renderCompletion,
+			},
 		},
 		width:  minWidth,
 		height: minHeight,
@@ -81,6 +85,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.page < len(m.pages)-1 {
 				m.page++
 			}
+		case "space":
+			if m.page == len(m.pages)-1 {
+				return m, tea.Quit
+			}
+			m.page++
 		case "[":
 			previousTheme, err := theme.PreviousTheme(m.theme.Name)
 			if err == nil {
