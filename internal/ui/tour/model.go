@@ -33,27 +33,27 @@ func newModel(thm theme.Theme) model {
 		styles: newStyles(thm),
 		pages: []page{
 			{
-				title:      "WELCOME",
+				title:      "Welcome",
 				renderBody: renderIntro,
 			},
 			{
-				title:      "CONFIGURE PUNCHOUT",
+				title:      "Configuration",
 				renderBody: renderConfiguration,
 			},
 			{
-				title:      "TRACK YOUR TIME",
-				renderBody: renderTimeTracking,
+				title:      "Workflow",
+				renderBody: renderWorkflow,
 			},
 			{
-				title:      "TUI OVERVIEW",
+				title:      "TUI overview",
 				renderBody: renderTUIOverview,
 			},
 			{
-				title:      "MCP SERVER",
+				title:      "MCP server",
 				renderBody: renderMCPServer,
 			},
 			{
-				title:      "THAT'S IT",
+				title:      "That's it",
 				renderBody: renderCompletion,
 			},
 		},

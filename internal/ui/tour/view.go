@@ -120,22 +120,20 @@ func renderPage(page page, styles styles) string {
 }
 
 func renderIntro(styles styles) string {
-	journey := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		styles.primary.Render("Record now."),
-		" ",
-		styles.secondary.Render("Review locally."),
-		" ",
-		styles.success.Render("Sync when ready."),
+	workflow := lipgloss.JoinVertical(
+		lipgloss.Left,
+		styles.primary.Render("Start a timer for an issue."),
+		styles.secondary.Render("Review the resulting worklog locally."),
+		styles.success.Render("Sync it to JIRA when ready."),
 	)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
 		styles.heading.Render("punchout"),
 		"",
-		styles.body.Render("Track time against JIRA issues without breaking your flow."),
+		styles.body.Render("Track time against JIRA issues from the terminal."),
 		"",
-		journey,
+		workflow,
 		"",
 		styles.muted.Render("Press space to continue"),
 	)
@@ -159,60 +157,59 @@ func renderConfiguration(styles styles) string {
 	)
 }
 
-func renderTimeTracking(styles styles) string {
-	issue := lipgloss.JoinVertical(
+func renderWorkflow(styles styles) string {
+	workflowPanel := styles.panel.Width(26).Height(2)
+	issues := workflowPanel.Render(lipgloss.JoinVertical(
 		lipgloss.Left,
-		styles.primary.Render("▸ PROJ-142"),
-		styles.body.Render("  Improve auth flow"),
-		"",
-	)
-	timer := lipgloss.JoinVertical(
+		styles.primary.Render("1  JIRA issues"),
+		styles.muted.Render("matching your JQL"),
+	))
+	timer := workflowPanel.Render(lipgloss.JoinVertical(
 		lipgloss.Left,
-		styles.muted.Render("tracking"),
-		styles.primary.Render("PROJ-142"),
-		styles.code.Render("00:42:16"),
-	)
-	worklog := lipgloss.JoinVertical(
+		styles.secondary.Render("2  Active timer"),
+		styles.muted.Render("one issue at a time"),
+	))
+	worklog := workflowPanel.Render(lipgloss.JoinVertical(
 		lipgloss.Left,
-		styles.body.Render("Local worklog"),
-		styles.muted.Render("Review, then sync"),
-		"",
-	)
+		styles.body.Render("3  Local worklog"),
+		styles.muted.Render("review before syncing"),
+	))
+	synced := workflowPanel.Render(lipgloss.JoinVertical(
+		lipgloss.Left,
+		styles.success.Render("4  Synced to JIRA"),
+		styles.muted.Render("recorded as a worklog"),
+	))
 
-	issueColumn := lipgloss.JoinVertical(
+	connectorWidth := 9
+	top := lipgloss.JoinHorizontal(
 		lipgloss.Center,
-		styles.muted.Render("Choose an issue"),
-		"",
-		styles.panel.Render(issue),
+		issues,
+		styles.muted.Width(connectorWidth).Align(lipgloss.Center).Render("───▶"),
+		timer,
 	)
-	timerColumn := lipgloss.JoinVertical(
-		lipgloss.Center,
-		styles.muted.Render("Track your work"),
-		"",
-		styles.panel.Render(timer),
-	)
-	connector := styles.muted.PaddingTop(2).Render("    ───▶    ")
-	top := lipgloss.JoinHorizontal(lipgloss.Center, issueColumn, connector, timerColumn)
-	worklogColumn := lipgloss.JoinVertical(
-		lipgloss.Center,
-		styles.muted.Render("│\n▼"),
-		styles.panel.Render(worklog),
-	)
-	bottom := lipgloss.PlaceHorizontal(lipgloss.Width(top), lipgloss.Right, worklogColumn)
-
-	keyHint := lipgloss.JoinHorizontal(
+	down := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		styles.code.Render("s"),
-		styles.muted.Render("  starts and stops tracking"),
+		lipgloss.NewStyle().Width(lipgloss.Width(issues)+connectorWidth).Render(""),
+		lipgloss.PlaceHorizontal(
+			lipgloss.Width(timer),
+			lipgloss.Center,
+			lipgloss.JoinVertical(lipgloss.Center, styles.code.Render("s"), styles.muted.Render("│\n▼")),
+		),
+	)
+	bottom := lipgloss.JoinHorizontal(
+		lipgloss.Center,
+		synced,
+		styles.muted.Width(connectorWidth).Align(lipgloss.Center).Render("◀───"),
+		worklog,
 	)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
 		top,
+		down,
 		bottom,
 		"",
-		keyHint,
-		styles.muted.Render("Punchout keeps one active timer at a time."),
+		styles.muted.Render("Review worklogs locally, then sync them when ready."),
 	)
 }
 
