@@ -45,6 +45,14 @@ func newModel(thm theme.Theme) model {
 				renderBody: renderTimeTracking,
 			},
 			{
+				title:      "TUI OVERVIEW",
+				renderBody: renderTUIOverview,
+			},
+			{
+				title:      "MCP SERVER",
+				renderBody: renderMCPServer,
+			},
+			{
 				title:      "THAT'S IT",
 				renderBody: renderCompletion,
 			},

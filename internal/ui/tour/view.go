@@ -57,7 +57,7 @@ func newStyles(thm theme.Theme) styles {
 			BorderForeground(muted),
 		pagination: lipgloss.NewStyle().
 			PaddingLeft(2).
-			PaddingRight(6).
+			PaddingRight(2).
 			Foreground(muted).
 			Background(background),
 		footerMode: lipgloss.NewStyle().
@@ -216,6 +216,92 @@ func renderTimeTracking(styles styles) string {
 	)
 }
 
+func renderTUIOverview(styles styles) string {
+	column := lipgloss.NewStyle().Width(20)
+	issues := column.Render(lipgloss.JoinVertical(
+		lipgloss.Left,
+		styles.primary.Render("1  Issues"),
+		"",
+		styles.muted.Render("JIRA issues"),
+		styles.muted.Render("matching your JQL"),
+	))
+	worklogs := column.Render(lipgloss.JoinVertical(
+		lipgloss.Left,
+		styles.secondary.Render("2  Worklogs"),
+		"",
+		styles.muted.Render("Local worklogs"),
+		styles.muted.Render("not yet synced"),
+	))
+	synced := column.Render(lipgloss.JoinVertical(
+		lipgloss.Left,
+		styles.success.Render("3  Synced"),
+		"",
+		styles.muted.Render("Worklogs synced"),
+		styles.muted.Render("to JIRA"),
+	))
+	views := lipgloss.JoinHorizontal(lipgloss.Top, issues, "  ", worklogs, "  ", synced)
+	views = styles.panel.Width(68).Height(5).Render(views)
+
+	controls := lipgloss.JoinVertical(
+		lipgloss.Left,
+		renderControl(styles, "j / k / ↑ / ↓", "move through lists"),
+		renderControl(styles, "1 / 2 / 3", "switch views"),
+		renderControl(styles, "tab / shift+tab", "cycle views"),
+		renderControl(styles, "?", "open the full key reference"),
+	)
+
+	return lipgloss.JoinVertical(
+		lipgloss.Center,
+		views,
+		"",
+		controls,
+	)
+}
+
+func renderMCPServer(styles styles) string {
+	interfacePanel := styles.panel.Width(16).Height(1)
+	interfaces := lipgloss.JoinVertical(
+		lipgloss.Center,
+		interfacePanel.Render(styles.primary.Render("TUI")),
+		"",
+		interfacePanel.Render(styles.secondary.Render("MCP client")),
+	)
+	junction := styles.muted.Render("───┐\n   │\n   │\n   ├──▶\n   │\n   │\n───┘")
+	worklogStore := styles.panel.Width(23).Height(1).Render(styles.body.Render("Local worklog store"))
+	jira := styles.panel.Width(12).Height(1).Render(styles.success.Render("JIRA"))
+	flow := lipgloss.JoinHorizontal(
+		lipgloss.Center,
+		interfaces,
+		junction,
+		worklogStore,
+		styles.muted.Render(" ───▶ "),
+		jira,
+	)
+	command := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		styles.muted.Render("$ "),
+		styles.code.Render("punchout mcp serve"),
+	)
+
+	return lipgloss.JoinVertical(
+		lipgloss.Center,
+		flow,
+		"",
+		styles.body.Render("The TUI and MCP server use the same local worklogs."),
+		styles.muted.Render("MCP tools can fetch issues, add and inspect worklogs, and sync them to JIRA."),
+		"",
+		command,
+	)
+}
+
+func renderControl(styles styles, key, description string) string {
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		styles.code.Width(18).Render(key),
+		styles.muted.Render(description),
+	)
+}
+
 func renderCompletion(styles styles) string {
 	finish := lipgloss.JoinHorizontal(
 		lipgloss.Top,
@@ -269,6 +355,6 @@ func (m model) renderHint(key, label string) string {
 		m.styles.footerKey.Render(key),
 		" ",
 		m.styles.footerHelp.Render(label),
-		"   ",
+		" ",
 	)
 }
