@@ -10,22 +10,32 @@ import (
 
 type styles struct {
 	titleBadge lipgloss.Style
-	product    lipgloss.Style
-	lead       lipgloss.Style
-	record     lipgloss.Style
-	review     lipgloss.Style
-	sync       lipgloss.Style
-	configPath lipgloss.Style
-	command    lipgloss.Style
+	heading    lipgloss.Style
+	body       lipgloss.Style
+	primary    lipgloss.Style
+	secondary  lipgloss.Style
+	success    lipgloss.Style
 	muted      lipgloss.Style
+	code       lipgloss.Style
 	pagination lipgloss.Style
 	footerMode lipgloss.Style
 	footerHint lipgloss.Style
 }
 
-var pages = []func(model) string{
-	renderIntroPage,
-	renderConfigPage,
+type page struct {
+	title   string
+	content func(styles) string
+}
+
+var pages = []page{
+	{
+		title:   "WELCOME",
+		content: renderIntro,
+	},
+	{
+		title:   "CONFIGURE PUNCHOUT",
+		content: renderConfiguration,
+	},
 }
 
 func newStyles(thm theme.Theme) styles {
@@ -39,16 +49,15 @@ func newStyles(thm theme.Theme) styles {
 			Padding(0, 1).
 			Foreground(background).
 			Background(lipgloss.Color(thm.Accent1)),
-		product: lipgloss.NewStyle().
+		heading: lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color(thm.Accent5)),
-		lead:       lipgloss.NewStyle().Foreground(foreground),
-		record:     lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent1)),
-		review:     lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent2)),
-		sync:       lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Success)),
-		configPath: lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(thm.Accent5)),
-		command:    lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent1)),
+		body:       lipgloss.NewStyle().Foreground(foreground),
+		primary:    lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent1)),
+		secondary:  lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent2)),
+		success:    lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Success)),
 		muted:      lipgloss.NewStyle().Foreground(muted),
+		code:       lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(thm.Accent5)),
 		pagination: lipgloss.NewStyle().Foreground(muted),
 		footerMode: lipgloss.NewStyle().
 			Bold(true).
@@ -62,13 +71,7 @@ func newStyles(thm theme.Theme) styles {
 }
 
 func (m model) View() tea.View {
-	page := pages[m.page](m)
-	page = lipgloss.JoinVertical(
-		lipgloss.Center,
-		page,
-		"",
-		m.styles.pagination.Render(m.pagination()),
-	)
+	page := renderPage(pages[m.page], m.styles, m.pagination())
 
 	footer := m.renderFooter()
 	contentHeight := m.height - lipgloss.Height(footer)
@@ -84,45 +87,52 @@ func (m model) View() tea.View {
 	return v
 }
 
-func renderIntroPage(m model) string {
+func renderPage(page page, styles styles, pagination string) string {
+	return lipgloss.JoinVertical(
+		lipgloss.Center,
+		styles.titleBadge.Render(page.title),
+		"",
+		page.content(styles),
+		"",
+		styles.pagination.Render(pagination),
+	)
+}
+
+func renderIntro(styles styles) string {
 	journey := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		m.styles.record.Render("Record now."),
+		styles.primary.Render("Record now."),
 		" ",
-		m.styles.review.Render("Review locally."),
+		styles.secondary.Render("Review locally."),
 		" ",
-		m.styles.sync.Render("Sync when ready."),
+		styles.success.Render("Sync when ready."),
 	)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
-		m.styles.titleBadge.Render("WELCOME"),
+		styles.heading.Render("punchout"),
 		"",
-		m.styles.product.Render("punchout"),
-		"",
-		m.styles.lead.Render("Track time against JIRA issues without breaking your flow."),
+		styles.body.Render("Track time against JIRA issues without breaking your flow."),
 		"",
 		journey,
 	)
 }
 
-func renderConfigPage(m model) string {
+func renderConfiguration(styles styles) string {
 	command := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		m.styles.muted.Render("$ "),
-		m.styles.command.Render("punchout --list-config"),
+		styles.muted.Render("$ "),
+		styles.primary.Render("punchout --list-config"),
 	)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
-		m.styles.titleBadge.Render("CONFIGURE PUNCHOUT"),
+		styles.body.Render("JIRA, issue, and TUI settings live in one TOML file."),
 		"",
-		m.styles.lead.Render("JIRA, issue, and TUI settings live in one TOML file."),
-		"",
-		m.styles.configPath.Render("~/.config/punchout/punchout.toml"),
+		styles.code.Render("~/.config/punchout/punchout.toml"),
 		"",
 		command,
-		m.styles.muted.Render("Inspect the resolved configuration. Tokens stay redacted."),
+		styles.muted.Render("Inspect the resolved configuration. Tokens stay redacted."),
 	)
 }
 
