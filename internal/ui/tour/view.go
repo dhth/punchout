@@ -58,10 +58,9 @@ func newStyles(thm theme.Theme) styles {
 		muted:     lipgloss.NewStyle().Foreground(muted),
 		code:      lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(thm.Accent5)),
 		pagination: lipgloss.NewStyle().
-			Bold(true).
 			PaddingLeft(2).
 			PaddingRight(6).
-			Foreground(lipgloss.Color(thm.Accent2)).
+			Foreground(muted).
 			Background(background),
 		footerMode: lipgloss.NewStyle().
 			Bold(true).
@@ -73,7 +72,7 @@ func newStyles(thm theme.Theme) styles {
 			Foreground(lipgloss.Color(thm.Accent5)).
 			Background(background),
 		footerHelp: lipgloss.NewStyle().
-			Foreground(lipgloss.Color(thm.Accent6)).
+			Foreground(muted).
 			Background(background),
 	}
 }
@@ -176,6 +175,6 @@ func (m model) renderHint(key, label string) string {
 		m.styles.footerKey.Render(key),
 		" ",
 		m.styles.footerHelp.Render(label),
-		"    ",
+		"   ",
 	)
 }
