@@ -12,7 +12,12 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 
-		if cmd.IsErrUnexpected(err) {
+		followUp, isErrUnexpected := cmd.HandleError(err)
+		if len(followUp) > 0 {
+			fmt.Fprintf(os.Stderr, "%s", followUp)
+		}
+
+		if isErrUnexpected {
 			fmt.Fprintf(os.Stderr, `
 ---
 This error is unexpected. 

@@ -6,14 +6,16 @@ import (
 	"github.com/dhth/punchout/internal/mcp/tools"
 )
 
-func IsErrUnexpected(err error) bool {
+func HandleError(err error) (string, bool) {
+	var zero string
 	switch {
 	case errors.Is(err, tools.ErrCouldntAddToolToServer):
-		return true
+		return zero, true
 	case errors.Is(err, tools.ErrCouldntConstructInputSchema):
-		return true
+		return zero, true
 	case errors.Is(err, tools.ErrCouldntConstructOutputSchema):
-		return true
+		return zero, true
 	}
-	return false
+
+	return zero, false
 }
