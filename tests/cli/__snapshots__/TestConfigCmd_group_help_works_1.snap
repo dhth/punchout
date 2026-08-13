@@ -7,7 +7,7 @@ Usage:
   punchout config [command]
 
 Available Commands:
-  show-sample Print a sample configuration
+  show-sample Print sample configuration
   validate    Validate a configuration file
 
 Flags:

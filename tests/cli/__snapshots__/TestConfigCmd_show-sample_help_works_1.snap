@@ -1,7 +1,7 @@
 success: true
 exit_code: 0
 ----- stdout -----
-Print a sample configuration
+Print sample configuration
 
 Usage:
   punchout config show-sample [flags]

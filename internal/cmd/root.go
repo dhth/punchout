@@ -283,7 +283,7 @@ func NewRootCommand() (*cobra.Command, error) {
 	}
 	configShowSampleCmd := &cobra.Command{
 		Use:   "show-sample",
-		Short: "Print a sample configuration",
+		Short: "Print sample configuration",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			fmt.Fprint(os.Stdout, config.SampleConfig)
