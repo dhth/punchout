@@ -135,25 +135,29 @@ func renderIntro(styles styles) string {
 }
 
 func renderWorkflow(styles styles) string {
-	workflowPanel := styles.panel.Width(26).Height(2)
+	workflowPanel := styles.panel.Width(26).Height(3)
 	issues := workflowPanel.Render(lipgloss.JoinVertical(
 		lipgloss.Left,
 		styles.primary.Render("1  JIRA issues"),
+		"",
 		styles.muted.Render("matching your JQL"),
 	))
 	timer := workflowPanel.Render(lipgloss.JoinVertical(
 		lipgloss.Left,
 		styles.secondary.Render("2  Active timer"),
+		"",
 		styles.muted.Render("one issue at a time"),
 	))
 	worklog := workflowPanel.Render(lipgloss.JoinVertical(
 		lipgloss.Left,
 		styles.body.Render("3  Local worklog"),
+		"",
 		styles.muted.Render("review before syncing"),
 	))
 	synced := workflowPanel.Render(lipgloss.JoinVertical(
 		lipgloss.Left,
 		styles.success.Render("4  Synced to JIRA"),
+		"",
 		styles.muted.Render("recorded as a worklog"),
 	))
 
