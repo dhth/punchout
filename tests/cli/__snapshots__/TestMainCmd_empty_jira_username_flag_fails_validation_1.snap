@@ -5,3 +5,5 @@ exit_code: 1
 ----- stderr -----
 Error: invalid configuration: jira-username cannot be empty for cloud installation
 
+Run 'punchout config show-sample' to view sample configuration.
+

@@ -5,3 +5,5 @@ exit_code: 1
 ----- stderr -----
 Error: invalid configuration: invalid value for MCP transport: "blah"
 
+Run 'punchout config show-sample' to view sample configuration.
+
