@@ -277,10 +277,10 @@ func renderMCPServer(styles styles) string {
 
 func renderConfiguration(defaultCfgPath string) func(styles) string {
 	return func(styles styles) string {
-		command := lipgloss.JoinHorizontal(
+		sampleCommand := lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			styles.muted.Render("$ "),
-			styles.code.Render("punchout --list-config"),
+			styles.code.Render("punchout config show-sample"),
 		)
 
 		return lipgloss.JoinVertical(
@@ -289,13 +289,9 @@ func renderConfiguration(defaultCfgPath string) func(styles) string {
 			"",
 			styles.tertiary.Render(defaultCfgPath),
 			"",
-			styles.body.Render("Sample configuration can be found at:"),
+			styles.body.Render("Print sample configuration via:"),
 			"",
-			styles.tertiary.Render("https://github.com/dhth/punchout#using-a-config-file."),
-			"",
-			styles.body.Render("You can print the config that punchout will use via:"),
-			"",
-			command,
+			sampleCommand,
 		)
 	}
 }

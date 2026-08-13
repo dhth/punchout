@@ -1,0 +1,7 @@
+success: true
+exit_code: 0
+----- stdout -----
+Config file "config/good.toml" is valid.
+
+----- stderr -----
+

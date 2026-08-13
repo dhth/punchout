@@ -1,0 +1,14 @@
+success: true
+exit_code: 0
+----- stdout -----
+Validate a configuration file
+
+Usage:
+  punchout config validate [flags]
+
+Flags:
+      --config-file-path string   location of punchout's config file (default "[PATH]")
+  -h, --help                      help for validate
+
+----- stderr -----
+

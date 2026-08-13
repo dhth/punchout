@@ -3,19 +3,19 @@
                                                                                 
                                                                                 
                                                                                 
+                                                                                
+                                                                                
                                  Configuration                                  
                                                                                 
                   punchout can be configured via a TOML file:                   
                                                                                 
                    /home/user/.config/punchout/punchout.toml                    
                                                                                 
-                     Sample configuration can be found at:                      
+                        Print sample configuration via:                         
                                                                                 
-             https://github.com/dhth/punchout#using-a-config-file.              
+                         $ punchout config show-sample                          
                                                                                 
-              You can print the config that punchout will use via:              
                                                                                 
-                            $ punchout --list-config                            
                                                                                 
                                                                                 
                                                                                 

@@ -5,3 +5,5 @@ exit_code: 1
 ----- stderr -----
 Error: invalid configuration: jira-token cannot be empty
 
+Run 'punchout config show-sample' to view sample configuration.
+

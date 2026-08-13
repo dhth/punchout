@@ -1,0 +1,7 @@
+[jira]
+jira_url = "https://jira.company.com"
+jira_token = "XXX"
+jql = "project = BLAH"
+
+[tui]
+theme = "not-a-theme"

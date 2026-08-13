@@ -1,0 +1,7 @@
+success: false
+exit_code: 1
+----- stdout -----
+
+----- stderr -----
+Error: invalid theme name provided: "not-a-theme"; available themes: [catppuccin-latte, catppuccin-mocha, dracula, github-dark, github-light, gruvbox-dark, gruvbox-dark-hard, gruvbox-light, monokai-classic, onedark, rose-pine-moon, solarized-light, tokyonight, xcode-dark]
+
