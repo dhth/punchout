@@ -1,0 +1,43 @@
+success: true
+exit_code: 0
+----- stdout -----
+# Optional. Defaults to punchout's standard database path.
+# db_path = "$SOME_ENV_VAR/punchout.db"
+
+[jira]
+# Optional. Defaults to "onpremise". Allowed values: "onpremise", "cloud".
+installation_type = "onpremise"
+
+jira_url = "https://jira.company.com"
+jira_token = "your personal access token"
+
+# For cloud installations, set installation_type to "cloud", use an API token,
+# and provide a username.
+# jira_username = "example@example.com"
+
+# Put whatever JQL you want to use to query issues.
+jql = "assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DESC"
+
+# Optional. Time difference, in minutes, between your timezone and the JIRA
+# server's timezone. Defaults to 0.
+# jira_time_delta_mins = 300
+
+# Optional. Used for worklogs when you do not provide a comment.
+# fallback_comment = "work"
+
+[tui]
+# Optional. Defaults to false.
+# use_cache_on_startup = true
+
+# Optional. Defaults to "gruvbox-dark".
+# theme = "tokyonight"
+
+[mcp]
+# Optional. Defaults to "stdio". Allowed values: "stdio", "http".
+# transport = "http"
+
+# Optional. Used when transport is "http". Defaults to 18899.
+# http_port = 9999
+
+----- stderr -----
+

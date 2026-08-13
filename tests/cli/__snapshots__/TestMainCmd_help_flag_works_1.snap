@@ -8,6 +8,7 @@ Usage:
   punchout [command]
 
 Available Commands:
+  config      Inspect and validate punchout configuration
   help        Help about any command
   mcp         Interact with punchout's MCP server
   tour        Take a quick tour of punchout

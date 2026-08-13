@@ -1,0 +1,13 @@
+success: true
+exit_code: 0
+----- stdout -----
+Print a sample configuration
+
+Usage:
+  punchout config show-sample [flags]
+
+Flags:
+  -h, --help   help for show-sample
+
+----- stderr -----
+

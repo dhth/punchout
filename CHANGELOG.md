@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Built-in themes
 - Support TUI and MCP settings in `punchout.toml`
 - A guided introduction to punchout's main features, available via `punchout tour`
+- Command to validate configuration (`punchout config validate`)
+- Command to show sample configuration (`punchout config show-sample`)
 
 ## [v1.4.0] - Mar 17, 2026
 

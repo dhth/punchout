@@ -273,6 +273,55 @@ func NewRootCommand() (*cobra.Command, error) {
 		defaultConfigFilePath = filepath.Join(userConfigDir, configFileName)
 	}
 
+	configCmd := &cobra.Command{
+		Use:   "config",
+		Short: "Inspect and validate punchout configuration",
+		Args:  cobra.NoArgs,
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+			return nil
+		},
+	}
+	configShowSampleCmd := &cobra.Command{
+		Use:   "show-sample",
+		Short: "Print a sample configuration",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			fmt.Fprint(os.Stdout, config.SampleConfig)
+			return nil
+		},
+	}
+	configValidateCmd := &cobra.Command{
+		Use:   "validate",
+		Short: "Validate a configuration file",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			if flagConfigFilePath == "" {
+				return errConfigFilePathEmpty
+			}
+
+			configPath := utils.ExpandTilde(flagConfigFilePath, userHomeDir)
+			cfg, err := config.Load(configPath, config.LoadOptions{
+				HomeDir: userHomeDir,
+				Defaults: config.Defaults{
+					DBPath: defaultDBPath,
+				},
+			})
+			if err != nil {
+				return err
+			}
+
+			_, err = theme.Get(cfg.TUI.ThemeName)
+			if err != nil {
+				return fmt.Errorf("%w; available themes: [%s]", err, strings.Join(theme.All(), ", "))
+			}
+
+			fmt.Fprintf(os.Stdout, "Config file %q is valid.\n", configPath)
+			return nil
+		},
+	}
+	configValidateCmd.Flags().StringVarP(&flagConfigFilePath, "config-file-path", "", defaultConfigFilePath, "location of punchout's config file")
+	configCmd.AddCommand(configShowSampleCmd, configValidateCmd)
+
 	addConfigFlags(rootCmd)
 	addConfigFlags(mcpServeCmd)
 	themeFlagUsage := fmt.Sprintf("theme to use; possible values: [%s]", strings.Join(theme.All(), ", "))
@@ -283,7 +332,7 @@ func NewRootCommand() (*cobra.Command, error) {
 	mcpServeCmd.Flags().Uint16VarP(&flagMcpServerPort, "http-port", "p", config.DefaultMCPHTTPPort, "port to use (when transport is http)")
 
 	mcpCmd.AddCommand(mcpServeCmd)
-	rootCmd.AddCommand(mcpCmd, tourCmd)
+	rootCmd.AddCommand(configCmd, mcpCmd, tourCmd)
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
