@@ -1,0 +1,24 @@
+                                                                                   
+                                                                                   
+                                                                                   
+                                                                                   
+                                       TUI                                         
+                                                                                   
+                   The TUI is built around 3 navigable views.                      
+                                                                                   
+      ┌──────────────────────────────────────────────────────────────────┐         
+      │ 1  Issues             2  Worklogs           3  Synced            │         
+      │                                                                  │         
+      │ JIRA issues           Local worklogs        Worklogs synced      │         
+      │ matching your JQL     not yet synced        to JIRA              │         
+      └──────────────────────────────────────────────────────────────────┘         
+                                                                                   
+                  j / k / ↑ / ↓     move through lists                             
+                  1 / 2 / 3         switch views                                   
+                  tab / shift+tab   cycle views                                    
+                  ?                 open the full key reference                    
+                                                                                   
+                                                                                   
+                                                                                   
+                                                                                   
+ punchout   3 / 6    h/← previous   space/l/→ next   esc/q quit   ] change theme   
