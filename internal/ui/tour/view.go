@@ -270,27 +270,29 @@ func renderMCPServer(styles styles) string {
 	)
 }
 
-func renderConfiguration(styles styles) string {
-	command := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		styles.muted.Render("$ "),
-		styles.code.Render("punchout --list-config"),
-	)
+func renderConfiguration(defaultCfgPath string) func(styles) string {
+	return func(styles styles) string {
+		command := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			styles.muted.Render("$ "),
+			styles.code.Render("punchout --list-config"),
+		)
 
-	return lipgloss.JoinVertical(
-		lipgloss.Center,
-		styles.body.Render("punchout can be configured via a TOML file."),
-		"",
-		styles.tertiary.Render("~/.config/punchout/punchout.toml"),
-		"",
-		styles.body.Render("Sample configuration can be found at:"),
-		"",
-		styles.tertiary.Render("https://github.com/dhth/punchout#using-a-config-file."),
-		"",
-		styles.body.Render("You can print the config that punchout will use via:"),
-		"",
-		command,
-	)
+		return lipgloss.JoinVertical(
+			lipgloss.Center,
+			styles.body.Render("punchout can be configured via a TOML file:"),
+			"",
+			styles.tertiary.Render(defaultCfgPath),
+			"",
+			styles.body.Render("Sample configuration can be found at:"),
+			"",
+			styles.tertiary.Render("https://github.com/dhth/punchout#using-a-config-file."),
+			"",
+			styles.body.Render("You can print the config that punchout will use via:"),
+			"",
+			command,
+		)
+	}
 }
 
 func renderControl(styles styles, key, description string) string {

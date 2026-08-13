@@ -13,12 +13,13 @@ const (
 )
 
 type model struct {
-	theme  theme.Theme
-	styles styles
-	pages  []page
-	page   int
-	width  int
-	height int
+	defaultCfgPath string
+	theme          theme.Theme
+	styles         styles
+	pages          []page
+	page           int
+	width          int
+	height         int
 }
 
 func (model) Init() tea.Cmd {
@@ -86,10 +87,11 @@ func (m model) pagination() string {
 	return fmt.Sprintf("%d / %d", m.page+1, len(m.pages))
 }
 
-func newModel(thm theme.Theme) model {
+func newModel(defaultCfgPath string, thm theme.Theme) model {
 	return model{
-		theme:  thm,
-		styles: newStyles(thm),
+		defaultCfgPath: defaultCfgPath,
+		theme:          thm,
+		styles:         newStyles(thm),
 		pages: []page{
 			{
 				title:      "Welcome",
@@ -109,7 +111,7 @@ func newModel(thm theme.Theme) model {
 			},
 			{
 				title:      "Configuration",
-				renderBody: renderConfiguration,
+				renderBody: renderConfiguration(defaultCfgPath),
 			},
 			{
 				title:      "That's it",

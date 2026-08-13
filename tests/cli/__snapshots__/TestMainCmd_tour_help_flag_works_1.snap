@@ -9,17 +9,5 @@ Usage:
 Flags:
   -h, --help   help for tour
 
-Global Flags:
-      --config-file-path string         location of punchout's config file (default "/home/user/.config/punchout/punchout.toml")
-      --db-path string                  override the location of punchout's local database
-      --fallback-comment string         fallback comment to use for worklog entries
-      --jira-installation-type string   JIRA installation type; allowed values: [cloud, onpremise]
-      --jira-time-delta-mins string     time delta (in minutes) between your timezone and the timezone of the JIRA server; can be +/-
-      --jira-token string               jira token (PAT for on-premise installation, API token for cloud installation)
-      --jira-url string                 URL of the JIRA server
-      --jira-username string            username for authentication (for cloud installation)
-      --jql string                      JQL to use to query issues
-      --list-config                     print the config that punchout will use
-
 ----- stderr -----
 

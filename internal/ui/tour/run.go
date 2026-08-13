@@ -5,8 +5,8 @@ import (
 	"github.com/dhth/punchout/internal/ui/theme"
 )
 
-func Run(thm theme.Theme) error {
-	p := tea.NewProgram(newModel(thm))
+func Run(defaultCfgPath string, thm theme.Theme) error {
+	p := tea.NewProgram(newModel(defaultCfgPath, thm))
 	_, err := p.Run()
 
 	return err
