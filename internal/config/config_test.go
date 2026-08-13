@@ -976,5 +976,13 @@ func TestLoadReturnsErrorWhenFileDoesNotExist(t *testing.T) {
 	filePath := filepath.Join(t.TempDir(), "does-not-exist.toml")
 
 	_, err := Load(filePath, LoadOptions{Defaults: Defaults{DBPath: "default.db"}})
-	require.ErrorIs(t, err, ErrOpenConfigFile)
+	require.ErrorIs(t, err, ErrConfigFileNotFound)
+}
+
+func TestSampleConfigIsValid(t *testing.T) {
+	_, err := decodeAndResolve(strings.NewReader(SampleConfig), LoadOptions{
+		HomeDir:  "/home/user",
+		Defaults: Defaults{DBPath: "default.db"},
+	})
+	require.NoError(t, err)
 }

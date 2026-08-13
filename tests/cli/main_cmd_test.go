@@ -33,6 +33,21 @@ func TestMainCmd(t *testing.T) {
 		snaps.MatchStandaloneSnapshot(t, result)
 	})
 
+	t.Run("tour help flag works", func(t *testing.T) {
+		// GIVEN
+		args := []string{
+			"tour",
+			"--help",
+		}
+
+		// WHEN
+		result, err := fx.runCmd(args)
+
+		// THEN
+		require.NoError(t, err)
+		snaps.MatchStandaloneSnapshot(t, result)
+	})
+
 	t.Run("cloud setup works", func(t *testing.T) {
 		// GIVEN
 		args := []string{

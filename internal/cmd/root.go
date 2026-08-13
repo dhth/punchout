@@ -17,6 +17,7 @@ import (
 	svc "github.com/dhth/punchout/internal/service"
 	"github.com/dhth/punchout/internal/ui"
 	"github.com/dhth/punchout/internal/ui/theme"
+	"github.com/dhth/punchout/internal/ui/tour"
 	"github.com/dhth/punchout/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -60,12 +61,26 @@ func NewRootCommand() (*cobra.Command, error) {
 		flagMcpTransportStr string
 		flagMcpServerPort   uint16
 
-		appCfg         config.Config
-		configPathFull string
-		db             *sql.DB
-		jiraSvc        svc.Jira
-		resolvedTheme  theme.Theme
+		defaultConfigFilePath string
+		appCfg                config.Config
+		configPathFull        string
+		db                    *sql.DB
+		jiraSvc               svc.Jira
+		resolvedTheme         theme.Theme
 	)
+
+	addConfigFlags := func(cmd *cobra.Command) {
+		cmd.Flags().StringVarP(&flagConfigFilePath, "config-file-path", "", defaultConfigFilePath, "location of punchout's config file")
+		cmd.Flags().StringVarP(&flagDBPath, "db-path", "", "", "override the location of punchout's local database")
+		cmd.Flags().StringVarP(&flagJiraInstallationType, "jira-installation-type", "", "", "JIRA installation type; allowed values: [cloud, onpremise]")
+		cmd.Flags().StringVarP(&flagJiraURL, "jira-url", "", "", "URL of the JIRA server")
+		cmd.Flags().StringVarP(&flagJiraToken, "jira-token", "", "", "jira token (PAT for on-premise installation, API token for cloud installation)")
+		cmd.Flags().StringVarP(&flagJiraUsername, "jira-username", "", "", "username for authentication (for cloud installation)")
+		cmd.Flags().StringVarP(&flagJQL, "jql", "", "", "JQL to use to query issues")
+		cmd.Flags().StringVarP(&flagFallbackComment, "fallback-comment", "", "", "fallback comment to use for worklog entries")
+		cmd.Flags().StringVarP(&flagJiraTimeDeltaMinsStr, "jira-time-delta-mins", "", "", "time delta (in minutes) between your timezone and the timezone of the JIRA server; can be +/-")
+		cmd.Flags().BoolVarP(&flagListConfig, "list-config", "", false, "print the config that punchout will use")
+	}
 
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -228,9 +243,23 @@ func NewRootCommand() (*cobra.Command, error) {
 		},
 	}
 
-	ros := runtime.GOOS
-	var defaultConfigFilePath string
+	tourCmd := &cobra.Command{
+		Use:   "tour",
+		Short: "Take a quick tour of punchout",
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+			return nil
+		},
+		RunE: func(_ *cobra.Command, _ []string) error {
+			thm, err := theme.Get(theme.DefaultName)
+			if err != nil {
+				return err
+			}
 
+			return tour.Run(defaultConfigFilePath, thm)
+		},
+	}
+
+	ros := runtime.GOOS
 	userConfigDir, err := os.UserConfigDir()
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", errCouldntGetConfigDir, err.Error())
@@ -244,16 +273,8 @@ func NewRootCommand() (*cobra.Command, error) {
 		defaultConfigFilePath = filepath.Join(userConfigDir, configFileName)
 	}
 
-	rootCmd.PersistentFlags().StringVarP(&flagConfigFilePath, "config-file-path", "", defaultConfigFilePath, "location of punchout's config file")
-	rootCmd.PersistentFlags().StringVarP(&flagDBPath, "db-path", "", "", "override the location of punchout's local database")
-	rootCmd.PersistentFlags().StringVarP(&flagJiraInstallationType, "jira-installation-type", "", "", "JIRA installation type; allowed values: [cloud, onpremise]")
-	rootCmd.PersistentFlags().StringVarP(&flagJiraURL, "jira-url", "", "", "URL of the JIRA server")
-	rootCmd.PersistentFlags().StringVarP(&flagJiraToken, "jira-token", "", "", "jira token (PAT for on-premise installation, API token for cloud installation)")
-	rootCmd.PersistentFlags().StringVarP(&flagJiraUsername, "jira-username", "", "", "username for authentication (for cloud installation)")
-	rootCmd.PersistentFlags().StringVarP(&flagJQL, "jql", "", "", "JQL to use to query issues")
-	rootCmd.PersistentFlags().StringVarP(&flagFallbackComment, "fallback-comment", "", "", "fallback comment to use for worklog entries")
-	rootCmd.PersistentFlags().StringVarP(&flagJiraTimeDeltaMinsStr, "jira-time-delta-mins", "", "", "time delta (in minutes) between your timezone and the timezone of the JIRA server; can be +/-")
-	rootCmd.PersistentFlags().BoolVarP(&flagListConfig, "list-config", "", false, "print the config that punchout will use")
+	addConfigFlags(rootCmd)
+	addConfigFlags(mcpServeCmd)
 	themeFlagUsage := fmt.Sprintf("theme to use; possible values: [%s]", strings.Join(theme.All(), ", "))
 	rootCmd.Flags().StringVarP(&flagTheme, "theme", "t", theme.DefaultName, themeFlagUsage)
 	rootCmd.Flags().BoolVarP(&flagUseCacheOnStartup, "use-cache-on-startup", "", false, "load JIRA issues from the local cache on startup")
@@ -262,7 +283,7 @@ func NewRootCommand() (*cobra.Command, error) {
 	mcpServeCmd.Flags().Uint16VarP(&flagMcpServerPort, "http-port", "p", config.DefaultMCPHTTPPort, "port to use (when transport is http)")
 
 	mcpCmd.AddCommand(mcpServeCmd)
-	rootCmd.AddCommand(mcpCmd)
+	rootCmd.AddCommand(mcpCmd, tourCmd)
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 

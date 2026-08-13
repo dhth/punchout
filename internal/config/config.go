@@ -1,9 +1,11 @@
 package config
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strings"
 
@@ -20,7 +22,11 @@ const (
 	mcpTransportNameHTTP          = "http"
 )
 
+//go:embed sample-config.toml
+var SampleConfig string
+
 var (
+	ErrConfigFileNotFound      = errors.New("no configuration file found")
 	ErrOpenConfigFile          = errors.New("couldn't open config file")
 	ErrParseConfigFile         = errors.New("couldn't parse config file")
 	ErrInvalidConfig           = errors.New("invalid configuration")
@@ -163,7 +169,10 @@ type fileJiraConfig struct {
 func Load(filePath string, options LoadOptions) (Config, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return Config{}, fmt.Errorf("%w: %s", ErrOpenConfigFile, err.Error())
+		if errors.Is(err, fs.ErrNotExist) {
+			return Config{}, fmt.Errorf("%w at %q", ErrConfigFileNotFound, filePath)
+		}
+		return Config{}, fmt.Errorf("%w: %w", ErrOpenConfigFile, err)
 	}
 	defer file.Close()
 

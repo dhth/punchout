@@ -1,0 +1,24 @@
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                   MCP server                                   
+                                                                                
+        ┌──────────────┐                                                        
+        │ TUI          │───┐                                                    
+        └──────────────┘   │   ┌─────────────────────┐      ┌──────────┐        
+                           ├──▶│ Local worklog store │ ───▶ │ JIRA     │        
+        ┌──────────────┐   │   └─────────────────────┘      └──────────┘        
+        │ MCP client   │───┘                                                    
+        └──────────────┘                                                        
+                                                                                
+  MCP tools can fetch issues, add and inspect worklogs, and sync them to JIRA.  
+                                                                                
+               The TUI and MCP server use the same local worklogs.              
+                                                                                
+                              $ punchout mcp serve                              
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ punchout   4 / 6    h/← previous   space/l/→ next   esc/q quit                 

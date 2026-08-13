@@ -1,13 +1,3 @@
-success: false
-exit_code: 1
------ stdout -----
-
------ stderr -----
-Error: no configuration file found at "config/absent.toml"
-
-Here's a sample config:
-
----
 # Optional. Defaults to punchout's standard database path.
 # db_path = "$SOME_ENV_VAR/punchout.db"
 
@@ -45,7 +35,3 @@ jql = "assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DES
 
 # Optional. Used when transport is "http". Defaults to 18899.
 # http_port = 9999
----
-
-New to punchout? Run 'punchout tour' for a quick introduction.
-

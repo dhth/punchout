@@ -1,0 +1,13 @@
+success: true
+exit_code: 0
+----- stdout -----
+Take a quick tour of punchout
+
+Usage:
+  punchout tour [flags]
+
+Flags:
+  -h, --help   help for tour
+
+----- stderr -----
+
