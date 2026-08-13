@@ -163,7 +163,7 @@ type fileJiraConfig struct {
 func Load(filePath string, options LoadOptions) (Config, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return Config{}, fmt.Errorf("%w: %s", ErrOpenConfigFile, err.Error())
+		return Config{}, fmt.Errorf("%w: %w", ErrOpenConfigFile, err)
 	}
 	defer file.Close()
 

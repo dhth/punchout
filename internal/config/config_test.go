@@ -1,6 +1,7 @@
 package config
 
 import (
+	"io/fs"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -977,4 +978,5 @@ func TestLoadReturnsErrorWhenFileDoesNotExist(t *testing.T) {
 
 	_, err := Load(filePath, LoadOptions{Defaults: Defaults{DBPath: "default.db"}})
 	require.ErrorIs(t, err, ErrOpenConfigFile)
+	require.ErrorIs(t, err, fs.ErrNotExist)
 }

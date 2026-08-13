@@ -3,5 +3,10 @@ exit_code: 1
 ----- stdout -----
 
 ----- stderr -----
-Error: couldn't open config file: open config/absent.toml: no such file or directory
+Error: no configuration file found at:
+  config/absent.toml
+
+See https://github.com/dhth/punchout#using-a-config-file to configure punchout.
+
+New to punchout? Run 'punchout tour' for a quick introduction.
 
