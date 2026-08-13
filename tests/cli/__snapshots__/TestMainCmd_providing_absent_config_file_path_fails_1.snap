@@ -3,8 +3,7 @@ exit_code: 1
 ----- stdout -----
 
 ----- stderr -----
-Error: no configuration file found at:
-  config/absent.toml
+Error: no configuration file found at "config/absent.toml"
 
 Here's a sample config:
 

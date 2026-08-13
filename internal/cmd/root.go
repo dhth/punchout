@@ -171,8 +171,7 @@ func NewRootCommand() (*cobra.Command, error) {
 			)
 			if err != nil {
 				if errors.Is(err, config.ErrOpenConfigFile) && errors.Is(err, fs.ErrNotExist) {
-					return fmt.Errorf(`no configuration file found at:
-  %s
+					return fmt.Errorf(`no configuration file found at %q
 
 Here's a sample config:
 
