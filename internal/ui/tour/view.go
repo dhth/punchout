@@ -8,12 +8,35 @@ import (
 	"github.com/dhth/punchout/internal/ui/theme"
 )
 
+func (m model) View() tea.View {
+	var content string
+	if m.dimensionsInsufficient() {
+		content = m.renderInsufficientDimensions()
+	} else {
+		page := renderPage(m.pages[m.page], m.styles)
+		footer := m.renderFooter()
+		contentHeight := m.height - lipgloss.Height(footer)
+		if contentHeight < lipgloss.Height(page) {
+			contentHeight = lipgloss.Height(page)
+		}
+		page = lipgloss.Place(m.width, contentHeight, lipgloss.Center, lipgloss.Center, page)
+		content = lipgloss.JoinVertical(lipgloss.Left, page, footer)
+	}
+
+	v := tea.NewView(content)
+	v.AltScreen = true
+	v.BackgroundColor = lipgloss.Color(m.theme.Background)
+	v.ForegroundColor = lipgloss.Color(m.theme.Foreground)
+	return v
+}
+
 type styles struct {
 	titleBadge lipgloss.Style
 	heading    lipgloss.Style
 	body       lipgloss.Style
 	primary    lipgloss.Style
 	secondary  lipgloss.Style
+	tertiary   lipgloss.Style
 	success    lipgloss.Style
 	muted      lipgloss.Style
 	code       lipgloss.Style
@@ -46,9 +69,10 @@ func newStyles(thm theme.Theme) styles {
 		body:      lipgloss.NewStyle().Foreground(foreground),
 		primary:   lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent1)),
 		secondary: lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent2)),
+		tertiary:  lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent3)),
 		success:   lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Success)),
 		muted:     lipgloss.NewStyle().Foreground(muted),
-		code:      lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(thm.Accent5)),
+		code:      lipgloss.NewStyle().Foreground(lipgloss.Color(thm.Accent5)),
 		panel: lipgloss.NewStyle().
 			Width(24).
 			Height(3).
@@ -57,7 +81,7 @@ func newStyles(thm theme.Theme) styles {
 			BorderForeground(muted),
 		pagination: lipgloss.NewStyle().
 			PaddingLeft(2).
-			PaddingRight(2).
+			PaddingRight(4).
 			Foreground(muted).
 			Background(background),
 		footerMode: lipgloss.NewStyle().
@@ -70,31 +94,10 @@ func newStyles(thm theme.Theme) styles {
 			Foreground(lipgloss.Color(thm.Accent5)).
 			Background(background),
 		footerHelp: lipgloss.NewStyle().
+			PaddingRight(2).
 			Foreground(muted).
 			Background(background),
 	}
-}
-
-func (m model) View() tea.View {
-	var content string
-	if m.dimensionsInsufficient() {
-		content = m.renderInsufficientDimensions()
-	} else {
-		page := renderPage(m.pages[m.page], m.styles)
-		footer := m.renderFooter()
-		contentHeight := m.height - lipgloss.Height(footer)
-		if contentHeight < lipgloss.Height(page) {
-			contentHeight = lipgloss.Height(page)
-		}
-		page = lipgloss.Place(m.width, contentHeight, lipgloss.Center, lipgloss.Center, page)
-		content = lipgloss.JoinVertical(lipgloss.Left, page, footer)
-	}
-
-	v := tea.NewView(content)
-	v.AltScreen = true
-	v.BackgroundColor = lipgloss.Color(m.theme.Background)
-	v.ForegroundColor = lipgloss.Color(m.theme.Foreground)
-	return v
 }
 
 func (m model) renderInsufficientDimensions() string {
@@ -120,40 +123,13 @@ func renderPage(page page, styles styles) string {
 }
 
 func renderIntro(styles styles) string {
-	workflow := lipgloss.JoinVertical(
-		lipgloss.Left,
-		styles.primary.Render("Start a timer for an issue."),
-		styles.secondary.Render("Review the resulting worklog locally."),
-		styles.success.Render("Sync it to JIRA when ready."),
-	)
-
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
-		styles.heading.Render("punchout"),
+		styles.heading.Render("punchout takes the suck out of logging time on JIRA"),
 		"",
-		styles.body.Render("Track time against JIRA issues from the terminal."),
+		styles.body.Render("This guide will briefly walk you through punchout's features."),
 		"",
-		workflow,
-		"",
-		styles.muted.Render("Press space to continue"),
-	)
-}
-
-func renderConfiguration(styles styles) string {
-	command := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		styles.muted.Render("$ "),
-		styles.primary.Render("punchout --list-config"),
-	)
-
-	return lipgloss.JoinVertical(
-		lipgloss.Center,
-		styles.body.Render("JIRA, issue, and TUI settings live in one TOML file."),
-		"",
-		styles.code.Render("~/.config/punchout/punchout.toml"),
-		"",
-		command,
-		styles.muted.Render("Inspect the resolved configuration. Tokens stay redacted."),
+		styles.muted.Render("Press space/l/→ to continue"),
 	)
 }
 
@@ -209,7 +185,7 @@ func renderWorkflow(styles styles) string {
 		down,
 		bottom,
 		"",
-		styles.muted.Render("Review worklogs locally, then sync them when ready."),
+		styles.tertiary.Render("Create worklogs locally, then sync them when ready."),
 	)
 }
 
@@ -249,6 +225,8 @@ func renderTUIOverview(styles styles) string {
 
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
+		styles.body.Render("The TUI is built around 3 navigable views."),
+		"",
 		views,
 		"",
 		controls,
@@ -284,8 +262,32 @@ func renderMCPServer(styles styles) string {
 		lipgloss.Center,
 		flow,
 		"",
-		styles.body.Render("The TUI and MCP server use the same local worklogs."),
-		styles.muted.Render("MCP tools can fetch issues, add and inspect worklogs, and sync them to JIRA."),
+		styles.body.Render("MCP tools can fetch issues, add and inspect worklogs, and sync them to JIRA."),
+		"",
+		styles.tertiary.Render("The TUI and MCP server use the same local worklogs."),
+		"",
+		command,
+	)
+}
+
+func renderConfiguration(styles styles) string {
+	command := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		styles.muted.Render("$ "),
+		styles.code.Render("punchout --list-config"),
+	)
+
+	return lipgloss.JoinVertical(
+		lipgloss.Center,
+		styles.body.Render("punchout can be configured via a TOML file."),
+		"",
+		styles.tertiary.Render("~/.config/punchout/punchout.toml"),
+		"",
+		styles.body.Render("Sample configuration can be found at:"),
+		"",
+		styles.tertiary.Render("https://github.com/dhth/punchout#using-a-config-file."),
+		"",
+		styles.body.Render("You can print the config that punchout will use via:"),
 		"",
 		command,
 	)
@@ -300,18 +302,11 @@ func renderControl(styles styles, key, description string) string {
 }
 
 func renderCompletion(styles styles) string {
-	finish := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		styles.muted.Render("Press "),
-		styles.code.Render("space"),
-		styles.muted.Render(" to finish the tour"),
-	)
-
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
 		styles.heading.Render("Happy time tracking!"),
 		"",
-		finish,
+		styles.muted.Render("Press space to finish the tour"),
 	)
 }
 
@@ -319,14 +314,14 @@ func (m model) renderFooter() string {
 	var navigation string
 	switch {
 	case m.page == 0:
-		navigation = m.renderHint("l/→/space", "next")
+		navigation = m.renderHint("space/l/→", "next")
 	case m.page == len(m.pages)-1:
 		navigation = m.renderHint("h/←", "previous")
 	default:
 		navigation = lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			m.renderHint("h/←", "previous"),
-			m.renderHint("l/→/space", "next"),
+			m.renderHint("space/l/→", "next"),
 		)
 	}
 

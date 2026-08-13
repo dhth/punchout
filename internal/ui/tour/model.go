@@ -21,47 +21,6 @@ type model struct {
 	height int
 }
 
-func Run(thm theme.Theme) error {
-	p := tea.NewProgram(newModel(thm))
-	_, err := p.Run()
-	return err
-}
-
-func newModel(thm theme.Theme) model {
-	return model{
-		theme:  thm,
-		styles: newStyles(thm),
-		pages: []page{
-			{
-				title:      "Welcome",
-				renderBody: renderIntro,
-			},
-			{
-				title:      "Configuration",
-				renderBody: renderConfiguration,
-			},
-			{
-				title:      "Workflow",
-				renderBody: renderWorkflow,
-			},
-			{
-				title:      "TUI overview",
-				renderBody: renderTUIOverview,
-			},
-			{
-				title:      "MCP server",
-				renderBody: renderMCPServer,
-			},
-			{
-				title:      "That's it",
-				renderBody: renderCompletion,
-			},
-		},
-		width:  minWidth,
-		height: minHeight,
-	}
-}
-
 func (model) Init() tea.Cmd {
 	return nil
 }
@@ -125,4 +84,39 @@ func (m *model) applyTheme(thm theme.Theme) {
 
 func (m model) pagination() string {
 	return fmt.Sprintf("%d / %d", m.page+1, len(m.pages))
+}
+
+func newModel(thm theme.Theme) model {
+	return model{
+		theme:  thm,
+		styles: newStyles(thm),
+		pages: []page{
+			{
+				title:      "Welcome",
+				renderBody: renderIntro,
+			},
+			{
+				title:      "Workflow",
+				renderBody: renderWorkflow,
+			},
+			{
+				title:      "TUI overview",
+				renderBody: renderTUIOverview,
+			},
+			{
+				title:      "MCP server",
+				renderBody: renderMCPServer,
+			},
+			{
+				title:      "Configuration",
+				renderBody: renderConfiguration,
+			},
+			{
+				title:      "That's it",
+				renderBody: renderCompletion,
+			},
+		},
+		width:  minWidth,
+		height: minHeight,
+	}
 }
