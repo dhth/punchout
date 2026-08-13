@@ -1,24 +1,24 @@
-                                                                                   
-                                                                                   
-                                                                                   
-                                                                                   
-                                    Workflow                                       
-                                                                                   
-         ┌────────────────────────┐         ┌────────────────────────┐             
-         │ 1  JIRA issues         │         │ 2  Active timer        │             
-         │ matching your JQL      │  ───▶   │ one issue at a time    │             
-         └────────────────────────┘         └────────────────────────┘             
-                                                        s                          
-                                                        │                          
-                                                        ▼                          
-         ┌────────────────────────┐         ┌────────────────────────┐             
-         │ 4  Synced to JIRA      │         │ 3  Local worklog       │             
-         │ recorded as a worklog  │  ◀───   │ review before syncing  │             
-         └────────────────────────┘         └────────────────────────┘             
-                                                                                   
-              Create worklogs locally, then sync them when ready.                  
-                                                                                   
-                                                                                   
-                                                                                   
-                                                                                   
- punchout   2 / 6    h/← previous   space/l/→ next   esc/q quit   ] change theme   
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                    Workflow                                    
+                                                                                
+         ┌────────────────────────┐         ┌────────────────────────┐          
+         │ 1  JIRA issues         │         │ 2  Active timer        │          
+         │ matching your JQL      │  ───▶   │ one issue at a time    │          
+         └────────────────────────┘         └────────────────────────┘          
+                                                        s                       
+                                                        │                       
+                                                        ▼                       
+         ┌────────────────────────┐         ┌────────────────────────┐          
+         │ 4  Synced to JIRA      │         │ 3  Local worklog       │          
+         │ recorded as a worklog  │  ◀───   │ review before syncing  │          
+         └────────────────────────┘         └────────────────────────┘          
+                                                                                
+              Create worklogs locally, then sync them when ready.               
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ punchout   2 / 6    h/← previous   space/l/→ next   esc/q quit                 

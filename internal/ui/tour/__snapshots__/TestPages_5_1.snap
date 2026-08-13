@@ -1,24 +1,24 @@
-                                                                                   
-                                                                                   
-                                                                                   
-                                                                                   
-                                                                                   
-                                 Configuration                                     
-                                                                                   
-                  punchout can be configured via a TOML file:                      
-                                                                                   
-                   /home/user/.config/punchout/punchout.toml                       
-                                                                                   
-                     Sample configuration can be found at:                         
-                                                                                   
-             https://github.com/dhth/punchout#using-a-config-file.                 
-                                                                                   
-              You can print the config that punchout will use via:                 
-                                                                                   
-                            $ punchout --list-config                               
-                                                                                   
-                                                                                   
-                                                                                   
-                                                                                   
-                                                                                   
- punchout   5 / 6    h/← previous   space/l/→ next   esc/q quit   ] change theme   
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                 Configuration                                  
+                                                                                
+                  punchout can be configured via a TOML file:                   
+                                                                                
+                   /home/user/.config/punchout/punchout.toml                    
+                                                                                
+                     Sample configuration can be found at:                      
+                                                                                
+             https://github.com/dhth/punchout#using-a-config-file.              
+                                                                                
+              You can print the config that punchout will use via:              
+                                                                                
+                            $ punchout --list-config                            
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ punchout   5 / 6    h/← previous   space/l/→ next   esc/q quit                 

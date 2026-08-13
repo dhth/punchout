@@ -332,7 +332,6 @@ func (m model) renderFooter() string {
 		lipgloss.Top,
 		navigation,
 		m.renderHint("esc/q", "quit"),
-		m.renderHint("]", "change theme"),
 	)
 	footerContent := lipgloss.JoinHorizontal(
 		lipgloss.Top,
