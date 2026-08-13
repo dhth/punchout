@@ -27,6 +27,7 @@ func (m model) View() tea.View {
 	v.AltScreen = true
 	v.BackgroundColor = lipgloss.Color(m.theme.Background)
 	v.ForegroundColor = lipgloss.Color(m.theme.Foreground)
+
 	return v
 }
 
