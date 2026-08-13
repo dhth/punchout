@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/fs"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -977,8 +976,7 @@ func TestLoadReturnsErrorWhenFileDoesNotExist(t *testing.T) {
 	filePath := filepath.Join(t.TempDir(), "does-not-exist.toml")
 
 	_, err := Load(filePath, LoadOptions{Defaults: Defaults{DBPath: "default.db"}})
-	require.ErrorIs(t, err, ErrOpenConfigFile)
-	require.ErrorIs(t, err, fs.ErrNotExist)
+	require.ErrorIs(t, err, ErrConfigFileNotFound)
 }
 
 func TestSampleConfigIsValid(t *testing.T) {

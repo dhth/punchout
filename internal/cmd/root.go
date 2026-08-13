@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -170,16 +169,6 @@ func NewRootCommand() (*cobra.Command, error) {
 				},
 			)
 			if err != nil {
-				if errors.Is(err, config.ErrOpenConfigFile) && errors.Is(err, fs.ErrNotExist) {
-					return fmt.Errorf(`no configuration file found at %q
-
-Here's a sample config:
-
----
-%s---
-
-New to punchout? Run 'punchout tour' for a quick introduction`, configPathFull, config.SampleConfig)
-				}
 				return err
 			}
 

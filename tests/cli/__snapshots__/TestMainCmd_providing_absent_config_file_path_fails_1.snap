@@ -47,5 +47,5 @@ jql = "assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DES
 # http_port = 9999
 ---
 
-New to punchout? Run 'punchout tour' for a quick introduction
+New to punchout? Run 'punchout tour' for a quick introduction.
 
