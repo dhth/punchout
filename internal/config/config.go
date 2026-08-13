@@ -1,6 +1,7 @@
 package config
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
@@ -19,6 +20,9 @@ const (
 	mcpTransportNameStdio         = "stdio"
 	mcpTransportNameHTTP          = "http"
 )
+
+//go:embed sample-config.toml
+var SampleConfig string
 
 var (
 	ErrOpenConfigFile          = errors.New("couldn't open config file")

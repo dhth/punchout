@@ -174,9 +174,12 @@ func NewRootCommand() (*cobra.Command, error) {
 					return fmt.Errorf(`no configuration file found at:
   %s
 
-See https://github.com/dhth/punchout#using-a-config-file to configure punchout.
+Here's a sample config:
 
-New to punchout? Run 'punchout tour' for a quick introduction.`, configPathFull)
+---
+%s---
+
+New to punchout? Run 'punchout tour' for a quick introduction`, configPathFull, config.SampleConfig)
 				}
 				return err
 			}

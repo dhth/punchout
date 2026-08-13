@@ -980,3 +980,11 @@ func TestLoadReturnsErrorWhenFileDoesNotExist(t *testing.T) {
 	require.ErrorIs(t, err, ErrOpenConfigFile)
 	require.ErrorIs(t, err, fs.ErrNotExist)
 }
+
+func TestSampleConfigIsValid(t *testing.T) {
+	_, err := decodeAndResolve(strings.NewReader(SampleConfig), LoadOptions{
+		HomeDir:  "/home/user",
+		Defaults: Defaults{DBPath: "default.db"},
+	})
+	require.NoError(t, err)
+}
