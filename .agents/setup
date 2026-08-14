@@ -11,4 +11,5 @@ curl -fsSL https://mise.run/bash | sh
 	"go:golang.org/x/vuln/cmd/govulncheck" \
 	gofumpt \
 	golangci-lint \
+	"github:dhth/terminal-control" \
 	yamlfmt
