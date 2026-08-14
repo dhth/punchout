@@ -13,3 +13,5 @@ curl -fsSL https://mise.run/bash | sh
 	golangci-lint \
 	"github:dhth/terminal-control" \
 	yamlfmt
+
+git config push.autoSetupRemote true
