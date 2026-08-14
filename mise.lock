@@ -85,6 +85,23 @@ checksum = "sha256:2345667cbcf60767c1a6f678755cbb7465367761084e9d2cbb59ae0cc1a94
 url = "https://github.com/sigstore/cosign/releases/download/v2.5.0/cosign-windows-amd64.exe"
 url_api = "https://api.github.com/repos/sigstore/cosign/releases/assets/244375159"
 
+[[tools."github:dhth/terminal-control"]]
+version = "0.6.0-r1"
+backend = "github:dhth/terminal-control"
+
+[tools."github:dhth/terminal-control".options]
+version_prefix = "musl-v"
+
+[tools."github:dhth/terminal-control"."platforms.linux-x64"]
+checksum = "sha256:63ae2cc1e83ac4e79d0ae7d2c606d87215b9831612d7f97440283356c1c03388"
+url = "https://github.com/dhth/terminal-control/releases/download/musl-v0.6.0-r1/termctrl-0.6.0-linux-x86_64-musl.tar.gz"
+url_api = "https://api.github.com/repos/dhth/terminal-control/releases/assets/513997951"
+
+[tools."github:dhth/terminal-control"."platforms.linux-x64-musl"]
+checksum = "sha256:63ae2cc1e83ac4e79d0ae7d2c606d87215b9831612d7f97440283356c1c03388"
+url = "https://github.com/dhth/terminal-control/releases/download/musl-v0.6.0-r1/termctrl-0.6.0-linux-x86_64-musl.tar.gz"
+url_api = "https://api.github.com/repos/dhth/terminal-control/releases/assets/513997951"
+
 [[tools.go]]
 version = "1.26.5"
 backend = "core:go"
@@ -251,6 +268,10 @@ checksum = "sha256:d7a3d8ba795e97ab8c4f8003630d300da164adf21fde5a4049440c20f15c3
 url = "https://github.com/goreleaser/goreleaser/releases/download/v2.14.1/goreleaser_Windows_x86_64.zip"
 url_api = "https://api.github.com/repos/goreleaser/goreleaser/releases/assets/362259806"
 provenance = "github-attestations"
+
+[[tools."npm:@kitlangton/terminal-control-darwin-arm64"]]
+version = "0.6.0"
+backend = "npm:@kitlangton/terminal-control-darwin-arm64"
 
 [[tools.yamlfmt]]
 version = "0.21.0"
