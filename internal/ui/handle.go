@@ -489,6 +489,7 @@ func (m *Model) getCmdToSyncWLToJIRA() []tea.Cmd {
 			}
 
 			wl.syncInProgress = true
+			wl.err = nil
 			m.worklogList.SetItem(i, wl)
 			cmds = append(cmds, m.syncWorklogWithJIRA(wl, i))
 			toSyncNum++
