@@ -48,21 +48,17 @@ func (svc *cloudJira) GetIssues(jql string) ([]d.Issue, error) {
 	return issues, nil
 }
 
-func (svc *cloudJira) SyncWLToJIRA(ctx context.Context, entry d.WorklogEntry, comment string, timeDeltaMins int) error {
-	if entry.EndTS == nil {
-		return errCannotSyncWLWithoutEndTime
-	}
-
-	start := getWorklogStart(entry, timeDeltaMins)
+func (svc *cloudJira) SyncWLToJIRA(ctx context.Context, worklog d.Worklog, timeDeltaMins int) error {
+	start := getWorklogStart(worklog, timeDeltaMins)
 
 	wl := jira.WorklogRecord{
-		IssueID:          entry.IssueKey,
+		IssueID:          worklog.IssueKey,
 		Started:          (*jira.Time)(&start),
-		TimeSpentSeconds: getTimeSpentSeconds(entry.BeginTS, *entry.EndTS),
-		Comment:          comment,
+		TimeSpentSeconds: worklog.SecsSpent(),
+		Comment:          worklog.Comment,
 	}
 
-	cwl, _, err := svc.client.Issue.AddWorklogRecord(ctx, entry.IssueKey, &wl)
+	cwl, _, err := svc.client.Issue.AddWorklogRecord(ctx, worklog.IssueKey, &wl)
 	if cwl != nil && cwl.Started == nil {
 		return errJIRARepliedWithEmptyWorklog
 	}

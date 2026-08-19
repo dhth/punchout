@@ -1,0 +1,56 @@
+{
+  "output": {
+    "type": "object",
+    "properties": {
+      "issues": {
+        "type": [
+          "null",
+          "array"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "issue_key": {
+              "type": "string",
+              "description": "issue key"
+            },
+            "issue_type": {
+              "type": "string",
+              "description": "issue type"
+            },
+            "summary": {
+              "type": "string",
+              "description": "issue summary"
+            },
+            "assignee": {
+              "type": "string",
+              "description": "issue assignee"
+            },
+            "status": {
+              "type": "string",
+              "description": "issue status"
+            },
+            "agg_seconds_spent": {
+              "type": "integer",
+              "description": "aggregate seconds spent on the issue"
+            }
+          },
+          "required": [
+            "issue_key",
+            "issue_type",
+            "summary",
+            "assignee",
+            "status",
+            "agg_seconds_spent"
+          ],
+          "additionalProperties": false
+        },
+        "description": "jira issues"
+      }
+    },
+    "required": [
+      "issues"
+    ],
+    "additionalProperties": false
+  }
+}

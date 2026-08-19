@@ -1,0 +1,150 @@
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "worklogs": {
+        "type": [
+          "null",
+          "array"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "issue_key": {
+              "type": "string",
+              "description": "issue key"
+            },
+            "begin_time": {
+              "type": "string",
+              "description": "begin time for issue (in the format 2006/01/02 15:04 in local time)"
+            },
+            "end_time": {
+              "type": "string",
+              "description": "end time for issue (in the format 2006/01/02 15:04 in local time, must be after begin_time)"
+            },
+            "comment": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "optional comment for the worklog"
+            }
+          },
+          "required": [
+            "issue_key",
+            "begin_time",
+            "end_time"
+          ],
+          "additionalProperties": false
+        },
+        "description": "array of worklog entries to create"
+      }
+    },
+    "required": [
+      "worklogs"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "successful_worklogs": {
+        "type": [
+          "null",
+          "array"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "issue_key": {
+              "type": "string",
+              "description": "jira issue key"
+            },
+            "begin_time": {
+              "type": "string",
+              "description": "begin time for issue (in the format 2006/01/02 15:04 in local time)"
+            },
+            "end_time": {
+              "type": "string",
+              "description": "end time for issue (in the format 2006/01/02 15:04 in local time, must be after begin_time)"
+            },
+            "comment": {
+              "type": "string",
+              "description": "comment for the worklog"
+            }
+          },
+          "required": [
+            "issue_key",
+            "begin_time",
+            "end_time",
+            "comment"
+          ],
+          "additionalProperties": false
+        },
+        "description": "successfully created worklog entries"
+      },
+      "failed_worklogs": {
+        "type": [
+          "null",
+          "array"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "input": {
+              "type": "object",
+              "properties": {
+                "issue_key": {
+                  "type": "string",
+                  "description": "issue key"
+                },
+                "begin_time": {
+                  "type": "string",
+                  "description": "begin time for issue (in the format 2006/01/02 15:04 in local time)"
+                },
+                "end_time": {
+                  "type": "string",
+                  "description": "end time for issue (in the format 2006/01/02 15:04 in local time, must be after begin_time)"
+                },
+                "comment": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "optional comment for the worklog"
+                }
+              },
+              "description": "original input that failed",
+              "required": [
+                "issue_key",
+                "begin_time",
+                "end_time"
+              ],
+              "additionalProperties": false
+            },
+            "error": {
+              "type": "string",
+              "description": "error message describing the failure"
+            },
+            "index": {
+              "type": "integer",
+              "description": "index of the failed entry in the original input array"
+            }
+          },
+          "required": [
+            "input",
+            "error",
+            "index"
+          ],
+          "additionalProperties": false
+        },
+        "description": "failed worklog entries with error details"
+      }
+    },
+    "required": [
+      "successful_worklogs",
+      "failed_worklogs"
+    ],
+    "additionalProperties": false
+  }
+}

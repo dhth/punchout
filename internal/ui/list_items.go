@@ -20,14 +20,30 @@ const (
 	dateFormat       = "2006/01/02"
 )
 
+type worklogListItem struct {
+	d.StoredWorklog
+
+	fallbackComment *string
+	syncInProgress  bool
+	err             error
+}
+
+func (item worklogListItem) FilterValue() string { return item.IssueKey }
+
+type syncedWorklogListItem struct {
+	d.StoredWorklog
+}
+
+func (item syncedWorklogListItem) FilterValue() string { return item.IssueKey }
+
 func renderListItem(item list.Item, thm theme.Theme, styles styles) (string, string) {
 	switch item := item.(type) {
 	case *d.Issue:
 		return renderIssue(item, thm, styles)
-	case d.WorklogEntry:
-		return renderWorklogEntry(item, styles)
-	case d.SyncedWorklogEntry:
-		return renderSyncedWorklogEntry(item)
+	case worklogListItem:
+		return renderUnsyncedWorklog(item, styles)
+	case syncedWorklogListItem:
+		return renderSyncedWorklog(item)
 	default:
 		return "", ""
 	}
@@ -70,48 +86,43 @@ func renderIssue(issue *d.Issue, thm theme.Theme, styles styles) (string, string
 	return title, description
 }
 
-func renderWorklogEntry(entry d.WorklogEntry, styles styles) (string, string) {
+func renderUnsyncedWorklog(entry worklogListItem, styles styles) (string, string) {
 	title := "[NO COMMENT]"
 	if !entry.NeedsComment() {
-		title = *entry.Comment
+		title = entry.Comment
 	}
 
-	if entry.Error != nil {
-		return title, "error: " + entry.Error.Error()
+	if entry.err != nil {
+		return title, "error: " + entry.err.Error()
 	}
 
 	var duration string
-	if entry.EndTS != nil {
-		now := time.Now()
-		startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-		if startOfToday.Sub(*entry.EndTS) > 0 {
-			if entry.BeginTS.Format(dateFormat) == entry.EndTS.Format(dateFormat) {
-				duration = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(dayAndTimeFormat), entry.EndTS.Format(timeOnlyFormat))
-			} else {
-				duration = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(dayAndTimeFormat), entry.EndTS.Format(dayAndTimeFormat))
-			}
+	now := time.Now()
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	if startOfToday.Sub(entry.EndTS) > 0 {
+		if entry.BeginTS.Format(dateFormat) == entry.EndTS.Format(dateFormat) {
+			duration = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(dayAndTimeFormat), entry.EndTS.Format(timeOnlyFormat))
 		} else {
-			duration = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(timeOnlyFormat), entry.EndTS.Format(timeOnlyFormat))
+			duration = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(dayAndTimeFormat), entry.EndTS.Format(dayAndTimeFormat))
 		}
+	} else {
+		duration = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(timeOnlyFormat), entry.EndTS.Format(timeOnlyFormat))
 	}
 
-	var timeSpent string
-	if entry.EndTS != nil {
-		timeSpent = utils.HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))
-	}
+	timeSpent := utils.HumanizeDuration(entry.SecsSpent())
 
 	var syncStatus string
 	switch {
 	case entry.Synced:
 		syncStatus = styles.syncedBadge.Render("synced")
-	case entry.SyncInProgress:
+	case entry.syncInProgress:
 		syncStatus = styles.syncingBadge.Render("syncing")
 	default:
 		syncStatus = styles.notSyncedBadge.Render("not synced")
 	}
 
 	var fallbackCommentStatus string
-	if entry.NeedsComment() && entry.FallbackComment != nil {
+	if entry.NeedsComment() && entry.fallbackComment != nil {
 		fallbackCommentStatus = styles.fallbackCommentBadge.Render("fallback comment")
 	}
 
@@ -127,10 +138,10 @@ func renderWorklogEntry(entry d.WorklogEntry, styles styles) (string, string) {
 	return title, description
 }
 
-func renderSyncedWorklogEntry(entry d.SyncedWorklogEntry) (string, string) {
+func renderSyncedWorklog(entry syncedWorklogListItem) (string, string) {
 	title := "[NO COMMENT]"
 	if !entry.NeedsComment() {
-		title = *entry.Comment
+		title = entry.Comment
 	}
 
 	description := fmt.Sprintf(

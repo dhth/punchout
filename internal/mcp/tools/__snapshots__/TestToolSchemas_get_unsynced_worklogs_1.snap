@@ -1,0 +1,51 @@
+{
+  "output": {
+    "type": "object",
+    "properties": {
+      "worklogs": {
+        "type": [
+          "null",
+          "array"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "issue_key": {
+              "type": "string",
+              "description": "JIRA issue key"
+            },
+            "begin_time": {
+              "type": "string",
+              "description": "worklog begin time"
+            },
+            "end_time": {
+              "type": "string",
+              "description": "worklog end time"
+            },
+            "comment": {
+              "type": "string",
+              "description": "worklog comment"
+            },
+            "id": {
+              "type": "integer",
+              "description": "worklog entry ID"
+            }
+          },
+          "required": [
+            "issue_key",
+            "begin_time",
+            "end_time",
+            "comment",
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "description": "unsynced worklog entries"
+      }
+    },
+    "required": [
+      "worklogs"
+    ],
+    "additionalProperties": false
+  }
+}

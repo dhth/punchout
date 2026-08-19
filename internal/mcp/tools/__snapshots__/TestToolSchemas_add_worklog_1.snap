@@ -1,0 +1,60 @@
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "issue_key": {
+        "type": "string",
+        "description": "issue key"
+      },
+      "begin_time": {
+        "type": "string",
+        "description": "begin time for issue (in the format 2006/01/02 15:04 in local time)"
+      },
+      "end_time": {
+        "type": "string",
+        "description": "end time for issue (in the format 2006/01/02 15:04 in local time, must be after begin_time)"
+      },
+      "comment": {
+        "type": [
+          "null",
+          "string"
+        ],
+        "description": "optional comment for the worklog"
+      }
+    },
+    "required": [
+      "issue_key",
+      "begin_time",
+      "end_time"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "issue_key": {
+        "type": "string",
+        "description": "jira issue key"
+      },
+      "begin_time": {
+        "type": "string",
+        "description": "begin time for issue (in the format 2006/01/02 15:04 in local time)"
+      },
+      "end_time": {
+        "type": "string",
+        "description": "end time for issue (in the format 2006/01/02 15:04 in local time, must be after begin_time)"
+      },
+      "comment": {
+        "type": "string",
+        "description": "comment for the worklog"
+      }
+    },
+    "required": [
+      "issue_key",
+      "begin_time",
+      "end_time",
+      "comment"
+    ],
+    "additionalProperties": false
+  }
+}

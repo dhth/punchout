@@ -36,7 +36,7 @@ type syncError struct {
 	IssueKey     string `json:"issue_key" jsonschema:"jira issue key"`
 	SyncedToJira bool   `json:"synced_to_jira" jsonschema:"whether the worklog was synced to jira"`
 	UpdatedInDB  bool   `json:"updated_in_db" jsonschema:"whether the worklog was updated in punchout's local db"`
-	Err          string `json:"error" jsonschema:"any error that occured during the sync"`
+	Err          string `json:"error" jsonschema:"any error that occurred during the sync"`
 }
 
 func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, syncWorklogsOutput, error) {
@@ -60,19 +60,17 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 
 	for _, entry := range entries {
 		wg.Add(1)
-		go func(entry d.WorklogEntry) {
+		go func(entry d.StoredWorklog) {
 			defer wg.Done()
 			defer func() {
 				<-semaphore
 			}()
 			semaphore <- struct{}{}
-			var comment string
 			var fallbackCommentUsed bool
-			if entry.NeedsComment() && h.JiraOpts.FallbackComment != nil {
-				comment = *h.JiraOpts.FallbackComment
+			worklog := entry.Worklog
+			if worklog.NeedsComment() && h.JiraOpts.FallbackComment != nil {
+				worklog.Comment = *h.JiraOpts.FallbackComment
 				fallbackCommentUsed = true
-			} else if entry.Comment != nil {
-				comment = *entry.Comment
 			}
 
 			sr := syncResult{
@@ -80,7 +78,7 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 				IssueKey: entry.IssueKey,
 			}
 
-			err := h.JiraSvc.SyncWLToJIRA(ctx, entry, comment, h.JiraOpts.TimeDeltaMins)
+			err := h.JiraSvc.SyncWLToJIRA(ctx, worklog, h.JiraOpts.TimeDeltaMins)
 			if err != nil {
 				sr.Err = err
 				resultChan <- sr
@@ -91,7 +89,7 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 			sr.SyncedToJira = true
 
 			if fallbackCommentUsed {
-				err = pers.UpdateSyncStatusAndCommentForWLInDB(h.DB, entry.ID, comment)
+				err = pers.UpdateSyncStatusAndCommentForWLInDB(h.DB, entry.ID, worklog.Comment)
 			} else {
 				err = pers.UpdateSyncStatusForWLInDB(h.DB, entry.ID)
 			}

@@ -33,12 +33,16 @@ func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
 }
 
 func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
+	if m.activeWorklog == nil {
+		return nil
+	}
+
 	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
 		m.setErrorMsg(err.Error())
 		return nil
 	}
-	m.activeIssueBeginTS = beginTS.Local()
+	m.activeWorklog.BeginTS = beginTS.Local()
 
 	endTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryEndTS].Value(), time.Local)
 	if err != nil {
@@ -47,7 +51,7 @@ func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 	}
 	m.activeIssueEndTS = endTS.Local()
 
-	if !m.isDurationValid(m.activeIssueBeginTS, m.activeIssueEndTS) {
+	if !m.isDurationValid(m.activeWorklog.BeginTS, m.activeIssueEndTS) {
 		return nil
 	}
 
@@ -60,8 +64,9 @@ func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 
 	return toggleTracking(
 		m.db,
+		trackingToggleFinish,
 		m.activeIssue,
-		m.activeIssueBeginTS,
+		m.activeWorklog.BeginTS,
 		m.activeIssueEndTS,
 		comment,
 	)
@@ -90,7 +95,7 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 	if ok {
 		switch m.worklogSaveType {
 		case worklogInsert:
-			worklog := d.ValidatedWorkLog{
+			worklog := d.Worklog{
 				IssueKey: issue.IssueKey,
 				BeginTS:  beginTS,
 				EndTS:    endTS,
@@ -99,15 +104,17 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 			cmd = insertManualEntry(m.db, worklog)
 			m.activeView = issueListView
 		case worklogUpdate:
-			wl, ok := m.worklogList.SelectedItem().(d.WorklogEntry)
+			wl, ok := m.worklogList.SelectedItem().(worklogListItem)
 			if ok {
 				cmd = updateManualEntry(
 					m.db,
 					wl.ID,
-					wl.IssueKey,
-					beginTS,
-					endTS,
-					m.trackingInputs[entryComment].Value(),
+					d.Worklog{
+						IssueKey: wl.IssueKey,
+						BeginTS:  beginTS,
+						EndTS:    endTS,
+						Comment:  m.trackingInputs[entryComment].Value(),
+					},
 				)
 				m.activeView = wLView
 			}
@@ -294,15 +301,15 @@ func (m *Model) handleRequestToGoToActiveIssue() {
 }
 
 func (m *Model) handleRequestToUpdateActiveWL() {
+	if m.activeWorklog == nil {
+		return
+	}
+
 	m.activeView = editActiveWLView
 	m.trackingFocussedField = entryBeginTS
-	beginTSStr := m.activeIssueBeginTS.Format(timeFormat)
+	beginTSStr := m.activeWorklog.BeginTS.Format(timeFormat)
 	m.trackingInputs[entryBeginTS].SetValue(beginTSStr)
-	if m.activeIssueComment != nil {
-		m.trackingInputs[entryComment].SetValue(*m.activeIssueComment)
-	} else {
-		m.trackingInputs[entryComment].SetValue("")
-	}
+	m.trackingInputs[entryComment].SetValue(m.activeWorklog.Comment)
 
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].Blur()
@@ -327,7 +334,7 @@ func (m *Model) handleRequestToCreateManualWL() {
 }
 
 func (m *Model) handleRequestToUpdateSavedWL() {
-	wl, ok := m.worklogList.SelectedItem().(d.WorklogEntry)
+	wl, ok := m.worklogList.SelectedItem().(worklogListItem)
 	if !ok {
 		return
 	}
@@ -345,11 +352,7 @@ func (m *Model) handleRequestToUpdateSavedWL() {
 
 	m.trackingInputs[entryBeginTS].SetValue(beginTSStr)
 	m.trackingInputs[entryEndTS].SetValue(endTSStr)
-	var comment string
-	if wl.Comment != nil {
-		comment = *wl.Comment
-	}
-	m.trackingInputs[entryComment].SetValue(comment)
+	m.trackingInputs[entryComment].SetValue(wl.Comment)
 
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].Blur()
@@ -381,7 +384,7 @@ func (m *Model) handleRequestToSyncTimestamps() {
 }
 
 func (m *Model) getCmdToDeleteWL() tea.Cmd {
-	issue, ok := m.worklogList.SelectedItem().(d.WorklogEntry)
+	issue, ok := m.worklogList.SelectedItem().(worklogListItem)
 	if !ok {
 		m.setErrorMsg("couldn't delete worklog entry")
 		return nil
@@ -403,11 +406,12 @@ func (m *Model) getCmdToQuickSwitchTracking() tea.Cmd {
 
 	if !m.trackingActive {
 		m.changesLocked = true
-		m.activeIssueBeginTS = time.Now()
+		m.activeWorklog = &d.InProgressWorklog{IssueKey: issue.IssueKey, BeginTS: time.Now()}
 		return toggleTracking(
 			m.db,
+			trackingToggleStart,
 			issue.IssueKey,
-			m.activeIssueBeginTS,
+			m.activeWorklog.BeginTS,
 			m.activeIssueEndTS,
 			"",
 		)
@@ -442,28 +446,29 @@ func (m *Model) getCmdToStartTracking() tea.Cmd {
 	}
 
 	m.changesLocked = true
-	m.activeIssueBeginTS = time.Now().Truncate(time.Second)
+	m.activeWorklog = &d.InProgressWorklog{IssueKey: issue.IssueKey, BeginTS: time.Now().Truncate(time.Second)}
 	return toggleTracking(
 		m.db,
+		trackingToggleStart,
 		issue.IssueKey,
-		m.activeIssueBeginTS,
+		m.activeWorklog.BeginTS,
 		m.activeIssueEndTS,
 		"",
 	)
 }
 
 func (m *Model) handleStoppingOfTracking() {
+	if m.activeWorklog == nil {
+		return
+	}
+
 	currentTime := time.Now()
-	beginTimeStr := m.activeIssueBeginTS.Format(timeFormat)
+	beginTimeStr := m.activeWorklog.BeginTS.Format(timeFormat)
 	currentTimeStr := currentTime.Format(timeFormat)
 
 	m.trackingInputs[entryBeginTS].SetValue(beginTimeStr)
 	m.trackingInputs[entryEndTS].SetValue(currentTimeStr)
-	if m.activeIssueComment != nil {
-		m.trackingInputs[entryComment].SetValue(*m.activeIssueComment)
-	} else {
-		m.trackingInputs[entryComment].SetValue("")
-	}
+	m.trackingInputs[entryComment].SetValue(m.activeWorklog.Comment)
 
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].Blur()
@@ -478,12 +483,13 @@ func (m *Model) getCmdToSyncWLToJIRA() []tea.Cmd {
 	var cmds []tea.Cmd
 	toSyncNum := 0
 	for i, entry := range m.worklogList.Items() {
-		if wl, ok := entry.(d.WorklogEntry); ok {
+		if wl, ok := entry.(worklogListItem); ok {
 			if wl.Synced {
 				continue
 			}
 
-			wl.SyncInProgress = true
+			wl.syncInProgress = true
+			wl.err = nil
 			m.worklogList.SetItem(i, wl)
 			cmds = append(cmds, m.syncWorklogWithJIRA(wl, i))
 			toSyncNum++
@@ -497,10 +503,14 @@ func (m *Model) getCmdToSyncWLToJIRA() []tea.Cmd {
 }
 
 func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
-	selectedIssue := m.issueList.SelectedItem().FilterValue()
+	selectedIssue := m.issueList.SelectedItem()
+	if selectedIssue == nil {
+		return nil
+	}
+
 	return openURLInBrowser(fmt.Sprintf("%sbrowse/%s",
 		m.jiraSvc.URL(),
-		selectedIssue))
+		selectedIssue.FilterValue()))
 }
 
 func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
@@ -626,8 +636,7 @@ func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
 	var secsSpent int
 	for i, e := range msg.entries {
 		secsSpent += e.SecsSpent()
-		e.FallbackComment = m.opts.Jira.FallbackComment
-		items[i] = list.Item(e)
+		items[i] = worklogListItem{StoredWorklog: e, fallbackComment: m.opts.Jira.FallbackComment}
 	}
 	m.worklogList.SetItems(items)
 	m.unsyncedWLSecsSpent = secsSpent
@@ -645,14 +654,14 @@ func (m *Model) handleSyncedWLEntriesFetchedFromDBMsg(msg syncedWLEntriesFetched
 
 	items := make([]list.Item, len(msg.entries))
 	for i, e := range msg.entries {
-		items[i] = list.Item(e)
+		items[i] = syncedWorklogListItem{StoredWorklog: e}
 	}
 	m.syncedWorklogList.SetItems(items)
 }
 
 func (m *Model) handleWLSyncUpdatedInDBMsg(msg wLSyncUpdatedInDB) {
 	if msg.err != nil {
-		msg.entry.Error = msg.err
+		msg.entry.err = msg.err
 		m.worklogList.SetItem(msg.index, msg.entry)
 		return
 	}
@@ -667,19 +676,25 @@ func (m *Model) handleActiveWLFetchedFromDBMsg(msg activeWLFetchedFromDB) {
 		return
 	}
 
-	m.activeIssue = msg.activeIssue
-	if msg.activeIssue == "" {
+	if previouslyActiveIssue := m.issueMap[m.activeIssue]; previouslyActiveIssue != nil {
+		previouslyActiveIssue.TrackingActive = false
+	}
+
+	if msg.worklog == nil {
+		m.activeIssue = ""
+		m.activeWorklog = nil
 		m.lastChange = updateChange
+		m.trackingActive = false
 	} else {
+		m.activeIssue = msg.worklog.IssueKey
 		m.lastChange = insertChange
 		activeIssue, ok := m.issueMap[m.activeIssue]
-		m.activeIssueBeginTS = msg.beginTS
-		m.activeIssueComment = msg.comment
+		m.activeWorklog = msg.worklog
 		if ok {
 			activeIssue.TrackingActive = true
 
 			// go to tracked item on startup
-			activeIndex, ok := m.issueIndexMap[msg.activeIssue]
+			activeIndex, ok := m.issueIndexMap[msg.worklog.IssueKey]
 			if ok {
 				m.issueList.Select(activeIndex)
 			}
@@ -709,20 +724,22 @@ func (m *Model) handleActiveWLDeletedFromDBMsg(msg activeWLDeletedFromDB) {
 	}
 	m.lastChange = updateChange
 	m.trackingActive = false
-	m.activeIssueComment = nil
+	m.activeWorklog = nil
 	m.activeIssue = ""
 }
 
 func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 	if msg.err != nil {
-		msg.entry.Error = msg.err
+		msg.entry.err = msg.err
+		msg.entry.syncInProgress = false
+		m.worklogList.SetItem(msg.index, msg.entry)
 		return nil
 	}
 
 	msg.entry.Synced = true
-	msg.entry.SyncInProgress = false
+	msg.entry.syncInProgress = false
 	if msg.fallbackCommentUsed {
-		msg.entry.Comment = m.opts.Jira.FallbackComment
+		msg.entry.Comment = *m.opts.Jira.FallbackComment
 	}
 	m.worklogList.SetItem(msg.index, msg.entry)
 	return updateSyncStatusForEntry(m.db, msg.entry, msg.index, msg.fallbackCommentUsed)
@@ -734,15 +751,38 @@ func (m *Model) handleActiveWLUpdatedInDBMsg(msg activeWLUpdatedInDB) {
 		return
 	}
 
-	m.activeIssueBeginTS = msg.beginTS
-	m.activeIssueComment = msg.comment
+	if m.activeWorklog == nil {
+		return
+	}
+
+	m.activeWorklog.BeginTS = msg.beginTS
+	if msg.comment != nil {
+		m.activeWorklog.Comment = *msg.comment
+	}
 }
 
 func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 	if msg.err != nil {
 		m.setErrorMsg(msg.err.Error())
-		m.trackingActive = false
-		m.activeIssueComment = nil
+		m.changesLocked = false
+		if msg.reconcileActiveStatus {
+			return fetchActiveStatus(m.db, 0)
+		}
+		switch msg.operation {
+		case trackingToggleStart:
+			m.trackingActive = false
+			m.activeIssue = ""
+			m.activeWorklog = nil
+		case trackingToggleFinish:
+			m.trackingActive = true
+			m.activeIssue = msg.activeIssue
+			if m.activeWorklog != nil {
+				m.activeWorklog.IssueKey = msg.activeIssue
+			}
+			if activeIssue := m.issueMap[msg.activeIssue]; activeIssue != nil {
+				activeIssue.TrackingActive = true
+			}
+		}
 		return nil
 	}
 
@@ -761,7 +801,7 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 			activeIssue.TrackingActive = false
 		}
 		m.trackingActive = false
-		m.activeIssueComment = nil
+		m.activeWorklog = nil
 		cmd = fetchUnsyncedWorkLogs(m.db)
 	case false:
 		m.lastChange = insertChange
@@ -778,9 +818,30 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
 	if msg.err != nil {
 		m.setErrorMsg(msg.err.Error())
-		if errors.Is(msg.err, pers.ErrNoTaskIsActive) || errors.Is(msg.err, pers.ErrCouldntStartTrackingTask) {
+		switch {
+		case errors.Is(msg.err, pers.ErrNoTaskIsActive):
+			if activeIssue := m.issueMap[m.activeIssue]; activeIssue != nil {
+				activeIssue.TrackingActive = false
+			}
+			m.activeIssue = ""
 			m.trackingActive = false
-			m.activeIssueComment = nil
+			m.activeWorklog = nil
+		case errors.Is(msg.err, pers.ErrCouldntStartTrackingTask):
+			if lastActiveIssue := m.issueMap[msg.lastActiveIssue]; lastActiveIssue != nil {
+				lastActiveIssue.TrackingActive = false
+			}
+			m.activeIssue = ""
+			m.trackingActive = false
+			m.activeWorklog = nil
+		case errors.Is(msg.err, pers.ErrCouldntStopActiveTask):
+			m.activeIssue = msg.lastActiveIssue
+			m.trackingActive = true
+			if m.activeWorklog != nil {
+				m.activeWorklog.IssueKey = msg.lastActiveIssue
+			}
+			if activeIssue := m.issueMap[msg.lastActiveIssue]; activeIssue != nil {
+				activeIssue.TrackingActive = true
+			}
 		}
 		return
 	}
@@ -804,8 +865,7 @@ func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
 		currentActiveIssue.TrackingActive = true
 	}
 	m.activeIssue = msg.currentActiveIssue
-	m.activeIssueBeginTS = msg.beginTS
-	m.activeIssueComment = nil
+	m.activeWorklog = &d.InProgressWorklog{IssueKey: msg.currentActiveIssue, BeginTS: msg.beginTS}
 }
 
 func (m *Model) shiftTime(direction timeShiftDirection, duration timeShiftDuration) error {
@@ -825,14 +885,18 @@ func (m *Model) shiftTime(direction timeShiftDirection, duration timeShiftDurati
 }
 
 func (m *Model) getCmdToQuickFinishActiveWL() tea.Cmd {
+	if m.activeWorklog == nil {
+		return nil
+	}
+
 	now := time.Now().Truncate(time.Second)
-	if !m.isDurationValid(m.activeIssueBeginTS, now) {
+	if !m.isDurationValid(m.activeWorklog.BeginTS, now) {
 		return nil
 	}
 
 	m.activeIssueEndTS = now
 
-	return toggleTracking(m.db, m.activeIssue, m.activeIssueBeginTS, m.activeIssueEndTS, "")
+	return toggleTracking(m.db, trackingToggleFinish, m.activeIssue, m.activeWorklog.BeginTS, m.activeIssueEndTS, "")
 }
 
 func (m *Model) isDurationValid(start, end time.Time) bool {
