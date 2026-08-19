@@ -33,6 +33,10 @@ func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
 }
 
 func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
+	if m.activeWorklog == nil {
+		return nil
+	}
+
 	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
 		m.setErrorMsg(err.Error())
@@ -297,6 +301,10 @@ func (m *Model) handleRequestToGoToActiveIssue() {
 }
 
 func (m *Model) handleRequestToUpdateActiveWL() {
+	if m.activeWorklog == nil {
+		return
+	}
+
 	m.activeView = editActiveWLView
 	m.trackingFocussedField = entryBeginTS
 	beginTSStr := m.activeWorklog.BeginTS.Format(timeFormat)
@@ -450,6 +458,10 @@ func (m *Model) getCmdToStartTracking() tea.Cmd {
 }
 
 func (m *Model) handleStoppingOfTracking() {
+	if m.activeWorklog == nil {
+		return
+	}
+
 	currentTime := time.Now()
 	beginTimeStr := m.activeWorklog.BeginTS.Format(timeFormat)
 	currentTimeStr := currentTime.Format(timeFormat)
@@ -490,10 +502,14 @@ func (m *Model) getCmdToSyncWLToJIRA() []tea.Cmd {
 }
 
 func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
-	selectedIssue := m.issueList.SelectedItem().FilterValue()
+	selectedIssue := m.issueList.SelectedItem()
+	if selectedIssue == nil {
+		return nil
+	}
+
 	return openURLInBrowser(fmt.Sprintf("%sbrowse/%s",
 		m.jiraSvc.URL(),
-		selectedIssue))
+		selectedIssue.FilterValue()))
 }
 
 func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
@@ -734,6 +750,10 @@ func (m *Model) handleActiveWLUpdatedInDBMsg(msg activeWLUpdatedInDB) {
 		return
 	}
 
+	if m.activeWorklog == nil {
+		return
+	}
+
 	m.activeWorklog.BeginTS = msg.beginTS
 	if msg.comment != nil {
 		m.activeWorklog.Comment = *msg.comment
@@ -755,7 +775,9 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 		case trackingToggleFinish:
 			m.trackingActive = true
 			m.activeIssue = msg.activeIssue
-			m.activeWorklog.IssueKey = msg.activeIssue
+			if m.activeWorklog != nil {
+				m.activeWorklog.IssueKey = msg.activeIssue
+			}
 			if activeIssue := m.issueMap[msg.activeIssue]; activeIssue != nil {
 				activeIssue.TrackingActive = true
 			}
@@ -813,7 +835,9 @@ func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
 		case errors.Is(msg.err, pers.ErrCouldntStopActiveTask):
 			m.activeIssue = msg.lastActiveIssue
 			m.trackingActive = true
-			m.activeWorklog.IssueKey = msg.lastActiveIssue
+			if m.activeWorklog != nil {
+				m.activeWorklog.IssueKey = msg.lastActiveIssue
+			}
 			if activeIssue := m.issueMap[msg.lastActiveIssue]; activeIssue != nil {
 				activeIssue.TrackingActive = true
 			}
@@ -860,6 +884,10 @@ func (m *Model) shiftTime(direction timeShiftDirection, duration timeShiftDurati
 }
 
 func (m *Model) getCmdToQuickFinishActiveWL() tea.Cmd {
+	if m.activeWorklog == nil {
+		return nil
+	}
+
 	now := time.Now().Truncate(time.Second)
 	if !m.isDurationValid(m.activeWorklog.BeginTS, now) {
 		return nil
