@@ -714,6 +714,8 @@ func (m *Model) handleActiveWLDeletedFromDBMsg(msg activeWLDeletedFromDB) {
 func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 	if msg.err != nil {
 		msg.entry.err = msg.err
+		msg.entry.syncInProgress = false
+		m.worklogList.SetItem(msg.index, msg.entry)
 		return nil
 	}
 
