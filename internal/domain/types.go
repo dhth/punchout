@@ -17,54 +17,29 @@ type Issue struct {
 
 func (issue Issue) FilterValue() string { return issue.IssueKey }
 
-type WorklogEntry struct {
-	ID              int        `json:"id" jsonschema:"worklog entry ID"`
-	IssueKey        string     `json:"issue_key" jsonschema:"JIRA issue key"`
-	BeginTS         time.Time  `json:"begin_time" jsonschema:"worklog begin time"`
-	EndTS           *time.Time `json:"end_time" jsonschema:"worklog end time"`
-	Comment         *string    `json:"comment" jsonschema:"worklog comment"`
-	FallbackComment *string    `json:"-"`
-	Active          bool       `json:"-"`
-	Synced          bool       `json:"-"`
-	SyncInProgress  bool       `json:"-"`
-	Error           error      `json:"-"`
-}
-
-type SyncedWorklogEntry struct {
-	ID       int
+type InProgressWorklog struct {
 	IssueKey string
 	BeginTS  time.Time
-	EndTS    time.Time
-	Comment  *string
-}
-
-func (entry *WorklogEntry) NeedsComment() bool {
-	if entry.Comment == nil {
-		return true
-	}
-
-	return strings.TrimSpace(*entry.Comment) == ""
-}
-
-func (entry *SyncedWorklogEntry) NeedsComment() bool {
-	if entry.Comment == nil {
-		return true
-	}
-
-	return strings.TrimSpace(*entry.Comment) == ""
-}
-
-func (entry WorklogEntry) SecsSpent() int {
-	return int(entry.EndTS.Sub(entry.BeginTS).Seconds())
-}
-
-func (entry WorklogEntry) FilterValue() string { return entry.IssueKey }
-
-func (entry SyncedWorklogEntry) FilterValue() string { return entry.IssueKey }
-
-type ValidatedWorkLog struct {
-	IssueKey string
-	BeginTS  time.Time
-	EndTS    time.Time
 	Comment  string
+}
+
+type Worklog struct {
+	IssueKey string    `json:"issue_key" jsonschema:"JIRA issue key"`
+	BeginTS  time.Time `json:"begin_time" jsonschema:"worklog begin time"`
+	EndTS    time.Time `json:"end_time" jsonschema:"worklog end time"`
+	Comment  string    `json:"comment" jsonschema:"worklog comment"`
+}
+
+func (w Worklog) NeedsComment() bool {
+	return strings.TrimSpace(w.Comment) == ""
+}
+
+func (w Worklog) SecsSpent() int {
+	return int(w.EndTS.Sub(w.BeginTS).Seconds())
+}
+
+type StoredWorklog struct {
+	Worklog
+	ID     int  `json:"id" jsonschema:"worklog entry ID"`
+	Synced bool `json:"-"`
 }

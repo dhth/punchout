@@ -115,9 +115,8 @@ type Model struct {
 	unsyncedWLCount       uint
 	unsyncedWLSecsSpent   int
 	syncedWorklogList     list.Model
-	activeIssueBeginTS    time.Time
 	activeIssueEndTS      time.Time
-	activeIssueComment    *string
+	activeWorklog         *d.InProgressWorklog
 	trackingInputs        []textinput.Model
 	trackingFocussedField trackingFocussedField
 	helpVP                viewport.Model

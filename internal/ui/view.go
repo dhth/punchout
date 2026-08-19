@@ -43,19 +43,20 @@ func (m Model) View() tea.View {
 	}
 
 	if m.issuesFetched {
-		if m.activeIssue != "" {
+		if m.activeWorklog != nil {
 			var issueSummaryMsg, trackingSinceMsg string
-			issue, ok := m.issueMap[m.activeIssue]
+			issueKey := m.activeWorklog.IssueKey
+			issue, ok := m.issueMap[issueKey]
 			if ok {
 				issueSummaryMsg = fmt.Sprintf("(%s)", utils.Trim(issue.Summary, 50))
 				if m.activeView != saveActiveWLView {
-					trackingSinceMsg = fmt.Sprintf("(since %s)", m.activeIssueBeginTS.Format(timeOnlyFormat))
+					trackingSinceMsg = fmt.Sprintf("(since %s)", m.activeWorklog.BeginTS.Format(timeOnlyFormat))
 				}
 			}
 			activeMsg = fmt.Sprintf(
 				"%s%s%s%s",
 				m.styles.tracking.Render("tracking:"),
-				m.styles.activeIssueKeyMsg.Render(m.activeIssue),
+				m.styles.activeIssueKeyMsg.Render(issueKey),
 				m.styles.activeIssueSummaryMsg.Render(issueSummaryMsg),
 				m.styles.trackingBegan.Render(trackingSinceMsg),
 			)

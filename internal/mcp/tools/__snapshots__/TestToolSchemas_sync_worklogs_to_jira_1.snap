@@ -1,0 +1,77 @@
+{
+  "output": {
+    "type": "object",
+    "properties": {
+      "successes": {
+        "type": [
+          "null",
+          "array"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "worklog_id": {
+              "type": "integer",
+              "description": "ID of the worklog entry"
+            },
+            "issue_key": {
+              "type": "string",
+              "description": "jira issue key"
+            }
+          },
+          "required": [
+            "worklog_id",
+            "issue_key"
+          ],
+          "additionalProperties": false
+        },
+        "description": "worklog entries that were successfully synced"
+      },
+      "errors": {
+        "type": [
+          "null",
+          "array"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "worklog_id": {
+              "type": "integer",
+              "description": "ID of the worklog entry"
+            },
+            "issue_key": {
+              "type": "string",
+              "description": "jira issue key"
+            },
+            "synced_to_jira": {
+              "type": "boolean",
+              "description": "whether the worklog was synced to jira"
+            },
+            "updated_in_db": {
+              "type": "boolean",
+              "description": "whether the worklog was updated in punchout's local db"
+            },
+            "error": {
+              "type": "string",
+              "description": "any error that occurred during the sync"
+            }
+          },
+          "required": [
+            "worklog_id",
+            "issue_key",
+            "synced_to_jira",
+            "updated_in_db",
+            "error"
+          ],
+          "additionalProperties": false
+        },
+        "description": "worklog entries for which syncing failed"
+      }
+    },
+    "required": [
+      "successes",
+      "errors"
+    ],
+    "additionalProperties": false
+  }
+}

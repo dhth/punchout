@@ -16,9 +16,7 @@ import (
 	_ "modernc.org/sqlite" // sqlite driver
 )
 
-var errWorklogsEndTSIsEmpty = errors.New("worklog's end timestamp is empty")
-
-func toggleTracking(db *sql.DB, selectedIssue string, beginTS, endTS time.Time, comment string) tea.Cmd {
+func toggleTracking(db *sql.DB, operation trackingToggleOperation, selectedIssue string, beginTS, endTS time.Time, comment string) tea.Cmd {
 	return func() tea.Msg {
 		row := db.QueryRow(`
 SELECT
@@ -38,25 +36,34 @@ LIMIT
 		if errors.Is(err, sql.ErrNoRows) {
 			trackStatus = trackingInactive
 		} else if err != nil {
-			return trackingToggledInDB{err: err}
+			return trackingToggledInDB{activeIssue: selectedIssue, operation: operation, err: err}
 		} else {
 			trackStatus = trackingActive
 		}
 
-		switch trackStatus {
-		case trackingInactive:
+		switch operation {
+		case trackingToggleStart:
+			if trackStatus != trackingInactive {
+				return trackingToggledInDB{operation: operation, reconcileActiveStatus: true, err: errors.New("cannot start tracking while another worklog is active")}
+			}
 			err = pers.InsertNewActiveWLInDB(db, selectedIssue, beginTS)
 			if err != nil {
-				return trackingToggledInDB{err: err}
+				return trackingToggledInDB{operation: operation, err: err}
 			}
-			return trackingToggledInDB{activeIssue: selectedIssue}
+			return trackingToggledInDB{activeIssue: selectedIssue, operation: operation}
+
+		case trackingToggleFinish:
+			if trackStatus != trackingActive {
+				return trackingToggledInDB{activeIssue: selectedIssue, operation: operation, reconcileActiveStatus: true, err: errors.New("cannot finish tracking when no worklog is active")}
+			}
+			err := pers.UpdateActiveWLInDB(db, d.Worklog{IssueKey: activeIssue, BeginTS: beginTS, EndTS: endTS, Comment: comment})
+			if err != nil {
+				return trackingToggledInDB{activeIssue: activeIssue, operation: operation, err: err}
+			}
+			return trackingToggledInDB{activeIssue: "", finished: true, operation: operation}
 
 		default:
-			err := pers.UpdateActiveWLInDB(db, activeIssue, comment, beginTS, endTS)
-			if err != nil {
-				return trackingToggledInDB{err: err}
-			}
-			return trackingToggledInDB{activeIssue: "", finished: true}
+			return trackingToggledInDB{err: errors.New("unknown tracking operation")}
 		}
 	}
 }
@@ -90,7 +97,7 @@ func updateActiveWL(db *sql.DB, beginTS time.Time, comment *string) tea.Cmd {
 	}
 }
 
-func insertManualEntry(db *sql.DB, worklog d.ValidatedWorkLog) tea.Cmd {
+func insertManualEntry(db *sql.DB, worklog d.Worklog) tea.Cmd {
 	return func() tea.Msg {
 		err := pers.InsertManualWLInDB(db, worklog)
 
@@ -105,7 +112,7 @@ func deleteActiveIssueLog(db *sql.DB) tea.Cmd {
 	}
 }
 
-func updateManualEntry(db *sql.DB, rowID int, issueKey string, beginTS time.Time, endTS time.Time, comment string) tea.Cmd {
+func updateManualEntry(db *sql.DB, rowID int, worklog d.Worklog) tea.Cmd {
 	return func() tea.Msg {
 		stmt, err := db.Prepare(`
 UPDATE
@@ -118,27 +125,27 @@ WHERE
     ID = ?;
 `)
 		if err != nil {
-			return wLUpdatedInDB{rowID, issueKey, err}
+			return wLUpdatedInDB{rowID, worklog.IssueKey, err}
 		}
 		defer stmt.Close()
 
-		_, err = stmt.Exec(beginTS.UTC(), endTS.UTC(), comment, rowID)
+		_, err = stmt.Exec(worklog.BeginTS.UTC(), worklog.EndTS.UTC(), worklog.Comment, rowID)
 		if err != nil {
-			return wLUpdatedInDB{rowID, issueKey, err}
+			return wLUpdatedInDB{rowID, worklog.IssueKey, err}
 		}
 
-		return wLUpdatedInDB{rowID, issueKey, nil}
+		return wLUpdatedInDB{rowID, worklog.IssueKey, nil}
 	}
 }
 
 func fetchActiveStatus(db *sql.DB, interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
-		activeIssue, beginTS, comment, err := pers.FetchActiveWLFromDB(db)
+		worklog, err := pers.FetchActiveWLFromDB(db)
 		if err != nil {
 			return activeWLFetchedFromDB{err: err}
 		}
 
-		return activeWLFetchedFromDB{activeIssue: activeIssue, beginTS: beginTS, comment: comment}
+		return activeWLFetchedFromDB{worklog: worklog}
 	})
 }
 
@@ -171,15 +178,11 @@ func deleteLogEntry(db *sql.DB, id int) tea.Cmd {
 	}
 }
 
-func updateSyncStatusForEntry(db *sql.DB, entry d.WorklogEntry, index int, fallbackCommentUsed bool) tea.Cmd {
+func updateSyncStatusForEntry(db *sql.DB, entry worklogListItem, index int, fallbackCommentUsed bool) tea.Cmd {
 	return func() tea.Msg {
 		var err error
-		var comment string
-		if entry.Comment != nil {
-			comment = *entry.Comment
-		}
 		if fallbackCommentUsed {
-			err = pers.UpdateSyncStatusAndCommentForWLInDB(db, entry.ID, comment)
+			err = pers.UpdateSyncStatusAndCommentForWLInDB(db, entry.ID, entry.Comment)
 		} else {
 			err = pers.UpdateSyncStatusForWLInDB(db, entry.ID)
 		}
@@ -236,22 +239,16 @@ func (m Model) saveIssuesToCache(snapshot issuecache.Snapshot) tea.Cmd {
 	}
 }
 
-func (m Model) syncWorklogWithJIRA(entry d.WorklogEntry, index int) tea.Cmd {
+func (m Model) syncWorklogWithJIRA(entry worklogListItem, index int) tea.Cmd {
 	return func() tea.Msg {
 		var fallbackCmtUsed bool
-		if entry.EndTS == nil {
-			return wLSyncedToJIRA{index, entry, fallbackCmtUsed, errWorklogsEndTSIsEmpty}
-		}
-
-		var comment string
-		if entry.NeedsComment() && m.opts.Jira.FallbackComment != nil {
-			comment = *m.opts.Jira.FallbackComment
+		worklog := entry.Worklog
+		if worklog.NeedsComment() && m.opts.Jira.FallbackComment != nil {
+			worklog.Comment = *m.opts.Jira.FallbackComment
 			fallbackCmtUsed = true
-		} else if entry.Comment != nil {
-			comment = *entry.Comment
 		}
 
-		err := m.jiraSvc.SyncWLToJIRA(context.TODO(), entry, comment, m.opts.Jira.TimeDeltaMins)
+		err := m.jiraSvc.SyncWLToJIRA(context.TODO(), worklog, m.opts.Jira.TimeDeltaMins)
 		return wLSyncedToJIRA{index, entry, fallbackCmtUsed, err}
 	}
 }

@@ -49,7 +49,7 @@ type failedWorklog struct {
 }
 
 type getUnsyncedWorklogsOutput struct {
-	Worklogs []d.WorklogEntry `json:"worklogs" jsonschema:"unsynced worklog entries"`
+	Worklogs []d.StoredWorklog `json:"worklogs" jsonschema:"unsynced worklog entries"`
 }
 
 func (h Handler) addWorklog(_ context.Context, _ *mcp.CallToolRequest, params addWorkLogInput) (*mcp.CallToolResult, addWorkLogOutput, error) {
@@ -133,8 +133,8 @@ func (h Handler) getUnsyncedWorklogs(_ context.Context, _ *mcp.CallToolRequest, 
 	return tSuc(output)
 }
 
-func (h Handler) validateWorklogInput(input addWorkLogInput) (d.ValidatedWorkLog, error) {
-	var zero d.ValidatedWorkLog
+func (h Handler) validateWorklogInput(input addWorkLogInput) (d.Worklog, error) {
+	var zero d.Worklog
 	if !jiraIssueRegex.MatchString(input.IssueKey) {
 		return zero, fmt.Errorf(`issue_key doesn't look valid; JIRA issue keys match the regex '[A-Z]{2,}-\d+'`)
 	}
@@ -161,7 +161,7 @@ func (h Handler) validateWorklogInput(input addWorkLogInput) (d.ValidatedWorkLog
 		comment = *h.JiraOpts.FallbackComment
 	}
 
-	return d.ValidatedWorkLog{
+	return d.Worklog{
 		IssueKey: input.IssueKey,
 		BeginTS:  beginTS,
 		EndTS:    endTS,

@@ -12,10 +12,20 @@ type clearUserMsgMsg struct {
 	id uint64
 }
 
+type trackingToggleOperation uint
+
+const (
+	trackingToggleUnknown trackingToggleOperation = iota
+	trackingToggleStart
+	trackingToggleFinish
+)
+
 type trackingToggledInDB struct {
-	activeIssue string
-	finished    bool
-	err         error
+	activeIssue           string
+	finished              bool
+	operation             trackingToggleOperation
+	reconcileActiveStatus bool
+	err                   error
 }
 
 type activeWLSwitchedInDB struct {
@@ -47,19 +57,17 @@ type wLUpdatedInDB struct {
 }
 
 type activeWLFetchedFromDB struct {
-	activeIssue string
-	beginTS     time.Time
-	comment     *string
-	err         error
+	worklog *d.InProgressWorklog
+	err     error
 }
 
 type wLEntriesFetchedFromDB struct {
-	entries []d.WorklogEntry
+	entries []d.StoredWorklog
 	err     error
 }
 
 type syncedWLEntriesFetchedFromDB struct {
-	entries []d.SyncedWorklogEntry
+	entries []d.StoredWorklog
 	err     error
 }
 
@@ -68,7 +76,7 @@ type wLDeletedFromDB struct {
 }
 
 type wLSyncUpdatedInDB struct {
-	entry d.WorklogEntry
+	entry worklogListItem
 	index int
 	err   error
 }
@@ -94,7 +102,7 @@ type issuesSavedToCache struct {
 
 type wLSyncedToJIRA struct {
 	index               int
-	entry               d.WorklogEntry
+	entry               worklogListItem
 	fallbackCommentUsed bool
 	err                 error
 }

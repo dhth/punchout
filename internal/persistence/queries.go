@@ -3,6 +3,7 @@ package persistence
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	d "github.com/dhth/punchout/internal/domain"
@@ -28,8 +29,8 @@ WHERE
 	return numActiveIssues, err
 }
 
-func getWorkLogsForIssueFromDB(db *sql.DB, issueKey string) ([]d.WorklogEntry, error) {
-	logEntries := make([]d.WorklogEntry, 0)
+func getWorkLogsForIssueFromDB(db *sql.DB, issueKey string) ([]d.StoredWorklog, error) {
+	logEntries := make([]d.StoredWorklog, 0)
 
 	rows, err := db.Query(`
 SELECT
@@ -38,12 +39,12 @@ SELECT
     begin_ts,
     end_ts,
     COMMENT,
-    active,
     synced
 FROM
     issue_log
 WHERE
     issue_key =?
+    AND active = false
 ORDER BY
     end_ts DESC;
 `, issueKey)
@@ -54,23 +55,22 @@ ORDER BY
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry d.WorklogEntry
+		var entry d.StoredWorklog
+		var comment sql.NullString
 		err = rows.Scan(
 			&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
 			&entry.EndTS,
-			&entry.Comment,
-			&entry.Active,
+			&comment,
 			&entry.Synced,
 		)
 		if err != nil {
 			return nil, err
 		}
 		entry.BeginTS = entry.BeginTS.Local()
-		if entry.EndTS != nil {
-			*entry.EndTS = entry.EndTS.Local()
-		}
+		entry.EndTS = entry.EndTS.Local()
+		entry.Comment = comment.String
 		logEntries = append(logEntries, entry)
 	}
 
@@ -81,7 +81,7 @@ ORDER BY
 	return logEntries, nil
 }
 
-func FetchActiveWLFromDB(db *sql.DB) (string, time.Time, *string, error) {
+func FetchActiveWLFromDB(db *sql.DB) (*d.InProgressWorklog, error) {
 	row := db.QueryRow(`
 SELECT
     issue_key,
@@ -97,17 +97,18 @@ LIMIT
     1;
 `)
 
-	var issueKey string
-	var beginTS time.Time
-	var comment *string
-	if err := row.Scan(&issueKey, &beginTS, &comment); err != nil {
+	var worklog d.InProgressWorklog
+	var comment sql.NullString
+	if err := row.Scan(&worklog.IssueKey, &worklog.BeginTS, &comment); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", time.Time{}, nil, nil
+			return nil, nil
 		}
-		return "", time.Time{}, nil, err
+		return nil, err
 	}
 
-	return issueKey, beginTS.Local(), comment, nil
+	worklog.BeginTS = worklog.BeginTS.Local()
+	worklog.Comment = comment.String
+	return &worklog, nil
 }
 
 func InsertNewActiveWLInDB(db *sql.DB, issueKey string, beginTS time.Time) error {
@@ -130,7 +131,7 @@ VALUES
 	return nil
 }
 
-func InsertManualWLInDB(db *sql.DB, worklog d.ValidatedWorkLog) error {
+func InsertManualWLInDB(db *sql.DB, worklog d.Worklog) error {
 	stmt, err := db.Prepare(`
 INSERT INTO
     issue_log (
@@ -161,7 +162,7 @@ VALUES
 	return err
 }
 
-func UpdateActiveWLInDB(db *sql.DB, issueKey, comment string, beginTS, endTS time.Time) error {
+func UpdateActiveWLInDB(db *sql.DB, worklog d.Worklog) error {
 	stmt, err := db.Prepare(`
 UPDATE
     issue_log
@@ -179,7 +180,7 @@ WHERE
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(beginTS.UTC(), endTS.UTC(), comment, issueKey)
+	_, err = stmt.Exec(worklog.BeginTS.UTC(), worklog.EndTS.UTC(), worklog.Comment, worklog.IssueKey)
 	if err != nil {
 		return err
 	}
@@ -211,8 +212,8 @@ WHERE
 	return nil
 }
 
-func FetchUnsyncedWLsFromDB(db *sql.DB) ([]d.WorklogEntry, error) {
-	logEntries := make([]d.WorklogEntry, 0)
+func FetchUnsyncedWLsFromDB(db *sql.DB) ([]d.StoredWorklog, error) {
+	logEntries := make([]d.StoredWorklog, 0)
 
 	rows, err := db.Query(`
 SELECT
@@ -221,7 +222,6 @@ SELECT
     begin_ts,
     end_ts,
     comment,
-    active,
     synced
 FROM
     issue_log
@@ -237,23 +237,22 @@ ORDER BY
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry d.WorklogEntry
+		var entry d.StoredWorklog
+		var comment sql.NullString
 		err = rows.Scan(
 			&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
 			&entry.EndTS,
-			&entry.Comment,
-			&entry.Active,
+			&comment,
 			&entry.Synced,
 		)
 		if err != nil {
 			return nil, err
 		}
 		entry.BeginTS = entry.BeginTS.Local()
-		if entry.EndTS != nil {
-			*entry.EndTS = entry.EndTS.Local()
-		}
+		entry.EndTS = entry.EndTS.Local()
+		entry.Comment = comment.String
 		logEntries = append(logEntries, entry)
 	}
 
@@ -264,8 +263,8 @@ ORDER BY
 	return logEntries, nil
 }
 
-func FetchSyncedWLsFromDB(db *sql.DB) ([]d.SyncedWorklogEntry, error) {
-	logEntries := make([]d.SyncedWorklogEntry, 0)
+func FetchSyncedWLsFromDB(db *sql.DB) ([]d.StoredWorklog, error) {
+	logEntries := make([]d.StoredWorklog, 0)
 
 	rows, err := db.Query(`
 SELECT
@@ -273,7 +272,8 @@ SELECT
     issue_key,
     begin_ts,
     end_ts,
-    COMMENT
+    COMMENT,
+    synced
 FROM
     issue_log
 WHERE
@@ -290,19 +290,22 @@ LIMIT
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry d.SyncedWorklogEntry
+		var entry d.StoredWorklog
+		var comment sql.NullString
 		err = rows.Scan(
 			&entry.ID,
 			&entry.IssueKey,
 			&entry.BeginTS,
 			&entry.EndTS,
-			&entry.Comment,
+			&comment,
+			&entry.Synced,
 		)
 		if err != nil {
 			return nil, err
 		}
 		entry.BeginTS = entry.BeginTS.Local()
 		entry.EndTS = entry.EndTS.Local()
+		entry.Comment = comment.String
 		logEntries = append(logEntries, entry)
 	}
 
@@ -424,7 +427,11 @@ func QuickSwitchActiveWLInDB(db *sql.DB, currentIssue, selectedIssue string, cur
 		return ErrCouldntStopActiveTask
 	}
 
-	return InsertNewActiveWLInDB(db, selectedIssue, currentTime)
+	if err := InsertNewActiveWLInDB(db, selectedIssue, currentTime); err != nil {
+		return fmt.Errorf("%w: %w", ErrCouldntStartTrackingTask, err)
+	}
+
+	return nil
 }
 
 func UpdateActiveWLBeginTSInDB(db *sql.DB, beginTS time.Time) error {
