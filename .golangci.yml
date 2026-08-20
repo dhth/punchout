@@ -3,7 +3,7 @@ linters:
   enable:
     - errname
     - errorlint
-    - exhaustruct
+    - exhaustruct_v5
     - goconst
     - nilerr
     - prealloc
@@ -17,8 +17,9 @@ linters:
     - usestdlibvars
     - wastedassign
   settings:
-    exhaustruct:
-      include:
+    exhaustruct_v5:
+      explicit-mode: true
+      enforce-patterns:
         - 'github.com/dhth/punchout/internal/ui/theme\.Theme'
         - 'github.com/dhth/punchout/internal/ui\.styles'
     revive:
