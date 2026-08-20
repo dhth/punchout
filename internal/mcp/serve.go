@@ -20,18 +20,7 @@ var (
 )
 
 func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraOpts config.JiraOptions, mcpCfg config.MCPConfig) error {
-	opts := &mcp.ServerOptions{
-		Instructions: "Use this server for creating worklogs and syncing them to JIRA. You can also use it to fetch issues from JIRA, and view unsynced worklogs.",
-	}
-	server := mcp.NewServer(&mcp.Implementation{Name: "punchout"}, opts)
-
-	toolsHandler := tools.Handler{
-		DB:       db,
-		JiraSvc:  jiraSvc,
-		JiraOpts: jiraOpts,
-	}
-
-	err := toolsHandler.AddToolsToServer(server)
+	server, err := newServer(db, jiraSvc, jiraOpts)
 	if err != nil {
 		return err
 	}
@@ -45,9 +34,40 @@ func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraOpts config.Ji
 		return nil
 	}
 
+	addr := fmt.Sprintf("127.0.0.1:%d", mcpCfg.HTTPPort)
+	slog.Info("starting MCP HTTP server", "address", addr)
+	err = http.ListenAndServe(addr, newHTTPHandler(server))
+	if err != nil {
+		return fmt.Errorf(`%w "%s": %w`, errCouldntListenOnAddr, addr, err)
+	}
+
+	return nil
+}
+
+func newServer(db *sql.DB, jiraSvc svc.Jira, jiraOpts config.JiraOptions) (*mcp.Server, error) {
+	opts := &mcp.ServerOptions{
+		Instructions: "Use this server for creating worklogs and syncing them to JIRA. You can also use it to fetch issues from JIRA, and view unsynced worklogs.",
+	}
+	server := mcp.NewServer(&mcp.Implementation{Name: "punchout"}, opts)
+
+	toolsHandler := tools.Handler{
+		DB:       db,
+		JiraSvc:  jiraSvc,
+		JiraOpts: jiraOpts,
+	}
+
+	err := toolsHandler.AddToolsToServer(server)
+	if err != nil {
+		return nil, err
+	}
+
+	return server, nil
+}
+
+func newHTTPHandler(server *mcp.Server) http.Handler {
 	handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
 		return server
-	}, nil)
+	}, &mcp.StreamableHTTPOptions{Stateless: true})
 
 	mux := http.NewServeMux()
 	mux.Handle("/v1", handler)
@@ -57,12 +77,5 @@ func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraOpts config.Ji
 		_, _ = fmt.Fprintf(w, "HEALTHY")
 	}))
 
-	addr := fmt.Sprintf("127.0.0.1:%d", mcpCfg.HTTPPort)
-	slog.Info("starting MCP HTTP server", "address", addr)
-	err = http.ListenAndServe(addr, mux)
-	if err != nil {
-		return fmt.Errorf(`%w "%s": %w`, errCouldntListenOnAddr, addr, err)
-	}
-
-	return nil
+	return mux
 }
