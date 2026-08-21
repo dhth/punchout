@@ -186,6 +186,8 @@ func decodeAndResolve(reader io.Reader, options LoadOptions) (Config, error) {
 		return Config{}, fmt.Errorf("%w: %s", ErrParseConfigFile, err.Error())
 	}
 
+	// Expand config file values before applying overrides. This intentionally
+	// reports unset environment variables even when an override replaces the field.
 	fileCfg, err = expandConfigEnv(fileCfg)
 	if err != nil {
 		return Config{}, fmt.Errorf("%w: %s", ErrInvalidConfig, err.Error())
