@@ -186,12 +186,9 @@ func decodeAndResolve(reader io.Reader, options LoadOptions) (Config, error) {
 		return Config{}, fmt.Errorf("%w: %s", ErrParseConfigFile, err.Error())
 	}
 
-	if fileCfg.DBPath != nil && options.Overrides.DBPath == nil {
-		expandedDBPath, err := expandEnv(*fileCfg.DBPath)
-		if err != nil {
-			return Config{}, fmt.Errorf("%w: couldn't expand db_path: %s", ErrInvalidConfig, err.Error())
-		}
-		fileCfg.DBPath = &expandedDBPath
+	fileCfg, err = expandConfigEnv(fileCfg)
+	if err != nil {
+		return Config{}, fmt.Errorf("%w: %s", ErrInvalidConfig, err.Error())
 	}
 	effectiveCfg := withOverrides(fileCfg, options.Overrides)
 	dbPath, err := resolveDBPath(
@@ -263,7 +260,47 @@ func withOverrides(cfg fileConfig, overrides Overrides) fileConfig {
 	return result
 }
 
-func expandEnv(value string) (string, error) {
+func expandConfigEnv(cfg fileConfig) (fileConfig, error) {
+	var err error
+	if cfg.DBPath, err = expandOptionalEnv("db_path", cfg.DBPath); err != nil {
+		return fileConfig{}, err
+	}
+	if cfg.Jira.InstallationType, err = expandOptionalEnv("installation_type", cfg.Jira.InstallationType); err != nil {
+		return fileConfig{}, err
+	}
+	if cfg.Jira.URL, err = expandOptionalEnv("jira_url", cfg.Jira.URL); err != nil {
+		return fileConfig{}, err
+	}
+	if cfg.Jira.JQL, err = expandOptionalEnv("jql", cfg.Jira.JQL); err != nil {
+		return fileConfig{}, err
+	}
+	if cfg.Jira.Token, err = expandOptionalEnv("jira_token", cfg.Jira.Token); err != nil {
+		return fileConfig{}, err
+	}
+	if cfg.Jira.Username, err = expandOptionalEnv("jira_username", cfg.Jira.Username); err != nil {
+		return fileConfig{}, err
+	}
+	if cfg.Jira.FallbackComment, err = expandOptionalEnv("fallback_comment", cfg.Jira.FallbackComment); err != nil {
+		return fileConfig{}, err
+	}
+
+	return cfg, nil
+}
+
+func expandOptionalEnv(configProperty string, value *string) (*string, error) {
+	if value == nil {
+		return nil, nil
+	}
+
+	expanded, err := expandEnv(configProperty, *value)
+	if err != nil {
+		return nil, err
+	}
+
+	return &expanded, nil
+}
+
+func expandEnv(configProperty, value string) (string, error) {
 	var unset []string
 	seen := make(map[string]struct{})
 
@@ -285,9 +322,9 @@ func expandEnv(value string) (string, error) {
 	case 0:
 		return expanded, nil
 	case 1:
-		return "", fmt.Errorf("environment variable %q is not set", unset[0])
+		return "", fmt.Errorf("couldn't expand %s: environment variable %q is not set", configProperty, unset[0])
 	default:
-		return "", fmt.Errorf("environment variables %q are not set", unset)
+		return "", fmt.Errorf("couldn't expand %s: environment variables %q are not set", configProperty, unset)
 	}
 }
 

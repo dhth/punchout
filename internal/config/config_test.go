@@ -15,6 +15,13 @@ func TestDecodeAndResolve(t *testing.T) {
 	defaults := Defaults{DBPath: "default.db"}
 	t.Setenv("PUNCHOUT_DB_DIR", "data-dir")
 	t.Setenv("EMPTY_DB_PATH", "")
+	t.Setenv("EMPTY_CONFIG_VALUE", "")
+	t.Setenv("PUNCHOUT_JIRA_INSTALLATION_TYPE", "cloud")
+	t.Setenv("PUNCHOUT_JIRA_HOST", "jira.company.com")
+	t.Setenv("PUNCHOUT_JQL", "project = ENV")
+	t.Setenv("PUNCHOUT_JIRA_TOKEN", "env-token")
+	t.Setenv("PUNCHOUT_JIRA_USERNAME", "env-user@example.com")
+	t.Setenv("PUNCHOUT_FALLBACK_COMMENT", "environment work")
 	defaultMCPConfig := MCPConfig{
 		Transport: MCPTransportStdio,
 		HTTPPort:  DefaultMCPHTTPPort,
@@ -24,6 +31,7 @@ func TestDecodeAndResolve(t *testing.T) {
 		cloudFallbackComment := "cloud work"
 		onPremiseFallbackComment := "on-premise work"
 		defaultInstallationFallbackComment := "default installation work"
+		envFallbackComment := "environment work"
 
 		tests := []struct {
 			name     string
@@ -184,6 +192,34 @@ jira_token = "token"
 						Installation: OnPremiseInstallation{
 							URL:   "https://jira.company.com",
 							Token: "token",
+						},
+					},
+					TUI: TUIConfig{ThemeName: theme.DefaultName},
+				},
+			},
+			{
+				name: "when Jira values contain environment variables",
+				input: `
+[jira]
+installation_type = "$PUNCHOUT_JIRA_INSTALLATION_TYPE"
+jira_url = "https://${PUNCHOUT_JIRA_HOST}"
+jql = "$PUNCHOUT_JQL"
+jira_token = "${PUNCHOUT_JIRA_TOKEN}"
+jira_username = "$PUNCHOUT_JIRA_USERNAME"
+fallback_comment = "${PUNCHOUT_FALLBACK_COMMENT}"
+`,
+				expected: Config{
+					DBPath: defaults.DBPath,
+					MCP:    defaultMCPConfig,
+					Jira: JiraConfig{
+						Options: JiraOptions{
+							JQL:             "project = ENV",
+							FallbackComment: &envFallbackComment,
+						},
+						Installation: CloudInstallation{
+							URL:      "https://jira.company.com",
+							Username: "env-user@example.com",
+							Token:    "env-token",
 						},
 					},
 					TUI: TUIConfig{ThemeName: theme.DefaultName},
@@ -709,6 +745,51 @@ jira_token = "original-token"
 		}
 	})
 
+	t.Run("applies overrides after expanding config values", func(t *testing.T) {
+		jiraTokenOverride := "override-token"
+		input := `
+[jira]
+jira_url = "https://${PUNCHOUT_JIRA_HOST}"
+jql = "project = PUNCH"
+jira_token = "$PUNCHOUT_JIRA_TOKEN"
+`
+
+		actual, err := decodeAndResolve(strings.NewReader(input), LoadOptions{
+			HomeDir:  homeDir,
+			Defaults: defaults,
+			Overrides: Overrides{Jira: JiraOverrides{
+				Token: &jiraTokenOverride,
+			}},
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, OnPremiseInstallation{
+			URL:   "https://jira.company.com",
+			Token: jiraTokenOverride,
+		}, actual.Jira.Installation)
+	})
+
+	t.Run("rejects unset environment variables before applying overrides", func(t *testing.T) {
+		jiraTokenOverride := "override-token"
+		input := `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "$PUNCHOUT_TEST_SHOULD_BE_UNSET_1"
+`
+
+		_, err := decodeAndResolve(strings.NewReader(input), LoadOptions{
+			HomeDir:  homeDir,
+			Defaults: defaults,
+			Overrides: Overrides{Jira: JiraOverrides{
+				Token: &jiraTokenOverride,
+			}},
+		})
+
+		require.ErrorIs(t, err, ErrInvalidConfig)
+		require.ErrorContains(t, err, `couldn't expand jira_token: environment variable "PUNCHOUT_TEST_SHOULD_BE_UNSET_1" is not set`)
+	})
+
 	t.Run("rejects invalid file configurations", func(t *testing.T) {
 		tests := []struct {
 			name                  string
@@ -783,6 +864,28 @@ jira_token = "token"
 `,
 				expectedError:         ErrInvalidConfig,
 				expectedErrorContains: "db file path cannot be empty",
+			},
+			{
+				name: "when Jira token references an unset environment variable",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "$PUNCHOUT_TEST_SHOULD_BE_UNSET_1"
+`,
+				expectedError:         ErrInvalidConfig,
+				expectedErrorContains: `couldn't expand jira_token: environment variable "PUNCHOUT_TEST_SHOULD_BE_UNSET_1" is not set`,
+			},
+			{
+				name: "when Jira token environment variable expands to empty",
+				input: `
+[jira]
+jira_url = "https://jira.company.com"
+jql = "project = PUNCH"
+jira_token = "$EMPTY_CONFIG_VALUE"
+`,
+				expectedError:         ErrInvalidConfig,
+				expectedErrorContains: "jira-token cannot be empty",
 			},
 			{
 				name: "when installation type is invalid",
