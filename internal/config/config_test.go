@@ -22,6 +22,8 @@ func TestDecodeAndResolve(t *testing.T) {
 	t.Setenv("PUNCHOUT_JIRA_TOKEN", "env-token")
 	t.Setenv("PUNCHOUT_JIRA_USERNAME", "env-user@example.com")
 	t.Setenv("PUNCHOUT_FALLBACK_COMMENT", "environment work")
+	t.Setenv("PUNCHOUT_THEME", "catppuccin-mocha")
+	t.Setenv("PUNCHOUT_MCP_TRANSPORT", "http")
 	defaultMCPConfig := MCPConfig{
 		Transport: MCPTransportStdio,
 		HTTPPort:  DefaultMCPHTTPPort,
@@ -198,7 +200,7 @@ jira_token = "token"
 				},
 			},
 			{
-				name: "when Jira values contain environment variables",
+				name: "when Jira, TUI, and MCP values contain environment variables",
 				input: `
 [jira]
 installation_type = "$PUNCHOUT_JIRA_INSTALLATION_TYPE"
@@ -207,10 +209,19 @@ jql = "$PUNCHOUT_JQL"
 jira_token = "${PUNCHOUT_JIRA_TOKEN}"
 jira_username = "$PUNCHOUT_JIRA_USERNAME"
 fallback_comment = "${PUNCHOUT_FALLBACK_COMMENT}"
+
+[tui]
+theme = "$PUNCHOUT_THEME"
+
+[mcp]
+transport = "${PUNCHOUT_MCP_TRANSPORT}"
 `,
 				expected: Config{
 					DBPath: defaults.DBPath,
-					MCP:    defaultMCPConfig,
+					MCP: MCPConfig{
+						Transport: MCPTransportHTTP,
+						HTTPPort:  DefaultMCPHTTPPort,
+					},
 					Jira: JiraConfig{
 						Options: JiraOptions{
 							JQL:             "project = ENV",
@@ -222,7 +233,7 @@ fallback_comment = "${PUNCHOUT_FALLBACK_COMMENT}"
 							Token:    "env-token",
 						},
 					},
-					TUI: TUIConfig{ThemeName: theme.DefaultName},
+					TUI: TUIConfig{ThemeName: "catppuccin-mocha"},
 				},
 			},
 			{

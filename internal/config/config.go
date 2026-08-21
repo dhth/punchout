@@ -285,6 +285,12 @@ func expandConfigEnv(cfg fileConfig) (fileConfig, error) {
 	if cfg.Jira.FallbackComment, err = expandOptionalEnv("fallback_comment", cfg.Jira.FallbackComment); err != nil {
 		return fileConfig{}, err
 	}
+	if cfg.TUI.ThemeName, err = expandOptionalEnv("theme", cfg.TUI.ThemeName); err != nil {
+		return fileConfig{}, err
+	}
+	if cfg.MCP.Transport, err = expandOptionalEnv("transport", cfg.MCP.Transport); err != nil {
+		return fileConfig{}, err
+	}
 
 	return cfg, nil
 }
