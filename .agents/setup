@@ -25,5 +25,4 @@ fi
     "go:golang.org/x/vuln/cmd/govulncheck" \
     gofumpt \
     golangci-lint \
-    "github:dhth/terminal-control" \
     yamlfmt
