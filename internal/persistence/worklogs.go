@@ -10,7 +10,10 @@ import (
 	"github.com/dhth/punchout/internal/domain"
 )
 
-var ErrIssueHasNoActiveWorklog = errors.New("issue doesn't have an active worklog")
+var (
+	ErrIssueHasNoActiveWorklog = errors.New("issue doesn't have an active worklog")
+	ErrNoActiveWorklog         = errors.New("no active worklog")
+)
 
 func (s *SQLiteStore) ActiveWorklog(ctx context.Context) (*domain.InProgressWorklog, error) {
 	row := s.db.QueryRowContext(ctx, `
@@ -77,6 +80,89 @@ WHERE
 	}
 	if rowsAffected == 0 {
 		return fmt.Errorf("%w: %s", ErrIssueHasNoActiveWorklog, worklog.IssueKey)
+	}
+
+	return nil
+}
+
+func (s *SQLiteStore) SwitchActiveWorklog(ctx context.Context, selectedIssue string, at time.Time) (string, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	previousIssue, err := fetchActiveIssue(ctx, tx)
+	if err != nil {
+		return "", err
+	}
+
+	if err := stopActiveWorklog(ctx, tx, previousIssue, at); err != nil {
+		return "", err
+	}
+
+	_, err = tx.ExecContext(ctx, `
+INSERT INTO
+    issue_log (issue_key, begin_ts, active, synced)
+VALUES
+    (?, ?, true, false);
+`, selectedIssue, at.UTC())
+	if err != nil {
+		return "", err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return "", err
+	}
+
+	return previousIssue, nil
+}
+
+func fetchActiveIssue(ctx context.Context, tx *sql.Tx) (string, error) {
+	var issueKey string
+	err := tx.QueryRowContext(ctx, `
+SELECT
+    issue_key
+FROM
+    issue_log
+WHERE
+    active = true
+ORDER BY
+    begin_ts DESC
+LIMIT
+    1;
+`).Scan(&issueKey)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", ErrNoActiveWorklog
+	}
+	if err != nil {
+		return "", err
+	}
+
+	return issueKey, nil
+}
+
+func stopActiveWorklog(ctx context.Context, tx *sql.Tx, issueKey string, endTS time.Time) error {
+	result, err := tx.ExecContext(ctx, `
+UPDATE
+    issue_log
+SET
+    active = false,
+    end_ts = ?
+WHERE
+    issue_key = ?
+    AND active = true;
+`, endTS.UTC(), issueKey)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return fmt.Errorf("expected to stop one active worklog for %s, stopped %d", issueKey, rowsAffected)
 	}
 
 	return nil

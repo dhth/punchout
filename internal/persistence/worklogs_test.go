@@ -234,6 +234,128 @@ func TestSQLiteStoreFinishWorklog(t *testing.T) {
 	})
 }
 
+func TestSQLiteStoreSwitchActiveWorklog(t *testing.T) {
+	t.Run("switches the active worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		location := time.FixedZone("UTC+1", int(time.Hour.Seconds()))
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		switchTS := time.Date(2026, time.August, 24, 11, 0, 0, 0, location)
+		previousID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  beginTS,
+			active:   true,
+		})
+
+		// WHEN
+		previousIssue, err := store.SwitchActiveWorklog(t.Context(), "TEST-2", switchTS)
+
+		// THEN
+		require.NoError(t, err)
+		assert.Equal(t, "TEST-1", previousIssue)
+
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 2)
+		previous := gotRows[0]
+		current := gotRows[1]
+
+		assert.Equal(t, previousID, previous.id)
+		assert.Equal(t, "TEST-1", previous.issueKey)
+		assert.Equal(t, beginTS, previous.beginTS)
+		require.True(t, previous.endTS.Valid)
+		assert.Equal(t, switchTS.UTC(), previous.endTS.Time)
+		assert.False(t, previous.comment.Valid)
+		assert.False(t, previous.active)
+		assert.False(t, previous.synced)
+
+		assert.Equal(t, "TEST-2", current.issueKey)
+		assert.Equal(t, switchTS.UTC(), current.beginTS)
+		assert.False(t, current.endTS.Valid)
+		assert.False(t, current.comment.Valid)
+		assert.True(t, current.active)
+		assert.False(t, current.synced)
+	})
+
+	t.Run("rolls back when starting the selected worklog fails", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		comment := "still active"
+		activeID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  beginTS,
+			comment:  &comment,
+			active:   true,
+		})
+		_, err := store.db.Exec(`
+CREATE TRIGGER reject_test_2_insert
+BEFORE INSERT ON issue_log
+WHEN NEW.issue_key = 'TEST-2'
+BEGIN
+    SELECT RAISE(ABORT, 'TEST-2 is rejected');
+END;
+`)
+		require.NoError(t, err)
+
+		// WHEN
+		previousIssue, err := store.SwitchActiveWorklog(
+			t.Context(),
+			"TEST-2",
+			beginTS.Add(time.Hour),
+		)
+
+		// THEN
+		require.ErrorContains(t, err, "TEST-2 is rejected")
+		assert.Empty(t, previousIssue)
+
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+		assert.Equal(t, activeID, got.id)
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, beginTS, got.beginTS)
+		assert.False(t, got.endTS.Valid)
+		require.True(t, got.comment.Valid)
+		assert.Equal(t, comment, got.comment.String)
+		assert.True(t, got.active)
+		assert.False(t, got.synced)
+	})
+
+	t.Run("returns an error when there is no active worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		endTS := beginTS.Add(time.Hour)
+		completedID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  beginTS,
+			endTS:    &endTS,
+		})
+
+		// WHEN
+		previousIssue, err := store.SwitchActiveWorklog(
+			t.Context(),
+			"TEST-1",
+			endTS.Add(time.Hour),
+		)
+
+		// THEN
+		require.ErrorIs(t, err, ErrNoActiveWorklog)
+		assert.Empty(t, previousIssue)
+
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+		assert.Equal(t, completedID, got.id)
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, beginTS, got.beginTS)
+		require.True(t, got.endTS.Valid)
+		assert.Equal(t, endTS, got.endTS.Time)
+		assert.False(t, got.active)
+		assert.False(t, got.synced)
+	})
+}
+
 func TestSQLiteStoreAddWorklog(t *testing.T) {
 	// GIVEN
 	store := setupTestStore(t)
