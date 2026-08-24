@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "punchout",
+      "version": ""
+    }
+  },
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"worklogs\":[{\"begin_time\":\"2026-08-24T09:00:00Z\",\"comment\":\"implemented endpoint tests\",\"end_time\":\"2026-08-24T10:15:00Z\",\"id\":41,\"issue_key\":\"TEST-201\"},{\"begin_time\":\"2026-08-24T11:30:00Z\",\"comment\":\"reviewed response contract\",\"end_time\":\"2026-08-24T12:00:00Z\",\"id\":42,\"issue_key\":\"TEST-202\"}]}"
+    }
+  ],
+  "structuredContent": {
+    "worklogs": [
+      {
+        "begin_time": "2026-08-24T09:00:00Z",
+        "comment": "implemented endpoint tests",
+        "end_time": "2026-08-24T10:15:00Z",
+        "id": 41,
+        "issue_key": "TEST-201"
+      },
+      {
+        "begin_time": "2026-08-24T11:30:00Z",
+        "comment": "reviewed response contract",
+        "end_time": "2026-08-24T12:00:00Z",
+        "id": 42,
+        "issue_key": "TEST-202"
+      }
+    ]
+  },
+  "resultType": "complete"
+}
