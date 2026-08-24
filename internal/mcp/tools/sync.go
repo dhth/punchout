@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 
 	d "github.com/dhth/punchout/internal/domain"
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+const markWorklogSyncedTimeout = 5 * time.Second
 
 type syncWorklogsOutput struct {
 	Successes []syncSuccess `json:"successes" jsonschema:"worklog entries that were successfully synced"`
@@ -91,7 +94,10 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 			if fallbackCommentUsed {
 				comment = &worklog.Comment
 			}
-			err = h.store.MarkWorklogSynced(ctx, entry.ID, comment)
+			// Jira has accepted a non-idempotent write, so request cancellation must not prevent us from recording it locally.
+			persistCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), markWorklogSyncedTimeout)
+			err = h.store.MarkWorklogSynced(persistCtx, entry.ID, comment)
+			cancel()
 			if err != nil {
 				sr.Err = err
 				resultChan <- sr
