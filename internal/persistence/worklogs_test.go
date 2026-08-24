@@ -129,6 +129,111 @@ func TestSQLiteStoreStartWorklog(t *testing.T) {
 	})
 }
 
+func TestSQLiteStoreFinishWorklog(t *testing.T) {
+	t.Run("finishes the matching active worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		location := time.FixedZone("UTC+1", int(time.Hour.Seconds()))
+		originalBeginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		beginTS := time.Date(2026, time.August, 24, 10, 0, 0, 0, location)
+		endTS := beginTS.Add(time.Hour)
+		completedEndTS := originalBeginTS.Add(30 * time.Minute)
+		completedComment := "existing completed worklog"
+		completedID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  originalBeginTS,
+			endTS:    &completedEndTS,
+			comment:  &completedComment,
+		})
+		insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  originalBeginTS,
+			active:   true,
+		})
+		worklog := domain.Worklog{
+			IssueKey: "TEST-1",
+			BeginTS:  beginTS,
+			EndTS:    endTS,
+			Comment:  "finished worklog",
+		}
+
+		// WHEN
+		err := store.FinishWorklog(t.Context(), worklog)
+
+		// THEN
+		require.NoError(t, err)
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 2)
+		completed := gotRows[0]
+		got := gotRows[1]
+
+		assert.Equal(t, completedID, completed.id)
+		assert.Equal(t, originalBeginTS, completed.beginTS)
+		require.True(t, completed.endTS.Valid)
+		assert.Equal(t, completedEndTS, completed.endTS.Time)
+		require.True(t, completed.comment.Valid)
+		assert.Equal(t, completedComment, completed.comment.String)
+		assert.False(t, completed.active)
+
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, beginTS.UTC(), got.beginTS)
+		require.True(t, got.endTS.Valid)
+		assert.Equal(t, endTS.UTC(), got.endTS.Time)
+		require.True(t, got.comment.Valid)
+		assert.Equal(t, "finished worklog", got.comment.String)
+		assert.False(t, got.active)
+		assert.False(t, got.synced)
+	})
+
+	t.Run("returns an error when a different issue is active", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  beginTS,
+			active:   true,
+		})
+
+		// WHEN
+		err := store.FinishWorklog(t.Context(), domain.Worklog{
+			IssueKey: "TEST-2",
+			BeginTS:  beginTS,
+			EndTS:    beginTS.Add(time.Hour),
+		})
+
+		// THEN
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrIssueHasNoActiveWorklog)
+		require.ErrorContains(t, err, "TEST-2")
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, beginTS, got.beginTS)
+		assert.True(t, got.active)
+	})
+
+	t.Run("returns an error when there is no active worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+
+		// WHEN
+		err := store.FinishWorklog(t.Context(), domain.Worklog{
+			IssueKey: "TEST-1",
+			BeginTS:  beginTS,
+			EndTS:    beginTS.Add(time.Hour),
+		})
+
+		// THEN
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrIssueHasNoActiveWorklog)
+		require.ErrorContains(t, err, "TEST-1")
+	})
+}
+
 func TestSQLiteStoreAddWorklog(t *testing.T) {
 	// GIVEN
 	store := setupTestStore(t)

@@ -4,10 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/dhth/punchout/internal/domain"
 )
+
+var ErrIssueHasNoActiveWorklog = errors.New("issue doesn't have an active worklog")
 
 func (s *SQLiteStore) ActiveWorklog(ctx context.Context) (*domain.InProgressWorklog, error) {
 	row := s.db.QueryRowContext(ctx, `
@@ -49,6 +52,34 @@ VALUES
 `, issueKey, beginTS.UTC())
 
 	return err
+}
+
+func (s *SQLiteStore) FinishWorklog(ctx context.Context, worklog domain.Worklog) error {
+	result, err := s.db.ExecContext(ctx, `
+UPDATE
+    issue_log
+SET
+    active = false,
+    begin_ts = ?,
+    end_ts = ?,
+    comment = ?
+WHERE
+    issue_key = ?
+    AND active = true;
+`, worklog.BeginTS.UTC(), worklog.EndTS.UTC(), worklog.Comment, worklog.IssueKey)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("%w: %s", ErrIssueHasNoActiveWorklog, worklog.IssueKey)
+	}
+
+	return nil
 }
 
 func (s *SQLiteStore) AddWorklog(ctx context.Context, worklog domain.Worklog) error {
