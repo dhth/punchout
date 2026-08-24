@@ -8,7 +8,6 @@ import (
 	"time"
 
 	d "github.com/dhth/punchout/internal/domain"
-	pers "github.com/dhth/punchout/internal/persistence"
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -52,7 +51,7 @@ type getUnsyncedWorklogsOutput struct {
 	Worklogs []d.StoredWorklog `json:"worklogs" jsonschema:"unsynced worklog entries"`
 }
 
-func (h Handler) addWorklog(_ context.Context, _ *mcp.CallToolRequest, params addWorkLogInput) (*mcp.CallToolResult, addWorkLogOutput, error) {
+func (h Handler) addWorklog(ctx context.Context, _ *mcp.CallToolRequest, params addWorkLogInput) (*mcp.CallToolResult, addWorkLogOutput, error) {
 	tErr := toolCallError[addWorkLogOutput]
 	tSuc := toolCallSuccess[addWorkLogOutput]
 
@@ -63,7 +62,7 @@ func (h Handler) addWorklog(_ context.Context, _ *mcp.CallToolRequest, params ad
 		return tErr(err)
 	}
 
-	err = pers.InsertManualWLInDB(h.DB, validatedWorkLog)
+	err = h.store.AddWorklog(ctx, validatedWorkLog)
 	if err != nil {
 		return tErr(err)
 	}
@@ -78,7 +77,7 @@ func (h Handler) addWorklog(_ context.Context, _ *mcp.CallToolRequest, params ad
 	return tSuc(output)
 }
 
-func (h Handler) addMultipleWorklogs(_ context.Context, _ *mcp.CallToolRequest, params addMultipleWorklogsInput) (*mcp.CallToolResult, addMultipleWorklogsOutput, error) {
+func (h Handler) addMultipleWorklogs(ctx context.Context, _ *mcp.CallToolRequest, params addMultipleWorklogsInput) (*mcp.CallToolResult, addMultipleWorklogsOutput, error) {
 	tSuc := toolCallSuccess[addMultipleWorklogsOutput]
 
 	slog.Info("got request for adding multiple worklogs", "count", len(params.Worklogs))
@@ -89,7 +88,7 @@ func (h Handler) addMultipleWorklogs(_ context.Context, _ *mcp.CallToolRequest, 
 	for i, worklogInput := range params.Worklogs {
 		validatedWorkLog, err := h.validateWorklogInput(worklogInput)
 		if err == nil {
-			err = pers.InsertManualWLInDB(h.DB, validatedWorkLog)
+			err = h.store.AddWorklog(ctx, validatedWorkLog)
 		}
 
 		if err != nil {
@@ -117,13 +116,13 @@ func (h Handler) addMultipleWorklogs(_ context.Context, _ *mcp.CallToolRequest, 
 	return tSuc(output)
 }
 
-func (h Handler) getUnsyncedWorklogs(_ context.Context, _ *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, getUnsyncedWorklogsOutput, error) {
+func (h Handler) getUnsyncedWorklogs(ctx context.Context, _ *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, getUnsyncedWorklogsOutput, error) {
 	tErr := toolCallError[getUnsyncedWorklogsOutput]
 	tSuc := toolCallSuccess[getUnsyncedWorklogsOutput]
 
 	slog.Info("got request for fetching unsynced worklogs")
 
-	entries, err := pers.FetchUnsyncedWLsFromDB(h.DB)
+	entries, err := h.store.UnsyncedWorklogs(ctx)
 	if err != nil {
 		return tErr(err)
 	}
@@ -157,8 +156,8 @@ func (h Handler) validateWorklogInput(input addWorkLogInput) (d.Worklog, error) 
 
 	if input.Comment != nil {
 		comment = *input.Comment
-	} else if h.JiraOpts.FallbackComment != nil {
-		comment = *h.JiraOpts.FallbackComment
+	} else if h.jiraOpts.FallbackComment != nil {
+		comment = *h.jiraOpts.FallbackComment
 	}
 
 	return d.Worklog{

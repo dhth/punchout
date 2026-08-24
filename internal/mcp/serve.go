@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -19,8 +18,8 @@ var (
 	errCouldntListenOnAddr = errors.New("MCP server couldn't listen on address")
 )
 
-func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraOpts config.JiraOptions, mcpCfg config.MCPConfig) error {
-	server, err := newServer(db, jiraSvc, jiraOpts)
+func Serve(ctx context.Context, store tools.WorklogStore, jiraSvc svc.Jira, jiraOpts config.JiraOptions, mcpCfg config.MCPConfig) error {
+	server, err := newServer(store, jiraSvc, jiraOpts)
 	if err != nil {
 		return err
 	}
@@ -44,17 +43,13 @@ func Serve(ctx context.Context, db *sql.DB, jiraSvc svc.Jira, jiraOpts config.Ji
 	return nil
 }
 
-func newServer(db *sql.DB, jiraSvc svc.Jira, jiraOpts config.JiraOptions) (*mcp.Server, error) {
+func newServer(store tools.WorklogStore, jiraSvc svc.Jira, jiraOpts config.JiraOptions) (*mcp.Server, error) {
 	opts := &mcp.ServerOptions{
 		Instructions: "Use this server for creating worklogs and syncing them to JIRA. You can also use it to fetch issues from JIRA, and view unsynced worklogs.",
 	}
 	server := mcp.NewServer(&mcp.Implementation{Name: "punchout"}, opts)
 
-	toolsHandler := tools.Handler{
-		DB:       db,
-		JiraSvc:  jiraSvc,
-		JiraOpts: jiraOpts,
-	}
+	toolsHandler := tools.NewHandler(store, jiraSvc, jiraOpts)
 
 	err := toolsHandler.AddToolsToServer(server)
 	if err != nil {

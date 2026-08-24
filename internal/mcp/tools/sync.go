@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	d "github.com/dhth/punchout/internal/domain"
-	pers "github.com/dhth/punchout/internal/persistence"
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -45,7 +44,7 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 
 	slog.Info("got request for syncing worklogs to JIRA")
 
-	entries, err := pers.FetchUnsyncedWLsFromDB(h.DB)
+	entries, err := h.store.UnsyncedWorklogs(ctx)
 	if err != nil {
 		return tErr(err)
 	}
@@ -68,8 +67,8 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 			semaphore <- struct{}{}
 			var fallbackCommentUsed bool
 			worklog := entry.Worklog
-			if worklog.NeedsComment() && h.JiraOpts.FallbackComment != nil {
-				worklog.Comment = *h.JiraOpts.FallbackComment
+			if worklog.NeedsComment() && h.jiraOpts.FallbackComment != nil {
+				worklog.Comment = *h.jiraOpts.FallbackComment
 				fallbackCommentUsed = true
 			}
 
@@ -78,7 +77,7 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 				IssueKey: entry.IssueKey,
 			}
 
-			err := h.JiraSvc.SyncWLToJIRA(ctx, worklog, h.JiraOpts.TimeDeltaMins)
+			err := h.jiraSvc.SyncWLToJIRA(ctx, worklog, h.jiraOpts.TimeDeltaMins)
 			if err != nil {
 				sr.Err = err
 				resultChan <- sr
@@ -88,11 +87,11 @@ func (h Handler) syncWorklogsToJira(ctx context.Context, _ *mcp.CallToolRequest,
 			slog.Info("synced worklog to jira", "issue_key", entry.IssueKey, "worklog_id", entry.ID)
 			sr.SyncedToJira = true
 
+			var comment *string
 			if fallbackCommentUsed {
-				err = pers.UpdateSyncStatusAndCommentForWLInDB(h.DB, entry.ID, worklog.Comment)
-			} else {
-				err = pers.UpdateSyncStatusForWLInDB(h.DB, entry.ID)
+				comment = &worklog.Comment
 			}
+			err = h.store.MarkWorklogSynced(ctx, entry.ID, comment)
 			if err != nil {
 				sr.Err = err
 				resultChan <- sr

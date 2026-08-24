@@ -229,17 +229,18 @@ func NewRootCommand() (*cobra.Command, error) {
 				return nil
 			}
 
-			db, err = pers.GetDB(appCfg.DBPath)
+			store, err := pers.NewSQLiteStore(appCfg.DBPath)
 			if err != nil {
 				return err
 			}
+			defer func() { _ = store.Close() }()
 
 			jiraSvc, err = getJiraSvc(appCfg.Jira.Installation)
 			if err != nil {
 				return err
 			}
 
-			return mcp.Serve(cmd.Context(), db, jiraSvc, appCfg.Jira.Options, appCfg.MCP)
+			return mcp.Serve(cmd.Context(), store, jiraSvc, appCfg.Jira.Options, appCfg.MCP)
 		},
 	}
 
