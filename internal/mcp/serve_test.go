@@ -347,6 +347,194 @@ func TestHTTPServerGetUnsyncedWorklogs(t *testing.T) {
 	})
 }
 
+func TestHTTPServerSyncWorklogsToJira(t *testing.T) {
+	t.Run("syncs a worklog successfully", func(t *testing.T) {
+		// GIVEN
+		type syncWLToJIRACall struct {
+			worklog       domain.Worklog
+			timeDeltaMins int
+		}
+		var syncWLToJIRACalls []syncWLToJIRACall
+		jira := &stubJira{
+			syncWLToJIRAFunc: func(_ context.Context, worklog domain.Worklog, timeDeltaMins int) error {
+				syncWLToJIRACalls = append(syncWLToJIRACalls, syncWLToJIRACall{
+					worklog:       worklog,
+					timeDeltaMins: timeDeltaMins,
+				})
+				return nil
+			},
+		}
+
+		type markWorklogSyncedCall struct {
+			id      int
+			comment *string
+		}
+		var markWorklogSyncedCalls []markWorklogSyncedCall
+		// Keep one entry so the handler's concurrent result ordering remains deterministic.
+		storedWorklog := domain.StoredWorklog{
+			ID: 51,
+			Worklog: domain.Worklog{
+				IssueKey: "TEST-301",
+				BeginTS:  time.Date(2026, time.August, 24, 14, 0, 0, 0, time.UTC),
+				EndTS:    time.Date(2026, time.August, 24, 15, 30, 0, 0, time.UTC),
+				Comment:  "implemented sync endpoint",
+			},
+		}
+		store := &stubWorklogStore{
+			unsyncedWorklogsFunc: func(context.Context) ([]domain.StoredWorklog, error) {
+				return []domain.StoredWorklog{storedWorklog}, nil
+			},
+			markWorklogSyncedFunc: func(_ context.Context, id int, comment *string) error {
+				markWorklogSyncedCalls = append(markWorklogSyncedCalls, markWorklogSyncedCall{
+					id:      id,
+					comment: comment,
+				})
+				return nil
+			},
+		}
+
+		jiraOpts := config.JiraOptions{TimeDeltaMins: 7}
+		ctx, session := setupMCPSession(t, store, jira, jiraOpts)
+
+		// WHEN
+		result, err := session.CallTool(ctx, &sdk.CallToolParams{
+			Name: "sync_worklogs_to_jira",
+		})
+
+		// THEN
+		require.NoError(t, err)
+		require.False(t, result.IsError)
+		require.Equal(t, []syncWLToJIRACall{{
+			worklog:       storedWorklog.Worklog,
+			timeDeltaMins: 7,
+		}}, syncWLToJIRACalls)
+		require.Equal(t, []markWorklogSyncedCall{{
+			id:      51,
+			comment: nil,
+		}}, markWorklogSyncedCalls)
+		snapshotCallToolResult(t, result)
+	})
+
+	t.Run("reports a Jira failure", func(t *testing.T) {
+		// GIVEN
+		jiraErr := errors.New("Jira unavailable")
+		type syncWLToJIRACall struct {
+			worklog       domain.Worklog
+			timeDeltaMins int
+		}
+		var syncWLToJIRACalls []syncWLToJIRACall
+		jira := &stubJira{
+			syncWLToJIRAFunc: func(_ context.Context, worklog domain.Worklog, timeDeltaMins int) error {
+				syncWLToJIRACalls = append(syncWLToJIRACalls, syncWLToJIRACall{
+					worklog:       worklog,
+					timeDeltaMins: timeDeltaMins,
+				})
+				return jiraErr
+			},
+		}
+
+		// Keep one entry so the handler's concurrent result ordering remains deterministic.
+		storedWorklog := domain.StoredWorklog{
+			ID: 52,
+			Worklog: domain.Worklog{
+				IssueKey: "TEST-302",
+				BeginTS:  time.Date(2026, time.August, 24, 16, 0, 0, 0, time.UTC),
+				EndTS:    time.Date(2026, time.August, 24, 17, 0, 0, 0, time.UTC),
+				Comment:  "investigated Jira failure",
+			},
+		}
+		store := &stubWorklogStore{
+			unsyncedWorklogsFunc: func(context.Context) ([]domain.StoredWorklog, error) {
+				return []domain.StoredWorklog{storedWorklog}, nil
+			},
+		}
+
+		jiraOpts := config.JiraOptions{TimeDeltaMins: 8}
+		ctx, session := setupMCPSession(t, store, jira, jiraOpts)
+
+		// WHEN
+		result, err := session.CallTool(ctx, &sdk.CallToolParams{
+			Name: "sync_worklogs_to_jira",
+		})
+
+		// THEN
+		require.NoError(t, err)
+		require.Equal(t, []syncWLToJIRACall{{
+			worklog:       storedWorklog.Worklog,
+			timeDeltaMins: 8,
+		}}, syncWLToJIRACalls)
+		snapshotCallToolResult(t, result)
+	})
+
+	t.Run("reports a persistence failure after syncing to Jira", func(t *testing.T) {
+		// GIVEN
+		type syncWLToJIRACall struct {
+			worklog       domain.Worklog
+			timeDeltaMins int
+		}
+		var syncWLToJIRACalls []syncWLToJIRACall
+		jira := &stubJira{
+			syncWLToJIRAFunc: func(_ context.Context, worklog domain.Worklog, timeDeltaMins int) error {
+				syncWLToJIRACalls = append(syncWLToJIRACalls, syncWLToJIRACall{
+					worklog:       worklog,
+					timeDeltaMins: timeDeltaMins,
+				})
+				return nil
+			},
+		}
+
+		type markWorklogSyncedCall struct {
+			id      int
+			comment *string
+		}
+		// Keep one entry so the handler's concurrent result ordering remains deterministic.
+		storedWorklog := domain.StoredWorklog{
+			ID: 53,
+			Worklog: domain.Worklog{
+				IssueKey: "TEST-303",
+				BeginTS:  time.Date(2026, time.August, 24, 18, 0, 0, 0, time.UTC),
+				EndTS:    time.Date(2026, time.August, 24, 19, 15, 0, 0, time.UTC),
+				Comment:  "investigated persistence failure",
+			},
+		}
+		var markWorklogSyncedCalls []markWorklogSyncedCall
+		persistenceErr := errors.New("database unavailable")
+
+		store := &stubWorklogStore{
+			unsyncedWorklogsFunc: func(context.Context) ([]domain.StoredWorklog, error) {
+				return []domain.StoredWorklog{storedWorklog}, nil
+			},
+			markWorklogSyncedFunc: func(_ context.Context, id int, comment *string) error {
+				markWorklogSyncedCalls = append(markWorklogSyncedCalls, markWorklogSyncedCall{
+					id:      id,
+					comment: comment,
+				})
+				return persistenceErr
+			},
+		}
+
+		jiraOpts := config.JiraOptions{TimeDeltaMins: 9}
+		ctx, session := setupMCPSession(t, store, jira, jiraOpts)
+
+		// WHEN
+		result, err := session.CallTool(ctx, &sdk.CallToolParams{
+			Name: "sync_worklogs_to_jira",
+		})
+
+		// THEN
+		require.NoError(t, err)
+		require.Equal(t, []syncWLToJIRACall{{
+			worklog:       storedWorklog.Worklog,
+			timeDeltaMins: 9,
+		}}, syncWLToJIRACalls)
+		require.Equal(t, []markWorklogSyncedCall{{
+			id:      53,
+			comment: nil,
+		}}, markWorklogSyncedCalls)
+		snapshotCallToolResult(t, result)
+	})
+}
+
 type stubWorklogStore struct {
 	addWorklogFunc        func(context.Context, domain.Worklog) error
 	unsyncedWorklogsFunc  func(context.Context) ([]domain.StoredWorklog, error)
@@ -372,6 +560,33 @@ func (s *stubWorklogStore) MarkWorklogSynced(ctx context.Context, id int, commen
 		panic("unexpected call to MarkWorklogSynced")
 	}
 	return s.markWorklogSyncedFunc(ctx, id, comment)
+}
+
+type stubJira struct {
+	getIssuesFunc    func(string) ([]domain.Issue, error)
+	syncWLToJIRAFunc func(context.Context, domain.Worklog, int) error
+	urlFunc          func() string
+}
+
+func (s *stubJira) GetIssues(jql string) ([]domain.Issue, error) {
+	if s.getIssuesFunc == nil {
+		panic("unexpected call to GetIssues")
+	}
+	return s.getIssuesFunc(jql)
+}
+
+func (s *stubJira) SyncWLToJIRA(ctx context.Context, worklog domain.Worklog, timeDeltaMins int) error {
+	if s.syncWLToJIRAFunc == nil {
+		panic("unexpected call to SyncWLToJIRA")
+	}
+	return s.syncWLToJIRAFunc(ctx, worklog, timeDeltaMins)
+}
+
+func (s *stubJira) URL() string {
+	if s.urlFunc == nil {
+		panic("unexpected call to URL")
+	}
+	return s.urlFunc()
 }
 
 func setupMCPSession(
