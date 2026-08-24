@@ -356,6 +356,119 @@ END;
 	})
 }
 
+func TestSQLiteStoreUpdateActiveWorklog(t *testing.T) {
+	t.Run("updates the begin time and preserves the comment when none is supplied", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		originalBeginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		location := time.FixedZone("UTC+1", int(time.Hour.Seconds()))
+		updatedBeginTS := time.Date(2026, time.August, 24, 11, 0, 0, 0, location)
+		comment := "existing comment"
+		id := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  originalBeginTS,
+			comment:  &comment,
+			active:   true,
+		})
+
+		// WHEN
+		err := store.UpdateActiveWorklog(t.Context(), updatedBeginTS, nil)
+
+		// THEN
+		require.NoError(t, err)
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+		assert.Equal(t, id, got.id)
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, updatedBeginTS.UTC(), got.beginTS)
+		assert.False(t, got.endTS.Valid)
+		require.True(t, got.comment.Valid)
+		assert.Equal(t, comment, got.comment.String)
+		assert.True(t, got.active)
+		assert.False(t, got.synced)
+	})
+
+	tests := []struct {
+		name           string
+		updatedComment string
+	}{
+		{
+			name:           "updates the begin time and comment",
+			updatedComment: "updated comment",
+		},
+		{
+			name:           "stores an explicitly empty comment",
+			updatedComment: "",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// GIVEN
+			store := setupTestStore(t)
+			originalBeginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+			updatedBeginTS := originalBeginTS.Add(time.Hour)
+			originalComment := "existing comment"
+			id := insertTestWorklogRow(t, store, testWorklogRow{
+				issueKey: "TEST-1",
+				beginTS:  originalBeginTS,
+				comment:  &originalComment,
+				active:   true,
+			})
+
+			// WHEN
+			err := store.UpdateActiveWorklog(t.Context(), updatedBeginTS, &test.updatedComment)
+
+			// THEN
+			require.NoError(t, err)
+			gotRows := fetchAllWorklogRows(t, store)
+			require.Len(t, gotRows, 1)
+			got := gotRows[0]
+			assert.Equal(t, id, got.id)
+			assert.Equal(t, "TEST-1", got.issueKey)
+			assert.Equal(t, updatedBeginTS, got.beginTS)
+			assert.False(t, got.endTS.Valid)
+			require.True(t, got.comment.Valid)
+			assert.Equal(t, test.updatedComment, got.comment.String)
+			assert.True(t, got.active)
+			assert.False(t, got.synced)
+		})
+	}
+
+	t.Run("returns an error when there is no active worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		endTS := beginTS.Add(time.Hour)
+		comment := "existing comment"
+		id := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  beginTS,
+			endTS:    &endTS,
+			comment:  &comment,
+		})
+		updatedComment := "updated comment"
+
+		// WHEN
+		err := store.UpdateActiveWorklog(t.Context(), endTS.Add(time.Hour), &updatedComment)
+
+		// THEN
+		require.ErrorIs(t, err, ErrNoActiveWorklog)
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+		assert.Equal(t, id, got.id)
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, beginTS, got.beginTS)
+		require.True(t, got.endTS.Valid)
+		assert.Equal(t, endTS, got.endTS.Time)
+		require.True(t, got.comment.Valid)
+		assert.Equal(t, comment, got.comment.String)
+		assert.False(t, got.active)
+		assert.False(t, got.synced)
+	})
+}
+
 func TestSQLiteStoreAddWorklog(t *testing.T) {
 	// GIVEN
 	store := setupTestStore(t)

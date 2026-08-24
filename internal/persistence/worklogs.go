@@ -168,6 +168,31 @@ WHERE
 	return nil
 }
 
+func (s *SQLiteStore) UpdateActiveWorklog(ctx context.Context, beginTS time.Time, comment *string) error {
+	result, err := s.db.ExecContext(ctx, `
+UPDATE
+    issue_log
+SET
+    begin_ts = ?,
+    comment = COALESCE(?, comment)
+WHERE
+    active = true;
+`, beginTS.UTC(), comment)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrNoActiveWorklog
+	}
+
+	return nil
+}
+
 func (s *SQLiteStore) AddWorklog(ctx context.Context, worklog domain.Worklog) error {
 	_, err := s.db.ExecContext(ctx, `
 INSERT INTO
