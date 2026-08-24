@@ -347,6 +347,75 @@ func TestHTTPServerGetUnsyncedWorklogs(t *testing.T) {
 	})
 }
 
+func TestHTTPServerGetJiraIssues(t *testing.T) {
+	t.Run("returns Jira issues", func(t *testing.T) {
+		// GIVEN
+		var getIssuesCalls []string
+		jira := &stubJira{
+			getIssuesFunc: func(jql string) ([]domain.Issue, error) {
+				getIssuesCalls = append(getIssuesCalls, jql)
+				return []domain.Issue{
+					{
+						IssueKey:        "TEST-401",
+						IssueType:       "Story",
+						Summary:         "Add MCP endpoint coverage",
+						Assignee:        "Ada Lovelace",
+						Status:          "In Progress",
+						AggSecondsSpent: 3600,
+					},
+					{
+						IssueKey:        "TEST-402",
+						IssueType:       "Bug",
+						Summary:         "Preserve tool error responses",
+						Assignee:        "Grace Hopper",
+						Status:          "To Do",
+						AggSecondsSpent: 900,
+					},
+				}, nil
+			},
+		}
+
+		jiraOpts := config.JiraOptions{JQL: "project = TEST ORDER BY key"}
+		ctx, session := setupMCPSession(t, nil, jira, jiraOpts)
+
+		// WHEN
+		result, err := session.CallTool(ctx, &sdk.CallToolParams{
+			Name: "get_jira_issues",
+		})
+
+		// THEN
+		require.NoError(t, err)
+		require.False(t, result.IsError)
+		require.Equal(t, []string{"project = TEST ORDER BY key"}, getIssuesCalls)
+		snapshotCallToolResult(t, result)
+	})
+
+	t.Run("reports a Jira failure", func(t *testing.T) {
+		// GIVEN
+		jiraErr := errors.New("Jira unavailable")
+		var getIssuesCalls []string
+		jira := &stubJira{
+			getIssuesFunc: func(jql string) ([]domain.Issue, error) {
+				getIssuesCalls = append(getIssuesCalls, jql)
+				return nil, jiraErr
+			},
+		}
+
+		jiraOpts := config.JiraOptions{JQL: "assignee = currentUser()"}
+		ctx, session := setupMCPSession(t, nil, jira, jiraOpts)
+
+		// WHEN
+		result, err := session.CallTool(ctx, &sdk.CallToolParams{
+			Name: "get_jira_issues",
+		})
+
+		// THEN
+		require.NoError(t, err)
+		require.Equal(t, []string{"assignee = currentUser()"}, getIssuesCalls)
+		snapshotCallToolResult(t, result)
+	})
+}
+
 func TestHTTPServerSyncWorklogsToJira(t *testing.T) {
 	t.Run("syncs a worklog successfully", func(t *testing.T) {
 		// GIVEN
