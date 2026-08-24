@@ -10,6 +10,80 @@ import (
 	_ "modernc.org/sqlite" // sqlite driver
 )
 
+func TestSQLiteStoreActiveWorklog(t *testing.T) {
+	t.Run("returns the active worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		location := time.FixedZone("UTC+1", int(time.Hour.Seconds()))
+		beginTS := time.Date(2026, time.August, 24, 9, 30, 0, 0, location)
+		endTS := beginTS.Add(time.Hour).UTC()
+		comment := "active worklog"
+		insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "COMPLETED-1",
+			beginTS:  beginTS.UTC(),
+			endTS:    &endTS,
+		})
+		insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "ACTIVE-1",
+			beginTS:  beginTS.UTC(),
+			comment:  &comment,
+			active:   true,
+		})
+
+		// WHEN
+		got, err := store.ActiveWorklog(t.Context())
+
+		// THEN
+		require.NoError(t, err)
+		assert.Equal(t, &domain.InProgressWorklog{
+			IssueKey: "ACTIVE-1",
+			BeginTS:  beginTS.UTC().Local(),
+			Comment:  comment,
+		}, got)
+	})
+
+	t.Run("normalizes a null comment to an empty string", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 30, 0, 0, time.UTC)
+		insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "ACTIVE-1",
+			beginTS:  beginTS,
+			active:   true,
+		})
+
+		// WHEN
+		got, err := store.ActiveWorklog(t.Context())
+
+		// THEN
+		require.NoError(t, err)
+		assert.Equal(t, &domain.InProgressWorklog{
+			IssueKey: "ACTIVE-1",
+			BeginTS:  beginTS.Local(),
+			Comment:  "",
+		}, got)
+	})
+
+	t.Run("returns nil when there is no active worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 30, 0, 0, time.UTC)
+		endTS := beginTS.Add(time.Hour)
+		insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "COMPLETED-1",
+			beginTS:  beginTS,
+			endTS:    &endTS,
+		})
+
+		// WHEN
+		got, err := store.ActiveWorklog(t.Context())
+
+		// THEN
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
+
 func TestSQLiteStoreAddWorklog(t *testing.T) {
 	// GIVEN
 	store := setupTestStore(t)

@@ -3,9 +3,41 @@ package persistence
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/dhth/punchout/internal/domain"
 )
+
+func (s *SQLiteStore) ActiveWorklog(ctx context.Context) (*domain.InProgressWorklog, error) {
+	row := s.db.QueryRowContext(ctx, `
+SELECT
+    issue_key,
+    begin_ts,
+    comment
+FROM
+    issue_log
+WHERE
+    active = true
+ORDER BY
+    begin_ts DESC
+LIMIT
+    1;
+`)
+
+	var worklog domain.InProgressWorklog
+	var comment sql.NullString
+	if err := row.Scan(&worklog.IssueKey, &worklog.BeginTS, &comment); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	worklog.BeginTS = worklog.BeginTS.Local()
+	worklog.Comment = comment.String
+
+	return &worklog, nil
+}
 
 func (s *SQLiteStore) AddWorklog(ctx context.Context, worklog domain.Worklog) error {
 	_, err := s.db.ExecContext(ctx, `
