@@ -129,9 +129,7 @@ func TestHTTPServerAddWorklog(t *testing.T) {
 			Comment:  "implemented persistence boundary",
 		}}, addedWorklogs)
 
-		got, err := json.MarshalIndent(result, "", "  ")
-		require.NoError(t, err)
-		snaps.MatchStandaloneSnapshot(t, string(got))
+		snapshotCallToolResult(t, result)
 	})
 
 	t.Run("rejects an invalid begin time", func(t *testing.T) {
@@ -152,18 +150,16 @@ func TestHTTPServerAddWorklog(t *testing.T) {
 
 		// THEN
 		require.NoError(t, err)
-		got, err := json.MarshalIndent(result, "", "  ")
-		require.NoError(t, err)
-		snaps.MatchStandaloneSnapshot(t, string(got))
+		snapshotCallToolResult(t, result)
 	})
 
 	t.Run("reports a persistence failure", func(t *testing.T) {
 		// GIVEN
 		persistenceErr := errors.New("database unavailable")
-		var addedWorklogs []domain.Worklog
+		var addWorklogCalls []domain.Worklog
 		store := &stubWorklogStore{
 			addWorklogFunc: func(_ context.Context, worklog domain.Worklog) error {
-				addedWorklogs = append(addedWorklogs, worklog)
+				addWorklogCalls = append(addWorklogCalls, worklog)
 				return persistenceErr
 			},
 		}
@@ -187,11 +183,86 @@ func TestHTTPServerAddWorklog(t *testing.T) {
 			BeginTS:  time.Date(2026, time.August, 24, 9, 30, 0, 0, time.Local),
 			EndTS:    time.Date(2026, time.August, 24, 10, 45, 0, 0, time.Local),
 			Comment:  "implemented persistence boundary",
-		}}, addedWorklogs)
+		}}, addWorklogCalls)
 
-		got, err := json.MarshalIndent(result, "", "  ")
+		snapshotCallToolResult(t, result)
+	})
+}
+
+func TestHTTPServerAddMultipleWorklogs(t *testing.T) {
+	t.Run("preserves mixed per-entry outcomes", func(t *testing.T) {
+		// GIVEN
+		persistenceErr := errors.New("database unavailable")
+		var addWorklogCalls []domain.Worklog
+		store := &stubWorklogStore{
+			addWorklogFunc: func(_ context.Context, worklog domain.Worklog) error {
+				addWorklogCalls = append(addWorklogCalls, worklog)
+				if worklog.IssueKey == "TEST-103" {
+					return persistenceErr
+				}
+				return nil
+			},
+		}
+		ctx, session := setupMCPSession(t, store, nil, config.JiraOptions{})
+
+		// WHEN
+		result, err := session.CallTool(ctx, &sdk.CallToolParams{
+			Name: "add_multiple_worklogs",
+			Arguments: map[string]any{
+				"worklogs": []map[string]any{
+					{
+						"issue_key":  "TEST-101",
+						"begin_time": "2026/08/24 09:00",
+						"end_time":   "2026/08/24 10:00",
+						"comment":    "successful entry",
+					},
+					{
+						"issue_key":  "TEST-102",
+						"begin_time": "invalid-time",
+						"end_time":   "2026/08/24 11:00",
+						"comment":    "validation failure",
+					},
+					{
+						"issue_key":  "TEST-103",
+						"begin_time": "2026/08/24 11:00",
+						"end_time":   "2026/08/24 12:00",
+						"comment":    "persistence failure",
+					},
+					{
+						"issue_key":  "TEST-104",
+						"begin_time": "2026/08/24 13:00",
+						"end_time":   "2026/08/24 14:00",
+						"comment":    "successful entry after failures",
+					},
+				},
+			},
+		})
+
+		// THEN
 		require.NoError(t, err)
-		snaps.MatchStandaloneSnapshot(t, string(got))
+		require.False(t, result.IsError)
+		require.Equal(t, []domain.Worklog{
+			{
+				IssueKey: "TEST-101",
+				BeginTS:  time.Date(2026, time.August, 24, 9, 0, 0, 0, time.Local),
+				EndTS:    time.Date(2026, time.August, 24, 10, 0, 0, 0, time.Local),
+				Comment:  "successful entry",
+			},
+			{
+				IssueKey: "TEST-103",
+				BeginTS:  time.Date(2026, time.August, 24, 11, 0, 0, 0, time.Local),
+				EndTS:    time.Date(2026, time.August, 24, 12, 0, 0, 0, time.Local),
+				Comment:  "persistence failure",
+			},
+			{
+				IssueKey: "TEST-104",
+				BeginTS:  time.Date(2026, time.August, 24, 13, 0, 0, 0, time.Local),
+				EndTS:    time.Date(2026, time.August, 24, 14, 0, 0, 0, time.Local),
+				Comment:  "successful entry after failures",
+			},
+		}, addWorklogCalls)
+
+		snapshotCallToolResult(t, result)
 	})
 }
 
@@ -246,4 +317,12 @@ func setupMCPSession(
 	t.Cleanup(func() { _ = session.Close() })
 
 	return ctx, session
+}
+
+func snapshotCallToolResult(t *testing.T, result *sdk.CallToolResult) {
+	t.Helper()
+
+	got, err := json.MarshalIndent(result, "", "  ")
+	require.NoError(t, err)
+	snaps.MatchStandaloneSnapshot(t, string(got))
 }
