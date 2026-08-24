@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/dhth/punchout/internal/domain"
 )
@@ -37,6 +38,17 @@ LIMIT
 	worklog.Comment = comment.String
 
 	return &worklog, nil
+}
+
+func (s *SQLiteStore) StartWorklog(ctx context.Context, issueKey string, beginTS time.Time) error {
+	_, err := s.db.ExecContext(ctx, `
+INSERT INTO
+    issue_log (issue_key, begin_ts, active, synced)
+VALUES
+    (?, ?, true, false);
+`, issueKey, beginTS.UTC())
+
+	return err
 }
 
 func (s *SQLiteStore) AddWorklog(ctx context.Context, worklog domain.Worklog) error {

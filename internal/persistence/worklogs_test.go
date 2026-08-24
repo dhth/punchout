@@ -84,6 +84,51 @@ func TestSQLiteStoreActiveWorklog(t *testing.T) {
 	})
 }
 
+func TestSQLiteStoreStartWorklog(t *testing.T) {
+	t.Run("starts a worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		location := time.FixedZone("UTC+1", int(time.Hour.Seconds()))
+		beginTS := time.Date(2026, time.August, 24, 9, 30, 0, 0, location)
+
+		// WHEN
+		err := store.StartWorklog(t.Context(), "TEST-1", beginTS)
+
+		// THEN
+		require.NoError(t, err)
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, beginTS.UTC(), got.beginTS)
+		assert.False(t, got.endTS.Valid)
+		assert.False(t, got.comment.Valid)
+		assert.True(t, got.active)
+		assert.False(t, got.synced)
+	})
+
+	t.Run("rejects a second active worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		firstBeginTS := time.Date(2026, time.August, 24, 9, 30, 0, 0, time.UTC)
+		require.NoError(t, store.StartWorklog(t.Context(), "TEST-1", firstBeginTS))
+
+		// WHEN
+		err := store.StartWorklog(t.Context(), "TEST-2", firstBeginTS.Add(time.Hour))
+
+		// THEN
+		require.ErrorContains(t, err, "Only one row with active=1 is allowed")
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, firstBeginTS, got.beginTS)
+		assert.True(t, got.active)
+	})
+}
+
 func TestSQLiteStoreAddWorklog(t *testing.T) {
 	// GIVEN
 	store := setupTestStore(t)
