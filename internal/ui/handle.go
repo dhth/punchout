@@ -166,7 +166,7 @@ func (m *Model) getCmdToGoForwardsInViews() tea.Cmd {
 		cmd = fetchUnsyncedWorkLogs(m.db)
 	case wLView:
 		m.activeView = syncedWLView
-		cmd = fetchSyncedWorkLogs(m.db)
+		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
 	case syncedWLView:
 		m.activeView = issueListView
 	case editActiveWLView:
@@ -208,7 +208,7 @@ func (m *Model) getCmdToGoBackwardsInViews() tea.Cmd {
 		cmd = fetchUnsyncedWorkLogs(m.db)
 	case issueListView:
 		m.activeView = syncedWLView
-		cmd = fetchSyncedWorkLogs(m.db)
+		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
 	case editActiveWLView:
 		switch m.trackingFocussedField {
 		case entryBeginTS:
@@ -277,7 +277,7 @@ func (m *Model) getCmdToReloadData() tea.Cmd {
 		cmd = fetchUnsyncedWorkLogs(m.db)
 		m.worklogList.ResetSelected()
 	case syncedWLView:
-		cmd = fetchSyncedWorkLogs(m.db)
+		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
 		m.syncedWorklogList.ResetSelected()
 	}
 

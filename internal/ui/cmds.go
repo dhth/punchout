@@ -159,9 +159,9 @@ func fetchUnsyncedWorkLogs(db *sql.DB) tea.Cmd {
 	}
 }
 
-func fetchSyncedWorkLogs(db *sql.DB) tea.Cmd {
+func fetchSyncedWorkLogs(ctx context.Context, store WorklogStore) tea.Cmd {
 	return func() tea.Msg {
-		entries, err := pers.FetchSyncedWLsFromDB(db)
+		entries, err := store.SyncedWorklogs(ctx)
 		return syncedWLEntriesFetchedFromDB{
 			entries: entries,
 			err:     err,

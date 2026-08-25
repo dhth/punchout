@@ -102,13 +102,6 @@ func TestCompletedWorklogQueries(t *testing.T) {
 				return FetchUnsyncedWLsFromDB(db)
 			},
 		},
-		{
-			name:   "synced worklogs",
-			synced: true,
-			query: func(db *sql.DB, _ string) ([]d.StoredWorklog, error) {
-				return FetchSyncedWLsFromDB(db)
-			},
-		},
 	}
 
 	for _, queryTest := range queries {

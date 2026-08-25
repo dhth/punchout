@@ -143,7 +143,7 @@ func (m Model) Init() tea.Cmd {
 	} else {
 		cmds = append(cmds, m.fetchIssuesFromJIRA(false))
 	}
-	cmds = append(cmds, fetchUnsyncedWorkLogs(m.db), fetchSyncedWorkLogs(m.db))
+	cmds = append(cmds, fetchUnsyncedWorkLogs(m.db), fetchSyncedWorkLogs(m.ctx, m.worklogStore))
 
 	return tea.Batch(cmds...)
 }
