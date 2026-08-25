@@ -101,7 +101,7 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 				EndTS:    endTS,
 				Comment:  m.trackingInputs[entryComment].Value(),
 			}
-			cmd = insertManualEntry(m.db, worklog)
+			cmd = insertManualEntry(m.ctx, m.worklogStore, worklog)
 			m.activeView = issueListView
 		case worklogUpdate:
 			wl, ok := m.worklogList.SelectedItem().(worklogListItem)

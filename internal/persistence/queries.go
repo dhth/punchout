@@ -131,37 +131,6 @@ VALUES
 	return nil
 }
 
-func InsertManualWLInDB(db *sql.DB, worklog d.Worklog) error {
-	stmt, err := db.Prepare(`
-INSERT INTO
-    issue_log (
-        issue_key,
-        begin_ts,
-        end_ts,
-        COMMENT,
-        active,
-        synced
-    )
-VALUES
-    (?, ?, ?, ?, ?, ?);
-`)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(
-		worklog.IssueKey,
-		worklog.BeginTS.UTC(),
-		worklog.EndTS.UTC(),
-		worklog.Comment,
-		false,
-		false,
-	)
-
-	return err
-}
-
 func UpdateActiveWLInDB(db *sql.DB, worklog d.Worklog) error {
 	stmt, err := db.Prepare(`
 UPDATE

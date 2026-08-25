@@ -97,9 +97,9 @@ func updateActiveWL(db *sql.DB, beginTS time.Time, comment *string) tea.Cmd {
 	}
 }
 
-func insertManualEntry(db *sql.DB, worklog d.Worklog) tea.Cmd {
+func insertManualEntry(ctx context.Context, store WorklogStore, worklog d.Worklog) tea.Cmd {
 	return func() tea.Msg {
-		err := pers.InsertManualWLInDB(db, worklog)
+		err := store.AddWorklog(ctx, worklog)
 
 		return manualWLInsertedInDB{worklog.IssueKey, err}
 	}
