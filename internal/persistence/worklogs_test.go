@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -560,6 +561,111 @@ func TestSQLiteStoreAddWorklog(t *testing.T) {
 	assert.Equal(t, worklog.Comment, got.comment.String)
 	assert.False(t, got.active)
 	assert.False(t, got.synced)
+}
+
+func TestSQLiteStoreUpdateWorklog(t *testing.T) {
+	t.Run("updates only the editable fields of the target worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		originalBeginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		originalEndTS := originalBeginTS.Add(time.Hour)
+		originalComment := "original comment"
+		targetID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  originalBeginTS,
+			endTS:    &originalEndTS,
+			comment:  &originalComment,
+			synced:   true,
+		})
+
+		otherBeginTS := originalEndTS.Add(time.Hour)
+		otherEndTS := otherBeginTS.Add(time.Hour)
+		otherComment := "other comment"
+		otherID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-2",
+			beginTS:  otherBeginTS,
+			endTS:    &otherEndTS,
+			comment:  &otherComment,
+		})
+
+		location := time.FixedZone("UTC+1", int(time.Hour.Seconds()))
+		updatedBeginTS := time.Date(2026, time.August, 25, 10, 0, 0, 0, location)
+		updatedEndTS := updatedBeginTS.Add(90 * time.Minute)
+		updatedWorklog := domain.Worklog{
+			IssueKey: "CHANGED-KEY",
+			BeginTS:  updatedBeginTS,
+			EndTS:    updatedEndTS,
+			Comment:  "updated comment",
+		}
+
+		// WHEN
+		err := store.UpdateWorklog(t.Context(), targetID, updatedWorklog)
+
+		// THEN
+		require.NoError(t, err)
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 2)
+		target := gotRows[0]
+		other := gotRows[1]
+
+		assert.Equal(t, targetID, target.id)
+		assert.Equal(t, "TEST-1", target.issueKey)
+		assert.Equal(t, updatedBeginTS.UTC(), target.beginTS)
+		require.True(t, target.endTS.Valid)
+		assert.Equal(t, updatedEndTS.UTC(), target.endTS.Time)
+		require.True(t, target.comment.Valid)
+		assert.Equal(t, updatedWorklog.Comment, target.comment.String)
+		assert.False(t, target.active)
+		assert.True(t, target.synced)
+
+		assert.Equal(t, otherID, other.id)
+		assert.Equal(t, "TEST-2", other.issueKey)
+		assert.Equal(t, otherBeginTS, other.beginTS)
+		require.True(t, other.endTS.Valid)
+		assert.Equal(t, otherEndTS, other.endTS.Time)
+		require.True(t, other.comment.Valid)
+		assert.Equal(t, otherComment, other.comment.String)
+		assert.False(t, other.active)
+		assert.False(t, other.synced)
+	})
+
+	t.Run("returns an error when the worklog does not exist", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		endTS := beginTS.Add(time.Hour)
+		comment := "original comment"
+		id := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  beginTS,
+			endTS:    &endTS,
+			comment:  &comment,
+		})
+
+		// WHEN
+		err := store.UpdateWorklog(t.Context(), id+1, domain.Worklog{
+			IssueKey: "TEST-2",
+			BeginTS:  beginTS.Add(time.Hour),
+			EndTS:    endTS.Add(time.Hour),
+			Comment:  "updated comment",
+		})
+
+		// THEN
+		require.ErrorIs(t, err, ErrWorklogNotFound)
+		require.ErrorContains(t, err, fmt.Sprint(id+1))
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+		assert.Equal(t, id, got.id)
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, beginTS, got.beginTS)
+		require.True(t, got.endTS.Valid)
+		assert.Equal(t, endTS, got.endTS.Time)
+		require.True(t, got.comment.Valid)
+		assert.Equal(t, comment, got.comment.String)
+		assert.False(t, got.active)
+		assert.False(t, got.synced)
+	})
 }
 
 func TestSQLiteStoreUnsyncedWorklogs(t *testing.T) {

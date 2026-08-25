@@ -13,6 +13,7 @@ import (
 var (
 	ErrIssueHasNoActiveWorklog = errors.New("issue doesn't have an active worklog")
 	ErrNoActiveWorklog         = errors.New("no active worklog")
+	ErrWorklogNotFound         = errors.New("worklog not found")
 )
 
 func (s *SQLiteStore) ActiveWorklog(ctx context.Context) (*domain.InProgressWorklog, error) {
@@ -236,6 +237,32 @@ VALUES
 	)
 
 	return err
+}
+
+func (s *SQLiteStore) UpdateWorklog(ctx context.Context, id int, worklog domain.Worklog) error {
+	result, err := s.db.ExecContext(ctx, `
+UPDATE
+    issue_log
+SET
+    begin_ts = ?,
+    end_ts = ?,
+    comment = ?
+WHERE
+    ID = ?;
+`, worklog.BeginTS.UTC(), worklog.EndTS.UTC(), worklog.Comment, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("%w: %d", ErrWorklogNotFound, id)
+	}
+
+	return nil
 }
 
 func (s *SQLiteStore) UnsyncedWorklogs(ctx context.Context) ([]domain.StoredWorklog, error) {
