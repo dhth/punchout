@@ -2,7 +2,6 @@ package ui
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"os/exec"
 	"runtime"
@@ -11,9 +10,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 	d "github.com/dhth/punchout/internal/domain"
 	"github.com/dhth/punchout/internal/issuecache"
-	pers "github.com/dhth/punchout/internal/persistence"
-
-	_ "modernc.org/sqlite" // sqlite driver
 )
 
 func toggleTracking(
@@ -87,19 +83,10 @@ func toggleTracking(
 	}
 }
 
-func quickSwitchActiveIssue(db *sql.DB, selectedIssue string, currentTime time.Time) tea.Cmd {
+func quickSwitchActiveIssue(ctx context.Context, store WorklogStore, selectedIssue string, currentTime time.Time) tea.Cmd {
 	return func() tea.Msg {
-		activeIssue, err := pers.GetActiveIssueFromDB(db)
-		if err != nil {
-			return activeWLSwitchedInDB{"", selectedIssue, currentTime, err}
-		}
-
-		err = pers.QuickSwitchActiveWLInDB(db, activeIssue, selectedIssue, currentTime)
-		if err != nil {
-			return activeWLSwitchedInDB{activeIssue, selectedIssue, currentTime, err}
-		}
-
-		return activeWLSwitchedInDB{activeIssue, selectedIssue, currentTime, nil}
+		previousIssue, err := store.SwitchActiveWorklog(ctx, selectedIssue, currentTime)
+		return activeWLSwitchedInDB{previousIssue, selectedIssue, currentTime, err}
 	}
 }
 

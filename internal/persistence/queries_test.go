@@ -11,36 +11,6 @@ import (
 	_ "modernc.org/sqlite" // sqlite driver
 )
 
-func TestQuickSwitchActiveWLInDB(t *testing.T) {
-	db := setupTestDB(t)
-
-	// GIVEN
-	now := time.Now()
-	activeIssueKey := "OLD-ACTIVE"
-	newActiveIssueKey := "NEW-ACTIVE"
-	beginTS := now.Add(-30 * time.Minute)
-	_, err := db.Exec(`
-INSERT INTO issue_log (issue_key, begin_ts, active, synced)
-VALUES (?, ?, ?, ?);
-`, activeIssueKey, beginTS, true, 0)
-	require.NoError(t, err, "couldn't insert active worklog")
-
-	// WHEN
-	err = QuickSwitchActiveWLInDB(db, activeIssueKey, newActiveIssueKey, now)
-	require.NoError(t, err, "quick switching returned an error")
-
-	// THEN
-	numActiveIssues, err := getNumActiveIssuesFromDB(db)
-	require.NoError(t, err, "couldn't get number of active issues")
-	gotNewActive, err := GetActiveIssueFromDB(db)
-	require.NoError(t, err, "couldn't get active issue")
-	worklogs, err := getWorkLogsForIssueFromDB(db, activeIssueKey)
-	require.NoError(t, err, "couldn't get worklog entries for active issue")
-	assert.Equal(t, 1, numActiveIssues, "number of active issues is incorrect")
-	assert.Equal(t, newActiveIssueKey, gotNewActive, "new active issue key is incorrect")
-	assert.Len(t, worklogs, 1, "work log entries for older issue is incorrect")
-}
-
 func TestCompletedWorklogQueries(t *testing.T) {
 	type queryFunc func(*sql.DB, string) ([]d.StoredWorklog, error)
 

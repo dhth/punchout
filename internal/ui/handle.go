@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -11,7 +10,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 	d "github.com/dhth/punchout/internal/domain"
 	"github.com/dhth/punchout/internal/issuecache"
-	pers "github.com/dhth/punchout/internal/persistence"
 	"github.com/dhth/punchout/internal/utils"
 )
 
@@ -420,7 +418,7 @@ func (m *Model) getCmdToQuickSwitchTracking() tea.Cmd {
 		)
 	}
 
-	return quickSwitchActiveIssue(m.db, issue.IssueKey, time.Now())
+	return quickSwitchActiveIssue(m.ctx, m.worklogStore, issue.IssueKey, time.Now())
 }
 
 func (m *Model) getCmdToToggleTracking() tea.Cmd {
@@ -819,35 +817,10 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 	return cmd
 }
 
-func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
+func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) tea.Cmd {
 	if msg.err != nil {
 		m.setErrorMsg(msg.err.Error())
-		switch {
-		case errors.Is(msg.err, pers.ErrNoTaskIsActive):
-			if activeIssue := m.issueMap[m.activeIssue]; activeIssue != nil {
-				activeIssue.TrackingActive = false
-			}
-			m.activeIssue = ""
-			m.trackingActive = false
-			m.activeWorklog = nil
-		case errors.Is(msg.err, pers.ErrCouldntStartTrackingTask):
-			if lastActiveIssue := m.issueMap[msg.lastActiveIssue]; lastActiveIssue != nil {
-				lastActiveIssue.TrackingActive = false
-			}
-			m.activeIssue = ""
-			m.trackingActive = false
-			m.activeWorklog = nil
-		case errors.Is(msg.err, pers.ErrCouldntStopActiveTask):
-			m.activeIssue = msg.lastActiveIssue
-			m.trackingActive = true
-			if m.activeWorklog != nil {
-				m.activeWorklog.IssueKey = msg.lastActiveIssue
-			}
-			if activeIssue := m.issueMap[msg.lastActiveIssue]; activeIssue != nil {
-				activeIssue.TrackingActive = true
-			}
-		}
-		return
+		return fetchActiveStatus(m.ctx, m.worklogStore, 0)
 	}
 
 	var lastActiveIssue *d.Issue
@@ -870,6 +843,7 @@ func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
 	}
 	m.activeIssue = msg.currentActiveIssue
 	m.activeWorklog = &d.InProgressWorklog{IssueKey: msg.currentActiveIssue, BeginTS: msg.beginTS}
+	return nil
 }
 
 func (m *Model) shiftTime(direction timeShiftDirection, duration timeShiftDuration) error {

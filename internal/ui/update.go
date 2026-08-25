@@ -305,7 +305,10 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 			cmds = append(cmds, handleCmd)
 		}
 	case activeWLSwitchedInDB:
-		m.handleActiveWLSwitchedInDBMsg(msg)
+		handleCmd := m.handleActiveWLSwitchedInDBMsg(msg)
+		if handleCmd != nil {
+			cmds = append(cmds, handleCmd)
+		}
 	case hideHelpMsg:
 		m.showHelpIndicator = false
 	case urlOpenedinBrowserMsg:
