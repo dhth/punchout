@@ -743,7 +743,7 @@ func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 		msg.entry.Comment = *m.opts.Jira.FallbackComment
 	}
 	m.worklogList.SetItem(msg.index, msg.entry)
-	return updateSyncStatusForEntry(m.db, msg.entry, msg.index, msg.fallbackCommentUsed)
+	return updateSyncStatusForEntry(m.ctx, m.worklogStore, msg.entry, msg.index, msg.fallbackCommentUsed)
 }
 
 func (m *Model) handleActiveWLUpdatedInDBMsg(msg activeWLUpdatedInDB) {

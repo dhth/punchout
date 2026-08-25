@@ -181,51 +181,6 @@ WHERE
 	return nil
 }
 
-func UpdateSyncStatusForWLInDB(db *sql.DB, id int) error {
-	stmt, err := db.Prepare(`
-UPDATE
-    issue_log
-SET
-    synced = 1
-WHERE
-    id = ?;
-`)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(id)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func UpdateSyncStatusAndCommentForWLInDB(db *sql.DB, id int, comment string) error {
-	stmt, err := db.Prepare(`
-UPDATE
-    issue_log
-SET
-    synced = 1,
-    COMMENT = ?
-WHERE
-    id = ?;
-`)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(comment, id)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func GetActiveIssueFromDB(db *sql.DB) (string, error) {
 	row := db.QueryRow(`
 SELECT

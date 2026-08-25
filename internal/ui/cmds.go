@@ -153,15 +153,14 @@ func deleteLogEntry(ctx context.Context, store WorklogStore, id int) tea.Cmd {
 	}
 }
 
-func updateSyncStatusForEntry(db *sql.DB, entry worklogListItem, index int, fallbackCommentUsed bool) tea.Cmd {
+func updateSyncStatusForEntry(ctx context.Context, store WorklogStore, entry worklogListItem, index int, fallbackCommentUsed bool) tea.Cmd {
 	return func() tea.Msg {
-		var err error
+		var comment *string
 		if fallbackCommentUsed {
-			err = pers.UpdateSyncStatusAndCommentForWLInDB(db, entry.ID, entry.Comment)
-		} else {
-			err = pers.UpdateSyncStatusForWLInDB(db, entry.ID)
+			comment = &entry.Comment
 		}
 
+		err := store.MarkWorklogSynced(ctx, entry.ID, comment)
 		return wLSyncUpdatedInDB{
 			entry: entry,
 			index: index,
