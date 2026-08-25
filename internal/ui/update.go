@@ -139,7 +139,7 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 		case "2":
 			if m.activeView != wLView {
 				m.activeView = wLView
-				cmds = append(cmds, fetchUnsyncedWorkLogs(m.db))
+				cmds = append(cmds, fetchUnsyncedWorkLogs(m.ctx, m.worklogStore))
 			}
 		case "3":
 			if m.activeView != syncedWLView {

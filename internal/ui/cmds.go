@@ -149,9 +149,9 @@ func fetchActiveStatus(db *sql.DB, interval time.Duration) tea.Cmd {
 	})
 }
 
-func fetchUnsyncedWorkLogs(db *sql.DB) tea.Cmd {
+func fetchUnsyncedWorkLogs(ctx context.Context, store WorklogStore) tea.Cmd {
 	return func() tea.Msg {
-		entries, err := pers.FetchUnsyncedWLsFromDB(db)
+		entries, err := store.UnsyncedWorklogs(ctx)
 		return wLEntriesFetchedFromDB{
 			entries: entries,
 			err:     err,
