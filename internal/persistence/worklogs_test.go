@@ -469,6 +469,69 @@ func TestSQLiteStoreUpdateActiveWorklog(t *testing.T) {
 	})
 }
 
+func TestSQLiteStoreDeleteActiveWorklog(t *testing.T) {
+	t.Run("deletes the active worklog without affecting completed worklogs", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		endTS := beginTS.Add(time.Hour)
+		completedID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  beginTS,
+			endTS:    &endTS,
+		})
+		insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-2",
+			beginTS:  endTS,
+			active:   true,
+		})
+
+		// WHEN
+		err := store.DeleteActiveWorklog(t.Context())
+
+		// THEN
+		require.NoError(t, err)
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+		assert.Equal(t, completedID, got.id)
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, beginTS, got.beginTS)
+		require.True(t, got.endTS.Valid)
+		assert.Equal(t, endTS, got.endTS.Time)
+		assert.False(t, got.active)
+		assert.False(t, got.synced)
+	})
+
+	t.Run("returns an error when there is no active worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		endTS := beginTS.Add(time.Hour)
+		completedID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  beginTS,
+			endTS:    &endTS,
+		})
+
+		// WHEN
+		err := store.DeleteActiveWorklog(t.Context())
+
+		// THEN
+		require.ErrorIs(t, err, ErrNoActiveWorklog)
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+		assert.Equal(t, completedID, got.id)
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, beginTS, got.beginTS)
+		require.True(t, got.endTS.Valid)
+		assert.Equal(t, endTS, got.endTS.Time)
+		assert.False(t, got.active)
+		assert.False(t, got.synced)
+	})
+}
+
 func TestSQLiteStoreAddWorklog(t *testing.T) {
 	// GIVEN
 	store := setupTestStore(t)

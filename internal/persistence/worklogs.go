@@ -193,6 +193,28 @@ WHERE
 	return nil
 }
 
+func (s *SQLiteStore) DeleteActiveWorklog(ctx context.Context) error {
+	result, err := s.db.ExecContext(ctx, `
+DELETE FROM
+    issue_log
+WHERE
+    active = true;
+`)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrNoActiveWorklog
+	}
+
+	return nil
+}
+
 func (s *SQLiteStore) AddWorklog(ctx context.Context, worklog domain.Worklog) error {
 	_, err := s.db.ExecContext(ctx, `
 INSERT INTO
