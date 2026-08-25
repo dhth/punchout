@@ -2,7 +2,6 @@ package ui
 
 import (
 	"context"
-	"database/sql"
 	"os"
 
 	tea "charm.land/bubbletea/v2"
@@ -13,7 +12,6 @@ import (
 
 func RenderUI(
 	ctx context.Context,
-	db *sql.DB,
 	worklogStore WorklogStore,
 	jiraSvc svc.Jira,
 	issueStore issuecache.Store,
@@ -33,7 +31,7 @@ func RenderUI(
 	}
 
 	p := tea.NewProgram(
-		InitialModel(tuiCtx, db, worklogStore, jiraSvc, issueStore, opts, thm, debug),
+		InitialModel(tuiCtx, worklogStore, jiraSvc, issueStore, opts, thm, debug),
 		tea.WithContext(tuiCtx),
 	)
 	if _, err := p.Run(); err != nil {

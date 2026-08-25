@@ -2,7 +2,6 @@ package ui
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"charm.land/bubbles/v2/list"
@@ -98,7 +97,6 @@ type Model struct {
 	styles                styles
 	activeView            stateView
 	lastView              stateView
-	db                    *sql.DB
 	worklogStore          WorklogStore
 	jiraSvc               svc.Jira
 	issueStore            issuecache.Store

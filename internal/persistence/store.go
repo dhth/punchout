@@ -44,8 +44,3 @@ func NewSQLiteStore(dbpath string) (*SQLiteStore, error) {
 func (s *SQLiteStore) Close() error {
 	return s.db.Close()
 }
-
-// DB temporarily exposes the underlying database during the TUI store migration.
-func (s *SQLiteStore) DB() *sql.DB {
-	return s.db
-}

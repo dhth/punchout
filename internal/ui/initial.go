@@ -2,7 +2,6 @@ package ui
 
 import (
 	"context"
-	"database/sql"
 
 	"charm.land/bubbles/v2/list"
 	"charm.land/bubbles/v2/textinput"
@@ -14,7 +13,6 @@ import (
 
 func InitialModel(
 	ctx context.Context,
-	db *sql.DB,
 	worklogStore WorklogStore,
 	jiraSvc svc.Jira,
 	issueStore issuecache.Store,
@@ -50,7 +48,6 @@ func InitialModel(
 		ctx:               ctx,
 		theme:             thm,
 		styles:            styles,
-		db:                db,
 		worklogStore:      worklogStore,
 		jiraSvc:           jiraSvc,
 		issueStore:        issueStore,

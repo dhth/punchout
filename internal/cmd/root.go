@@ -204,7 +204,7 @@ func NewRootCommand() (*cobra.Command, error) {
 				return err
 			}
 
-			return ui.RenderUI(cmd.Context(), worklogStore.DB(), worklogStore, jiraSvc, issueStore, ui.Options{
+			return ui.RenderUI(cmd.Context(), worklogStore, jiraSvc, issueStore, ui.Options{
 				Jira:              appCfg.Jira.Options,
 				UseCacheOnStartup: appCfg.TUI.UseCacheOnStartup,
 			}, resolvedTheme)
