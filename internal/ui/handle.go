@@ -29,7 +29,7 @@ func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
 	}
 	m.trackingInputs[entryBeginTS].SetValue("")
 	m.activeView = issueListView
-	return updateActiveWL(m.db, beginTS, comment)
+	return updateActiveWL(m.ctx, m.worklogStore, beginTS, comment)
 }
 
 func (m *Model) getCmdToSaveActiveWL() tea.Cmd {

@@ -84,15 +84,9 @@ func quickSwitchActiveIssue(db *sql.DB, selectedIssue string, currentTime time.T
 	}
 }
 
-func updateActiveWL(db *sql.DB, beginTS time.Time, comment *string) tea.Cmd {
+func updateActiveWL(ctx context.Context, store WorklogStore, beginTS time.Time, comment *string) tea.Cmd {
 	return func() tea.Msg {
-		var err error
-		if comment == nil {
-			err = pers.UpdateActiveWLBeginTSInDB(db, beginTS)
-		} else {
-			err = pers.UpdateActiveWLBeginTSAndCommentInDB(db, beginTS, *comment)
-		}
-
+		err := store.UpdateActiveWorklog(ctx, beginTS, comment)
 		return activeWLUpdatedInDB{beginTS, comment, err}
 	}
 }
