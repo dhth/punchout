@@ -2,11 +2,17 @@ package persistence
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	_ "modernc.org/sqlite" // sqlite driver
+)
+
+var (
+	errCouldntOpenDB       = errors.New("couldn't open punchout database")
+	errCouldntInitializeDB = errors.New("couldn't initialize database")
 )
 
 type SQLiteStore struct {
@@ -27,7 +33,7 @@ func NewSQLiteStore(dbpath string) (*SQLiteStore, error) {
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
 
-	if err := InitDB(db); err != nil {
+	if err := initDB(db); err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("%w: %s", errCouldntInitializeDB, err.Error())
 	}

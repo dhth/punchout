@@ -36,7 +36,7 @@ func setupTestStore(t *testing.T) *SQLiteStore {
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
 
-	require.NoError(t, InitDB(db))
+	require.NoError(t, initDB(db))
 
 	store := &SQLiteStore{db: db}
 	t.Cleanup(func() {

@@ -6,7 +6,7 @@ const (
 	DBVersion = "1"
 )
 
-func InitDB(db *sql.DB) error {
+func initDB(db *sql.DB) error {
 	_, err := db.Exec(`
 CREATE TABLE IF NOT EXISTS issue_log (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
