@@ -390,7 +390,7 @@ func (m *Model) getCmdToDeleteWL() tea.Cmd {
 		return nil
 	}
 
-	return deleteLogEntry(m.db, issue.ID)
+	return deleteLogEntry(m.ctx, m.worklogStore, issue.ID)
 }
 
 func (m *Model) getCmdToQuickSwitchTracking() tea.Cmd {

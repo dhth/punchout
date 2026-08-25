@@ -181,26 +181,6 @@ WHERE
 	return nil
 }
 
-func DeleteWLInDB(db *sql.DB, id int) error {
-	stmt, err := db.Prepare(`
-DELETE FROM
-    issue_log
-WHERE
-    ID =?;
-`)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(id)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func UpdateSyncStatusForWLInDB(db *sql.DB, id int) error {
 	stmt, err := db.Prepare(`
 UPDATE

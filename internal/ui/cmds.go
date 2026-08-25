@@ -169,9 +169,9 @@ func fetchSyncedWorkLogs(ctx context.Context, store WorklogStore) tea.Cmd {
 	}
 }
 
-func deleteLogEntry(db *sql.DB, id int) tea.Cmd {
+func deleteLogEntry(ctx context.Context, store WorklogStore, id int) tea.Cmd {
 	return func() tea.Msg {
-		err := pers.DeleteWLInDB(db, id)
+		err := store.DeleteWorklog(ctx, id)
 		return wLDeletedFromDB{
 			err: err,
 		}
