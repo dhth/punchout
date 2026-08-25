@@ -226,23 +226,6 @@ WHERE
 	return nil
 }
 
-func DeleteActiveLogInDB(db *sql.DB) error {
-	stmt, err := db.Prepare(`
-DELETE FROM
-    issue_log
-WHERE
-    active = TRUE;
-`)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec()
-
-	return err
-}
-
 func GetActiveIssueFromDB(db *sql.DB) (string, error) {
 	row := db.QueryRow(`
 SELECT

@@ -105,9 +105,9 @@ func insertManualEntry(ctx context.Context, store WorklogStore, worklog d.Worklo
 	}
 }
 
-func deleteActiveIssueLog(db *sql.DB) tea.Cmd {
+func deleteActiveIssueLog(ctx context.Context, store WorklogStore) tea.Cmd {
 	return func() tea.Msg {
-		err := pers.DeleteActiveLogInDB(db)
+		err := store.DeleteActiveWorklog(ctx)
 		return activeWLDeletedFromDB{err}
 	}
 }

@@ -185,7 +185,7 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 			}
 		case "ctrl+x":
 			if m.activeView == issueListView && m.trackingActive {
-				cmds = append(cmds, deleteActiveIssueLog(m.db))
+				cmds = append(cmds, deleteActiveIssueLog(m.ctx, m.worklogStore))
 			}
 		case "S":
 			if m.activeView != issueListView {
