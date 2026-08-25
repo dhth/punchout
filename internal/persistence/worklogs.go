@@ -265,6 +265,28 @@ WHERE
 	return nil
 }
 
+func (s *SQLiteStore) DeleteWorklog(ctx context.Context, id int) error {
+	result, err := s.db.ExecContext(ctx, `
+DELETE FROM
+    issue_log
+WHERE
+    ID = ?;
+`, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("%w: %d", ErrWorklogNotFound, id)
+	}
+
+	return nil
+}
+
 func (s *SQLiteStore) UnsyncedWorklogs(ctx context.Context) ([]domain.StoredWorklog, error) {
 	rows, err := s.db.QueryContext(ctx, `
 SELECT

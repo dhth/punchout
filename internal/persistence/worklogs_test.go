@@ -668,6 +668,82 @@ func TestSQLiteStoreUpdateWorklog(t *testing.T) {
 	})
 }
 
+func TestSQLiteStoreDeleteWorklog(t *testing.T) {
+	t.Run("deletes only the target worklog", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		endTS := beginTS.Add(time.Hour)
+		targetID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  beginTS,
+			endTS:    &endTS,
+		})
+
+		otherBeginTS := endTS.Add(time.Hour)
+		otherEndTS := otherBeginTS.Add(time.Hour)
+		otherComment := "other comment"
+		otherID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-2",
+			beginTS:  otherBeginTS,
+			endTS:    &otherEndTS,
+			comment:  &otherComment,
+			synced:   true,
+		})
+
+		// WHEN
+		err := store.DeleteWorklog(t.Context(), targetID)
+
+		// THEN
+		require.NoError(t, err)
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+		assert.Equal(t, otherID, got.id)
+		assert.Equal(t, "TEST-2", got.issueKey)
+		assert.Equal(t, otherBeginTS, got.beginTS)
+		require.True(t, got.endTS.Valid)
+		assert.Equal(t, otherEndTS, got.endTS.Time)
+		require.True(t, got.comment.Valid)
+		assert.Equal(t, otherComment, got.comment.String)
+		assert.False(t, got.active)
+		assert.True(t, got.synced)
+	})
+
+	t.Run("returns an error when the worklog does not exist", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		endTS := beginTS.Add(time.Hour)
+		comment := "existing comment"
+		id := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  beginTS,
+			endTS:    &endTS,
+			comment:  &comment,
+		})
+
+		// WHEN
+		err := store.DeleteWorklog(t.Context(), id+1)
+
+		// THEN
+		require.ErrorIs(t, err, ErrWorklogNotFound)
+		require.ErrorContains(t, err, fmt.Sprint(id+1))
+		gotRows := fetchAllWorklogRows(t, store)
+		require.Len(t, gotRows, 1)
+		got := gotRows[0]
+		assert.Equal(t, id, got.id)
+		assert.Equal(t, "TEST-1", got.issueKey)
+		assert.Equal(t, beginTS, got.beginTS)
+		require.True(t, got.endTS.Valid)
+		assert.Equal(t, endTS, got.endTS.Time)
+		require.True(t, got.comment.Valid)
+		assert.Equal(t, comment, got.comment.String)
+		assert.False(t, got.active)
+		assert.False(t, got.synced)
+	})
+}
+
 func TestSQLiteStoreUnsyncedWorklogs(t *testing.T) {
 	t.Run("returns completed unsynced worklogs newest first", func(t *testing.T) {
 		// GIVEN
