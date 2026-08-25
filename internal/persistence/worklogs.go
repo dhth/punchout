@@ -335,6 +335,57 @@ ORDER BY
 	return worklogs, nil
 }
 
+func (s *SQLiteStore) SyncedWorklogs(ctx context.Context) ([]domain.StoredWorklog, error) {
+	rows, err := s.db.QueryContext(ctx, `
+SELECT
+    ID,
+    issue_key,
+    begin_ts,
+    end_ts,
+    comment
+FROM
+    issue_log
+WHERE
+    active = false
+    AND synced = true
+ORDER BY
+    end_ts DESC
+LIMIT
+    30;
+`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	worklogs := make([]domain.StoredWorklog, 0)
+	for rows.Next() {
+		var worklog domain.StoredWorklog
+		var comment sql.NullString
+		if err := rows.Scan(
+			&worklog.ID,
+			&worklog.IssueKey,
+			&worklog.BeginTS,
+			&worklog.EndTS,
+			&comment,
+		); err != nil {
+			return nil, err
+		}
+
+		worklog.BeginTS = worklog.BeginTS.Local()
+		worklog.EndTS = worklog.EndTS.Local()
+		worklog.Comment = comment.String
+		worklog.Synced = true
+		worklogs = append(worklogs, worklog)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return worklogs, nil
+}
+
 func (s *SQLiteStore) MarkWorklogSynced(ctx context.Context, id int, comment *string) error {
 	_, err := s.db.ExecContext(ctx, `
 UPDATE

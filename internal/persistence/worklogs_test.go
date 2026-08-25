@@ -825,6 +825,121 @@ func TestSQLiteStoreUnsyncedWorklogs(t *testing.T) {
 	})
 }
 
+func TestSQLiteStoreSyncedWorklogs(t *testing.T) {
+	t.Run("returns completed synced worklogs newest first", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+		location := time.FixedZone("UTC+1", int(time.Hour.Seconds()))
+		olderBegin := time.Date(2026, time.August, 24, 9, 0, 0, 0, location)
+		olderEnd := olderBegin.Add(time.Hour)
+		newerBegin := olderEnd.Add(time.Hour)
+		newerEnd := newerBegin.Add(90 * time.Minute)
+		olderEndUTC := olderEnd.UTC()
+		newerEndUTC := newerEnd.UTC()
+		olderComment := "older worklog"
+
+		olderID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-1",
+			beginTS:  olderBegin.UTC(),
+			endTS:    &olderEndUTC,
+			comment:  &olderComment,
+			synced:   true,
+		})
+		newerID := insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "TEST-2",
+			beginTS:  newerBegin.UTC(),
+			endTS:    &newerEndUTC,
+			comment:  nil,
+			synced:   true,
+		})
+		insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "UNSYNCED-1",
+			beginTS:  olderBegin.UTC(),
+			endTS:    &olderEndUTC,
+		})
+
+		// WHEN
+		got, err := store.SyncedWorklogs(t.Context())
+
+		// THEN
+		require.NoError(t, err)
+		assert.Equal(t, []domain.StoredWorklog{
+			{
+				ID: newerID,
+				Worklog: domain.Worklog{
+					IssueKey: "TEST-2",
+					BeginTS:  newerBegin.UTC().Local(),
+					EndTS:    newerEnd.UTC().Local(),
+					Comment:  "",
+				},
+				Synced: true,
+			},
+			{
+				ID: olderID,
+				Worklog: domain.Worklog{
+					IssueKey: "TEST-1",
+					BeginTS:  olderBegin.UTC().Local(),
+					EndTS:    olderEnd.UTC().Local(),
+					Comment:  olderComment,
+				},
+				Synced: true,
+			},
+		}, got)
+	})
+
+	t.Run("limits results to the newest worklogs", func(t *testing.T) {
+		// GIVEN
+		const limit = 30
+
+		store := setupTestStore(t)
+		beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
+		oldestEndTS := beginTS.Add(time.Hour)
+		insertTestWorklogRow(t, store, testWorklogRow{
+			issueKey: "OLDEST",
+			beginTS:  beginTS,
+			endTS:    &oldestEndTS,
+			synced:   true,
+		})
+
+		expectedIDs := make([]int, 0, limit)
+		for i := limit; i >= 1; i-- {
+			endTS := oldestEndTS.Add(time.Duration(i) * time.Hour)
+			id := insertTestWorklogRow(t, store, testWorklogRow{
+				issueKey: fmt.Sprintf("TEST-%d", i),
+				beginTS:  endTS.Add(-time.Hour),
+				endTS:    &endTS,
+				synced:   true,
+			})
+			expectedIDs = append(expectedIDs, id)
+		}
+
+		// WHEN
+		got, err := store.SyncedWorklogs(t.Context())
+
+		// THEN
+		require.NoError(t, err)
+		require.Len(t, got, limit)
+		gotIDs := make([]int, 0, len(got))
+		for _, worklog := range got {
+			gotIDs = append(gotIDs, worklog.ID)
+		}
+		assert.Equal(t, expectedIDs, gotIDs)
+	})
+
+	t.Run("returns an empty non-nil slice when there are no synced worklogs", func(t *testing.T) {
+		// GIVEN
+		store := setupTestStore(t)
+
+		// WHEN
+		got, err := store.SyncedWorklogs(t.Context())
+
+		// THEN
+		require.NoError(t, err)
+		assert.Empty(t, got)
+		assert.NotNil(t, got)
+	})
+}
+
 func TestSQLiteStoreMarkWorklogSynced(t *testing.T) {
 	tests := []struct {
 		name            string
