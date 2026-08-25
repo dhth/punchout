@@ -112,29 +112,10 @@ func deleteActiveIssueLog(db *sql.DB) tea.Cmd {
 	}
 }
 
-func updateManualEntry(db *sql.DB, rowID int, worklog d.Worklog) tea.Cmd {
+func updateManualEntry(ctx context.Context, store WorklogStore, rowID int, worklog d.Worklog) tea.Cmd {
 	return func() tea.Msg {
-		stmt, err := db.Prepare(`
-UPDATE
-    issue_log
-SET
-    begin_ts = ?,
-    end_ts = ?,
-    COMMENT = ?
-WHERE
-    ID = ?;
-`)
-		if err != nil {
-			return wLUpdatedInDB{rowID, worklog.IssueKey, err}
-		}
-		defer stmt.Close()
-
-		_, err = stmt.Exec(worklog.BeginTS.UTC(), worklog.EndTS.UTC(), worklog.Comment, rowID)
-		if err != nil {
-			return wLUpdatedInDB{rowID, worklog.IssueKey, err}
-		}
-
-		return wLUpdatedInDB{rowID, worklog.IssueKey, nil}
+		err := store.UpdateWorklog(ctx, rowID, worklog)
+		return wLUpdatedInDB{rowID, worklog.IssueKey, err}
 	}
 }
 

@@ -107,7 +107,8 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 			wl, ok := m.worklogList.SelectedItem().(worklogListItem)
 			if ok {
 				cmd = updateManualEntry(
-					m.db,
+					m.ctx,
+					m.worklogStore,
 					wl.ID,
 					d.Worklog{
 						IssueKey: wl.IssueKey,
