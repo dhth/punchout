@@ -565,7 +565,7 @@ func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) []tea.Cmd {
 	m.issueList.Styles.Title = m.styles.issueListTitle
 	m.issuesFetched = true
 
-	cmds := []tea.Cmd{fetchActiveStatus(m.db, 0)}
+	cmds := []tea.Cmd{fetchActiveStatus(m.ctx, m.worklogStore, 0)}
 	switch msg.source {
 	case issueSourceCache:
 		if len(msg.issues) == 0 {
@@ -767,7 +767,7 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 		m.setErrorMsg(msg.err.Error())
 		m.changesLocked = false
 		if msg.reconcileActiveStatus {
-			return fetchActiveStatus(m.db, 0)
+			return fetchActiveStatus(m.ctx, m.worklogStore, 0)
 		}
 		switch msg.operation {
 		case trackingToggleStart:

@@ -113,9 +113,9 @@ func updateManualEntry(ctx context.Context, store WorklogStore, rowID int, workl
 	}
 }
 
-func fetchActiveStatus(db *sql.DB, interval time.Duration) tea.Cmd {
+func fetchActiveStatus(ctx context.Context, store WorklogStore, interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
-		worklog, err := pers.FetchActiveWLFromDB(db)
+		worklog, err := store.ActiveWorklog(ctx)
 		if err != nil {
 			return activeWLFetchedFromDB{err: err}
 		}

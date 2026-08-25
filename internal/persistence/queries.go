@@ -81,36 +81,6 @@ ORDER BY
 	return logEntries, nil
 }
 
-func FetchActiveWLFromDB(db *sql.DB) (*d.InProgressWorklog, error) {
-	row := db.QueryRow(`
-SELECT
-    issue_key,
-    begin_ts,
-    COMMENT
-FROM
-    issue_log
-WHERE
-    active = 1
-ORDER BY
-    begin_ts DESC
-LIMIT
-    1;
-`)
-
-	var worklog d.InProgressWorklog
-	var comment sql.NullString
-	if err := row.Scan(&worklog.IssueKey, &worklog.BeginTS, &comment); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	worklog.BeginTS = worklog.BeginTS.Local()
-	worklog.Comment = comment.String
-	return &worklog, nil
-}
-
 func InsertNewActiveWLInDB(db *sql.DB, issueKey string, beginTS time.Time) error {
 	stmt, err := db.Prepare(`
 INSERT INTO

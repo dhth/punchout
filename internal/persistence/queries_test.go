@@ -36,50 +36,9 @@ VALUES (?, ?, ?, ?);
 	require.NoError(t, err, "couldn't get active issue")
 	worklogs, err := getWorkLogsForIssueFromDB(db, activeIssueKey)
 	require.NoError(t, err, "couldn't get worklog entries for active issue")
-	activeWorklog, err := FetchActiveWLFromDB(db)
-	require.NoError(t, err, "couldn't get active worklog")
-
 	assert.Equal(t, 1, numActiveIssues, "number of active issues is incorrect")
 	assert.Equal(t, newActiveIssueKey, gotNewActive, "new active issue key is incorrect")
 	assert.Len(t, worklogs, 1, "work log entries for older issue is incorrect")
-	require.NotNil(t, activeWorklog, "active worklog is missing")
-	assert.Equal(t, newActiveIssueKey, activeWorklog.IssueKey, "active worklog issue key is incorrect")
-}
-
-func TestFetchActiveWLFromDB(t *testing.T) {
-	t.Run("returns nil when no worklog is active", func(t *testing.T) {
-		db := setupTestDB(t)
-
-		worklog, err := FetchActiveWLFromDB(db)
-
-		require.NoError(t, err)
-		assert.Nil(t, worklog)
-	})
-
-	t.Run("returns active worklog", func(t *testing.T) {
-		db := setupTestDB(t)
-		beginTS := time.Now().Truncate(time.Second)
-		insertActiveWorklog(t, db, "ACTIVE-ISSUE", beginTS, "comment")
-
-		worklog, err := FetchActiveWLFromDB(db)
-
-		require.NoError(t, err)
-		require.NotNil(t, worklog)
-		assert.Equal(t, "ACTIVE-ISSUE", worklog.IssueKey)
-		assert.True(t, beginTS.Equal(worklog.BeginTS))
-		assert.Equal(t, "comment", worklog.Comment)
-	})
-
-	t.Run("normalizes NULL comment to empty string", func(t *testing.T) {
-		db := setupTestDB(t)
-		insertActiveWorklog(t, db, "NULL-COMMENT", time.Now(), nil)
-
-		worklog, err := FetchActiveWLFromDB(db)
-
-		require.NoError(t, err)
-		require.NotNil(t, worklog)
-		assert.Empty(t, worklog.Comment)
-	})
 }
 
 func TestCompletedWorklogQueries(t *testing.T) {
