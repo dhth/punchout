@@ -16,49 +16,68 @@ import (
 	_ "modernc.org/sqlite" // sqlite driver
 )
 
-func toggleTracking(db *sql.DB, operation trackingToggleOperation, selectedIssue string, beginTS, endTS time.Time, comment string) tea.Cmd {
+func toggleTracking(
+	ctx context.Context,
+	store WorklogStore,
+	operation trackingToggleOperation,
+	selectedIssue string,
+	beginTS,
+	endTS time.Time,
+	comment string,
+) tea.Cmd {
 	return func() tea.Msg {
-		row := db.QueryRow(`
-SELECT
-    issue_key
-FROM
-    issue_log
-WHERE
-    active = 1
-ORDER BY
-    begin_ts DESC
-LIMIT
-    1;
-`)
-		var trackStatus trackingStatus
-		var activeIssue string
-		err := row.Scan(&activeIssue)
-		if errors.Is(err, sql.ErrNoRows) {
-			trackStatus = trackingInactive
-		} else if err != nil {
-			return trackingToggledInDB{activeIssue: selectedIssue, operation: operation, err: err}
-		} else {
-			trackStatus = trackingActive
+		activeWorklog, err := store.ActiveWorklog(ctx)
+		if err != nil {
+			return trackingToggledInDB{
+				activeIssue: selectedIssue,
+				operation:   operation,
+				err:         err,
+			}
 		}
 
 		switch operation {
 		case trackingToggleStart:
-			if trackStatus != trackingInactive {
-				return trackingToggledInDB{operation: operation, reconcileActiveStatus: true, err: errors.New("cannot start tracking while another worklog is active")}
+			if activeWorklog != nil {
+				return trackingToggledInDB{
+					operation:             operation,
+					reconcileActiveStatus: true,
+					err:                   errors.New("cannot start tracking while another worklog is active"),
+				}
 			}
-			err = pers.InsertNewActiveWLInDB(db, selectedIssue, beginTS)
+			err = store.StartWorklog(ctx, selectedIssue, beginTS)
 			if err != nil {
-				return trackingToggledInDB{operation: operation, err: err}
+				return trackingToggledInDB{
+					operation:             operation,
+					reconcileActiveStatus: true,
+					err:                   err,
+				}
 			}
 			return trackingToggledInDB{activeIssue: selectedIssue, operation: operation}
 
 		case trackingToggleFinish:
-			if trackStatus != trackingActive {
-				return trackingToggledInDB{activeIssue: selectedIssue, operation: operation, reconcileActiveStatus: true, err: errors.New("cannot finish tracking when no worklog is active")}
+			if activeWorklog == nil {
+				return trackingToggledInDB{
+					activeIssue:           selectedIssue,
+					operation:             operation,
+					reconcileActiveStatus: true,
+					err:                   errors.New("cannot finish tracking when no worklog is active"),
+				}
 			}
-			err := pers.UpdateActiveWLInDB(db, d.Worklog{IssueKey: activeIssue, BeginTS: beginTS, EndTS: endTS, Comment: comment})
+			err := store.FinishWorklog(ctx,
+				d.Worklog{
+					IssueKey: activeWorklog.IssueKey,
+					BeginTS:  beginTS,
+					EndTS:    endTS,
+					Comment:  comment,
+				},
+			)
 			if err != nil {
-				return trackingToggledInDB{activeIssue: activeIssue, operation: operation, err: err}
+				return trackingToggledInDB{
+					activeIssue:           activeWorklog.IssueKey,
+					operation:             operation,
+					reconcileActiveStatus: true,
+					err:                   err,
+				}
 			}
 			return trackingToggledInDB{activeIssue: "", finished: true, operation: operation}
 

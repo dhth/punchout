@@ -63,7 +63,8 @@ func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 	}
 
 	return toggleTracking(
-		m.db,
+		m.ctx,
+		m.worklogStore,
 		trackingToggleFinish,
 		m.activeIssue,
 		m.activeWorklog.BeginTS,
@@ -409,7 +410,8 @@ func (m *Model) getCmdToQuickSwitchTracking() tea.Cmd {
 		m.changesLocked = true
 		m.activeWorklog = &d.InProgressWorklog{IssueKey: issue.IssueKey, BeginTS: time.Now()}
 		return toggleTracking(
-			m.db,
+			m.ctx,
+			m.worklogStore,
 			trackingToggleStart,
 			issue.IssueKey,
 			m.activeWorklog.BeginTS,
@@ -449,7 +451,8 @@ func (m *Model) getCmdToStartTracking() tea.Cmd {
 	m.changesLocked = true
 	m.activeWorklog = &d.InProgressWorklog{IssueKey: issue.IssueKey, BeginTS: time.Now().Truncate(time.Second)}
 	return toggleTracking(
-		m.db,
+		m.ctx,
+		m.worklogStore,
 		trackingToggleStart,
 		issue.IssueKey,
 		m.activeWorklog.BeginTS,
@@ -897,7 +900,14 @@ func (m *Model) getCmdToQuickFinishActiveWL() tea.Cmd {
 
 	m.activeIssueEndTS = now
 
-	return toggleTracking(m.db, trackingToggleFinish, m.activeIssue, m.activeWorklog.BeginTS, m.activeIssueEndTS, "")
+	return toggleTracking(m.ctx,
+		m.worklogStore,
+		trackingToggleFinish,
+		m.activeIssue,
+		m.activeWorklog.BeginTS,
+		m.activeIssueEndTS,
+		"",
+	)
 }
 
 func (m *Model) isDurationValid(start, end time.Time) bool {

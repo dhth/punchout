@@ -101,32 +101,6 @@ VALUES
 	return nil
 }
 
-func UpdateActiveWLInDB(db *sql.DB, worklog d.Worklog) error {
-	stmt, err := db.Prepare(`
-UPDATE
-    issue_log
-SET
-    active = 0,
-    begin_ts = ?,
-    end_ts = ?,
-    COMMENT = ?
-WHERE
-    issue_key = ?
-    AND active = 1;
-`)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(worklog.BeginTS.UTC(), worklog.EndTS.UTC(), worklog.Comment, worklog.IssueKey)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func StopCurrentlyActiveWLInDB(db *sql.DB, issueKey string, endTS time.Time) error {
 	stmt, err := db.Prepare(`
 UPDATE

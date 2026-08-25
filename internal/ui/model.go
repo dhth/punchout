@@ -16,13 +16,6 @@ import (
 	"github.com/dhth/punchout/internal/ui/theme"
 )
 
-type trackingStatus uint
-
-const (
-	trackingInactive trackingStatus = iota
-	trackingActive
-)
-
 type dBChange uint
 
 const (
