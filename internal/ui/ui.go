@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"database/sql"
 	"os"
 
@@ -11,6 +12,7 @@ import (
 )
 
 func RenderUI(
+	ctx context.Context,
 	db *sql.DB,
 	worklogStore WorklogStore,
 	jiraSvc svc.Jira,
@@ -18,6 +20,9 @@ func RenderUI(
 	opts Options,
 	thm theme.Theme,
 ) error {
+	tuiCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	debug := os.Getenv("DEBUG") == "1"
 	if debug {
 		f, err := tea.LogToFile("debug.log", "debug")
@@ -27,7 +32,10 @@ func RenderUI(
 		defer f.Close()
 	}
 
-	p := tea.NewProgram(InitialModel(db, worklogStore, jiraSvc, issueStore, opts, thm, debug))
+	p := tea.NewProgram(
+		InitialModel(tuiCtx, db, worklogStore, jiraSvc, issueStore, opts, thm, debug),
+		tea.WithContext(tuiCtx),
+	)
 	if _, err := p.Run(); err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"database/sql"
 
 	"charm.land/bubbles/v2/list"
@@ -12,6 +13,7 @@ import (
 )
 
 func InitialModel(
+	ctx context.Context,
 	db *sql.DB,
 	worklogStore WorklogStore,
 	jiraSvc svc.Jira,
@@ -45,6 +47,7 @@ func InitialModel(
 	trackingInputs[entryComment].SetWidth(60)
 
 	m := Model{
+		ctx:               ctx,
 		theme:             thm,
 		styles:            styles,
 		db:                db,

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -99,6 +100,7 @@ type Options struct {
 }
 
 type Model struct {
+	ctx                   context.Context
 	theme                 theme.Theme
 	styles                styles
 	activeView            stateView

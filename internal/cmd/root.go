@@ -178,7 +178,7 @@ func NewRootCommand() (*cobra.Command, error) {
 
 			return nil
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			if flagListConfig {
 				fmt.Fprint(os.Stdout, formatTUIConfig(configPathFull, appCfg))
 				return nil
@@ -204,7 +204,7 @@ func NewRootCommand() (*cobra.Command, error) {
 				return err
 			}
 
-			return ui.RenderUI(worklogStore.DB(), worklogStore, jiraSvc, issueStore, ui.Options{
+			return ui.RenderUI(cmd.Context(), worklogStore.DB(), worklogStore, jiraSvc, issueStore, ui.Options{
 				Jira:              appCfg.Jira.Options,
 				UseCacheOnStartup: appCfg.TUI.UseCacheOnStartup,
 			}, resolvedTheme)
