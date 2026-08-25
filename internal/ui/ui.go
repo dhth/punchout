@@ -12,6 +12,7 @@ import (
 
 func RenderUI(
 	db *sql.DB,
+	worklogStore WorklogStore,
 	jiraSvc svc.Jira,
 	issueStore issuecache.Store,
 	opts Options,
@@ -26,7 +27,7 @@ func RenderUI(
 		defer f.Close()
 	}
 
-	p := tea.NewProgram(InitialModel(db, jiraSvc, issueStore, opts, thm, debug))
+	p := tea.NewProgram(InitialModel(db, worklogStore, jiraSvc, issueStore, opts, thm, debug))
 	if _, err := p.Run(); err != nil {
 		return err
 	}

@@ -13,6 +13,7 @@ import (
 
 func InitialModel(
 	db *sql.DB,
+	worklogStore WorklogStore,
 	jiraSvc svc.Jira,
 	issueStore issuecache.Store,
 	opts Options,
@@ -47,6 +48,7 @@ func InitialModel(
 		theme:             thm,
 		styles:            styles,
 		db:                db,
+		worklogStore:      worklogStore,
 		jiraSvc:           jiraSvc,
 		issueStore:        issueStore,
 		opts:              opts,

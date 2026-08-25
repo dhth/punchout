@@ -15,7 +15,7 @@ func TestInitialModelUsesProvidedTheme(t *testing.T) {
 	thm, err := theme.Get("dracula")
 	require.NoError(t, err)
 
-	m := InitialModel(nil, nil, issuecache.Store{}, Options{}, thm, false)
+	m := InitialModel(nil, nil, nil, issuecache.Store{}, Options{}, thm, false)
 
 	assert.Equal(t, thm, m.theme)
 	assert.Equal(
@@ -31,7 +31,7 @@ func TestApplyThemeRefreshesThemeDependentUI(t *testing.T) {
 	nextTheme, err := theme.Get("dracula")
 	require.NoError(t, err)
 
-	m := InitialModel(nil, nil, issuecache.Store{}, Options{}, initialTheme, false)
+	m := InitialModel(nil, nil, nil, issuecache.Store{}, Options{}, initialTheme, false)
 	m.helpVP = viewport.New(viewport.WithWidth(120), viewport.WithHeight(20))
 	m.helpVPReady = true
 

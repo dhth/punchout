@@ -104,6 +104,7 @@ type Model struct {
 	activeView            stateView
 	lastView              stateView
 	db                    *sql.DB
+	worklogStore          WorklogStore
 	jiraSvc               svc.Jira
 	issueStore            issuecache.Store
 	opts                  Options
