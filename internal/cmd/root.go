@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -64,7 +63,6 @@ func NewRootCommand() (*cobra.Command, error) {
 		defaultConfigFilePath string
 		appCfg                config.Config
 		configPathFull        string
-		db                    *sql.DB
 		jiraSvc               svc.Jira
 		resolvedTheme         theme.Theme
 	)
@@ -180,7 +178,7 @@ func NewRootCommand() (*cobra.Command, error) {
 
 			return nil
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			if flagListConfig {
 				fmt.Fprint(os.Stdout, formatTUIConfig(configPathFull, appCfg))
 				return nil
@@ -195,17 +193,18 @@ func NewRootCommand() (*cobra.Command, error) {
 				return fmt.Errorf("couldn't initialize issue cache: %w", err)
 			}
 
-			db, err = pers.GetDB(appCfg.DBPath)
+			worklogStore, err := pers.NewSQLiteStore(appCfg.DBPath)
 			if err != nil {
 				return err
 			}
+			defer func() { _ = worklogStore.Close() }()
 
 			jiraSvc, err = getJiraSvc(appCfg.Jira.Installation)
 			if err != nil {
 				return err
 			}
 
-			return ui.RenderUI(db, jiraSvc, issueStore, ui.Options{
+			return ui.RenderUI(cmd.Context(), worklogStore, jiraSvc, issueStore, ui.Options{
 				Jira:              appCfg.Jira.Options,
 				UseCacheOnStartup: appCfg.TUI.UseCacheOnStartup,
 			}, resolvedTheme)

@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"database/sql"
+	"context"
 	"os"
 
 	tea "charm.land/bubbletea/v2"
@@ -11,12 +11,16 @@ import (
 )
 
 func RenderUI(
-	db *sql.DB,
+	ctx context.Context,
+	worklogStore WorklogStore,
 	jiraSvc svc.Jira,
 	issueStore issuecache.Store,
 	opts Options,
 	thm theme.Theme,
 ) error {
+	tuiCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	debug := os.Getenv("DEBUG") == "1"
 	if debug {
 		f, err := tea.LogToFile("debug.log", "debug")
@@ -26,7 +30,10 @@ func RenderUI(
 		defer f.Close()
 	}
 
-	p := tea.NewProgram(InitialModel(db, jiraSvc, issueStore, opts, thm, debug))
+	p := tea.NewProgram(
+		InitialModel(tuiCtx, worklogStore, jiraSvc, issueStore, opts, thm, debug),
+		tea.WithContext(tuiCtx),
+	)
 	if _, err := p.Run(); err != nil {
 		return err
 	}

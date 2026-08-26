@@ -139,7 +139,7 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 		case "2":
 			if m.activeView != wLView {
 				m.activeView = wLView
-				cmds = append(cmds, fetchUnsyncedWorkLogs(m.db))
+				cmds = append(cmds, fetchUnsyncedWorkLogs(m.ctx, m.worklogStore))
 			}
 		case "3":
 			if m.activeView != syncedWLView {
@@ -185,7 +185,7 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 			}
 		case "ctrl+x":
 			if m.activeView == issueListView && m.trackingActive {
-				cmds = append(cmds, deleteActiveIssueLog(m.db))
+				cmds = append(cmds, deleteActiveIssueLog(m.ctx, m.worklogStore))
 			}
 		case "S":
 			if m.activeView != issueListView {
@@ -305,7 +305,10 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 			cmds = append(cmds, handleCmd)
 		}
 	case activeWLSwitchedInDB:
-		m.handleActiveWLSwitchedInDBMsg(msg)
+		handleCmd := m.handleActiveWLSwitchedInDBMsg(msg)
+		if handleCmd != nil {
+			cmds = append(cmds, handleCmd)
+		}
 	case hideHelpMsg:
 		m.showHelpIndicator = false
 	case urlOpenedinBrowserMsg:

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"os/exec"
 	"runtime"
@@ -11,54 +10,70 @@ import (
 	tea "charm.land/bubbletea/v2"
 	d "github.com/dhth/punchout/internal/domain"
 	"github.com/dhth/punchout/internal/issuecache"
-	pers "github.com/dhth/punchout/internal/persistence"
-
-	_ "modernc.org/sqlite" // sqlite driver
 )
 
-func toggleTracking(db *sql.DB, operation trackingToggleOperation, selectedIssue string, beginTS, endTS time.Time, comment string) tea.Cmd {
+func toggleTracking(
+	ctx context.Context,
+	store WorklogStore,
+	operation trackingToggleOperation,
+	selectedIssue string,
+	beginTS,
+	endTS time.Time,
+	comment string,
+) tea.Cmd {
 	return func() tea.Msg {
-		row := db.QueryRow(`
-SELECT
-    issue_key
-FROM
-    issue_log
-WHERE
-    active = 1
-ORDER BY
-    begin_ts DESC
-LIMIT
-    1;
-`)
-		var trackStatus trackingStatus
-		var activeIssue string
-		err := row.Scan(&activeIssue)
-		if errors.Is(err, sql.ErrNoRows) {
-			trackStatus = trackingInactive
-		} else if err != nil {
-			return trackingToggledInDB{activeIssue: selectedIssue, operation: operation, err: err}
-		} else {
-			trackStatus = trackingActive
+		activeWorklog, err := store.ActiveWorklog(ctx)
+		if err != nil {
+			return trackingToggledInDB{
+				activeIssue: selectedIssue,
+				operation:   operation,
+				err:         err,
+			}
 		}
 
 		switch operation {
 		case trackingToggleStart:
-			if trackStatus != trackingInactive {
-				return trackingToggledInDB{operation: operation, reconcileActiveStatus: true, err: errors.New("cannot start tracking while another worklog is active")}
+			if activeWorklog != nil {
+				return trackingToggledInDB{
+					operation:             operation,
+					reconcileActiveStatus: true,
+					err:                   errors.New("cannot start tracking while another worklog is active"),
+				}
 			}
-			err = pers.InsertNewActiveWLInDB(db, selectedIssue, beginTS)
+			err = store.StartWorklog(ctx, selectedIssue, beginTS)
 			if err != nil {
-				return trackingToggledInDB{operation: operation, err: err}
+				return trackingToggledInDB{
+					operation:             operation,
+					reconcileActiveStatus: true,
+					err:                   err,
+				}
 			}
 			return trackingToggledInDB{activeIssue: selectedIssue, operation: operation}
 
 		case trackingToggleFinish:
-			if trackStatus != trackingActive {
-				return trackingToggledInDB{activeIssue: selectedIssue, operation: operation, reconcileActiveStatus: true, err: errors.New("cannot finish tracking when no worklog is active")}
+			if activeWorklog == nil {
+				return trackingToggledInDB{
+					activeIssue:           selectedIssue,
+					operation:             operation,
+					reconcileActiveStatus: true,
+					err:                   errors.New("cannot finish tracking when no worklog is active"),
+				}
 			}
-			err := pers.UpdateActiveWLInDB(db, d.Worklog{IssueKey: activeIssue, BeginTS: beginTS, EndTS: endTS, Comment: comment})
+			err := store.FinishWorklog(ctx,
+				d.Worklog{
+					IssueKey: activeWorklog.IssueKey,
+					BeginTS:  beginTS,
+					EndTS:    endTS,
+					Comment:  comment,
+				},
+			)
 			if err != nil {
-				return trackingToggledInDB{activeIssue: activeIssue, operation: operation, err: err}
+				return trackingToggledInDB{
+					activeIssue:           activeWorklog.IssueKey,
+					operation:             operation,
+					reconcileActiveStatus: true,
+					err:                   err,
+				}
 			}
 			return trackingToggledInDB{activeIssue: "", finished: true, operation: operation}
 
@@ -68,79 +83,45 @@ LIMIT
 	}
 }
 
-func quickSwitchActiveIssue(db *sql.DB, selectedIssue string, currentTime time.Time) tea.Cmd {
+func quickSwitchActiveIssue(ctx context.Context, store WorklogStore, selectedIssue string, currentTime time.Time) tea.Cmd {
 	return func() tea.Msg {
-		activeIssue, err := pers.GetActiveIssueFromDB(db)
-		if err != nil {
-			return activeWLSwitchedInDB{"", selectedIssue, currentTime, err}
-		}
-
-		err = pers.QuickSwitchActiveWLInDB(db, activeIssue, selectedIssue, currentTime)
-		if err != nil {
-			return activeWLSwitchedInDB{activeIssue, selectedIssue, currentTime, err}
-		}
-
-		return activeWLSwitchedInDB{activeIssue, selectedIssue, currentTime, nil}
+		previousIssue, err := store.SwitchActiveWorklog(ctx, selectedIssue, currentTime)
+		return activeWLSwitchedInDB{previousIssue, selectedIssue, currentTime, err}
 	}
 }
 
-func updateActiveWL(db *sql.DB, beginTS time.Time, comment *string) tea.Cmd {
+func updateActiveWL(ctx context.Context, store WorklogStore, beginTS time.Time, comment *string) tea.Cmd {
 	return func() tea.Msg {
-		var err error
-		if comment == nil {
-			err = pers.UpdateActiveWLBeginTSInDB(db, beginTS)
-		} else {
-			err = pers.UpdateActiveWLBeginTSAndCommentInDB(db, beginTS, *comment)
-		}
-
+		err := store.UpdateActiveWorklog(ctx, beginTS, comment)
 		return activeWLUpdatedInDB{beginTS, comment, err}
 	}
 }
 
-func insertManualEntry(db *sql.DB, worklog d.Worklog) tea.Cmd {
+func insertManualEntry(ctx context.Context, store WorklogStore, worklog d.Worklog) tea.Cmd {
 	return func() tea.Msg {
-		err := pers.InsertManualWLInDB(db, worklog)
+		err := store.AddWorklog(ctx, worklog)
 
 		return manualWLInsertedInDB{worklog.IssueKey, err}
 	}
 }
 
-func deleteActiveIssueLog(db *sql.DB) tea.Cmd {
+func deleteActiveIssueLog(ctx context.Context, store WorklogStore) tea.Cmd {
 	return func() tea.Msg {
-		err := pers.DeleteActiveLogInDB(db)
+		err := store.DeleteActiveWorklog(ctx)
 		return activeWLDeletedFromDB{err}
 	}
 }
 
-func updateManualEntry(db *sql.DB, rowID int, worklog d.Worklog) tea.Cmd {
+func updateManualEntry(ctx context.Context, store WorklogStore, rowID int, worklog d.Worklog) tea.Cmd {
 	return func() tea.Msg {
-		stmt, err := db.Prepare(`
-UPDATE
-    issue_log
-SET
-    begin_ts = ?,
-    end_ts = ?,
-    COMMENT = ?
-WHERE
-    ID = ?;
-`)
-		if err != nil {
-			return wLUpdatedInDB{rowID, worklog.IssueKey, err}
-		}
-		defer stmt.Close()
-
-		_, err = stmt.Exec(worklog.BeginTS.UTC(), worklog.EndTS.UTC(), worklog.Comment, rowID)
-		if err != nil {
-			return wLUpdatedInDB{rowID, worklog.IssueKey, err}
-		}
-
-		return wLUpdatedInDB{rowID, worklog.IssueKey, nil}
+		err := store.UpdateWorklog(ctx, rowID, worklog)
+		return wLUpdatedInDB{rowID, worklog.IssueKey, err}
 	}
 }
 
-func fetchActiveStatus(db *sql.DB, interval time.Duration) tea.Cmd {
+func fetchActiveStatus(ctx context.Context, store WorklogStore, interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
-		worklog, err := pers.FetchActiveWLFromDB(db)
+		worklog, err := store.ActiveWorklog(ctx)
 		if err != nil {
 			return activeWLFetchedFromDB{err: err}
 		}
@@ -149,9 +130,9 @@ func fetchActiveStatus(db *sql.DB, interval time.Duration) tea.Cmd {
 	})
 }
 
-func fetchUnsyncedWorkLogs(db *sql.DB) tea.Cmd {
+func fetchUnsyncedWorkLogs(ctx context.Context, store WorklogStore) tea.Cmd {
 	return func() tea.Msg {
-		entries, err := pers.FetchUnsyncedWLsFromDB(db)
+		entries, err := store.UnsyncedWorklogs(ctx)
 		return wLEntriesFetchedFromDB{
 			entries: entries,
 			err:     err,
@@ -159,9 +140,9 @@ func fetchUnsyncedWorkLogs(db *sql.DB) tea.Cmd {
 	}
 }
 
-func fetchSyncedWorkLogs(db *sql.DB) tea.Cmd {
+func fetchSyncedWorkLogs(ctx context.Context, store WorklogStore) tea.Cmd {
 	return func() tea.Msg {
-		entries, err := pers.FetchSyncedWLsFromDB(db)
+		entries, err := store.SyncedWorklogs(ctx)
 		return syncedWLEntriesFetchedFromDB{
 			entries: entries,
 			err:     err,
@@ -169,24 +150,23 @@ func fetchSyncedWorkLogs(db *sql.DB) tea.Cmd {
 	}
 }
 
-func deleteLogEntry(db *sql.DB, id int) tea.Cmd {
+func deleteLogEntry(ctx context.Context, store WorklogStore, id int) tea.Cmd {
 	return func() tea.Msg {
-		err := pers.DeleteWLInDB(db, id)
+		err := store.DeleteWorklog(ctx, id)
 		return wLDeletedFromDB{
 			err: err,
 		}
 	}
 }
 
-func updateSyncStatusForEntry(db *sql.DB, entry worklogListItem, index int, fallbackCommentUsed bool) tea.Cmd {
+func updateSyncStatusForEntry(ctx context.Context, store WorklogStore, entry worklogListItem, index int, fallbackCommentUsed bool) tea.Cmd {
 	return func() tea.Msg {
-		var err error
+		var comment *string
 		if fallbackCommentUsed {
-			err = pers.UpdateSyncStatusAndCommentForWLInDB(db, entry.ID, entry.Comment)
-		} else {
-			err = pers.UpdateSyncStatusForWLInDB(db, entry.ID)
+			comment = &entry.Comment
 		}
 
+		err := store.MarkWorklogSynced(ctx, entry.ID, comment)
 		return wLSyncUpdatedInDB{
 			entry: entry,
 			index: index,

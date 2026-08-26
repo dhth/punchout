@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"database/sql"
+	"context"
 	"time"
 
 	"charm.land/bubbles/v2/list"
@@ -13,13 +13,6 @@ import (
 	"github.com/dhth/punchout/internal/issuecache"
 	svc "github.com/dhth/punchout/internal/service"
 	"github.com/dhth/punchout/internal/ui/theme"
-)
-
-type trackingStatus uint
-
-const (
-	trackingInactive trackingStatus = iota
-	trackingActive
 )
 
 type dBChange uint
@@ -99,11 +92,12 @@ type Options struct {
 }
 
 type Model struct {
+	ctx                   context.Context
 	theme                 theme.Theme
 	styles                styles
 	activeView            stateView
 	lastView              stateView
-	db                    *sql.DB
+	worklogStore          WorklogStore
 	jiraSvc               svc.Jira
 	issueStore            issuecache.Store
 	opts                  Options
@@ -140,7 +134,7 @@ func (m Model) Init() tea.Cmd {
 	} else {
 		cmds = append(cmds, m.fetchIssuesFromJIRA(false))
 	}
-	cmds = append(cmds, fetchUnsyncedWorkLogs(m.db), fetchSyncedWorkLogs(m.db))
+	cmds = append(cmds, fetchUnsyncedWorkLogs(m.ctx, m.worklogStore), fetchSyncedWorkLogs(m.ctx, m.worklogStore))
 
 	return tea.Batch(cmds...)
 }

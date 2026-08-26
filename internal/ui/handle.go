@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -11,7 +10,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 	d "github.com/dhth/punchout/internal/domain"
 	"github.com/dhth/punchout/internal/issuecache"
-	pers "github.com/dhth/punchout/internal/persistence"
 	"github.com/dhth/punchout/internal/utils"
 )
 
@@ -29,7 +27,7 @@ func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
 	}
 	m.trackingInputs[entryBeginTS].SetValue("")
 	m.activeView = issueListView
-	return updateActiveWL(m.db, beginTS, comment)
+	return updateActiveWL(m.ctx, m.worklogStore, beginTS, comment)
 }
 
 func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
@@ -63,7 +61,8 @@ func (m *Model) getCmdToSaveActiveWL() tea.Cmd {
 	}
 
 	return toggleTracking(
-		m.db,
+		m.ctx,
+		m.worklogStore,
 		trackingToggleFinish,
 		m.activeIssue,
 		m.activeWorklog.BeginTS,
@@ -101,13 +100,14 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 				EndTS:    endTS,
 				Comment:  m.trackingInputs[entryComment].Value(),
 			}
-			cmd = insertManualEntry(m.db, worklog)
+			cmd = insertManualEntry(m.ctx, m.worklogStore, worklog)
 			m.activeView = issueListView
 		case worklogUpdate:
 			wl, ok := m.worklogList.SelectedItem().(worklogListItem)
 			if ok {
 				cmd = updateManualEntry(
-					m.db,
+					m.ctx,
+					m.worklogStore,
 					wl.ID,
 					d.Worklog{
 						IssueKey: wl.IssueKey,
@@ -163,10 +163,10 @@ func (m *Model) getCmdToGoForwardsInViews() tea.Cmd {
 	switch m.activeView {
 	case issueListView:
 		m.activeView = wLView
-		cmd = fetchUnsyncedWorkLogs(m.db)
+		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
 	case wLView:
 		m.activeView = syncedWLView
-		cmd = fetchSyncedWorkLogs(m.db)
+		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
 	case syncedWLView:
 		m.activeView = issueListView
 	case editActiveWLView:
@@ -205,10 +205,10 @@ func (m *Model) getCmdToGoBackwardsInViews() tea.Cmd {
 		m.activeView = issueListView
 	case syncedWLView:
 		m.activeView = wLView
-		cmd = fetchUnsyncedWorkLogs(m.db)
+		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
 	case issueListView:
 		m.activeView = syncedWLView
-		cmd = fetchSyncedWorkLogs(m.db)
+		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
 	case editActiveWLView:
 		switch m.trackingFocussedField {
 		case entryBeginTS:
@@ -274,10 +274,10 @@ func (m *Model) getCmdToReloadData() tea.Cmd {
 		m.issueList.Styles.Title = m.styles.issueListUnfetchedTitle
 		cmd = m.fetchIssuesFromJIRA(false)
 	case wLView:
-		cmd = fetchUnsyncedWorkLogs(m.db)
+		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
 		m.worklogList.ResetSelected()
 	case syncedWLView:
-		cmd = fetchSyncedWorkLogs(m.db)
+		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
 		m.syncedWorklogList.ResetSelected()
 	}
 
@@ -390,7 +390,7 @@ func (m *Model) getCmdToDeleteWL() tea.Cmd {
 		return nil
 	}
 
-	return deleteLogEntry(m.db, issue.ID)
+	return deleteLogEntry(m.ctx, m.worklogStore, issue.ID)
 }
 
 func (m *Model) getCmdToQuickSwitchTracking() tea.Cmd {
@@ -408,7 +408,8 @@ func (m *Model) getCmdToQuickSwitchTracking() tea.Cmd {
 		m.changesLocked = true
 		m.activeWorklog = &d.InProgressWorklog{IssueKey: issue.IssueKey, BeginTS: time.Now()}
 		return toggleTracking(
-			m.db,
+			m.ctx,
+			m.worklogStore,
 			trackingToggleStart,
 			issue.IssueKey,
 			m.activeWorklog.BeginTS,
@@ -417,7 +418,7 @@ func (m *Model) getCmdToQuickSwitchTracking() tea.Cmd {
 		)
 	}
 
-	return quickSwitchActiveIssue(m.db, issue.IssueKey, time.Now())
+	return quickSwitchActiveIssue(m.ctx, m.worklogStore, issue.IssueKey, time.Now())
 }
 
 func (m *Model) getCmdToToggleTracking() tea.Cmd {
@@ -448,7 +449,8 @@ func (m *Model) getCmdToStartTracking() tea.Cmd {
 	m.changesLocked = true
 	m.activeWorklog = &d.InProgressWorklog{IssueKey: issue.IssueKey, BeginTS: time.Now().Truncate(time.Second)}
 	return toggleTracking(
-		m.db,
+		m.ctx,
+		m.worklogStore,
 		trackingToggleStart,
 		issue.IssueKey,
 		m.activeWorklog.BeginTS,
@@ -564,7 +566,7 @@ func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) []tea.Cmd {
 	m.issueList.Styles.Title = m.styles.issueListTitle
 	m.issuesFetched = true
 
-	cmds := []tea.Cmd{fetchActiveStatus(m.db, 0)}
+	cmds := []tea.Cmd{fetchActiveStatus(m.ctx, m.worklogStore, 0)}
 	switch msg.source {
 	case issueSourceCache:
 		if len(msg.issues) == 0 {
@@ -610,7 +612,7 @@ func (m *Model) handleManualEntryInsertedInDBMsg(msg manualWLInsertedInDB) tea.C
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].SetValue("")
 	}
-	return fetchUnsyncedWorkLogs(m.db)
+	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
 }
 
 func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
@@ -623,7 +625,7 @@ func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].SetValue("")
 	}
-	return fetchUnsyncedWorkLogs(m.db)
+	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
 }
 
 func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
@@ -709,7 +711,7 @@ func (m *Model) handleWLDeletedFromDBMsg(msg wLDeletedFromDB) tea.Cmd {
 		return nil
 	}
 
-	return fetchUnsyncedWorkLogs(m.db)
+	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
 }
 
 func (m *Model) handleActiveWLDeletedFromDBMsg(msg activeWLDeletedFromDB) {
@@ -742,7 +744,7 @@ func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 		msg.entry.Comment = *m.opts.Jira.FallbackComment
 	}
 	m.worklogList.SetItem(msg.index, msg.entry)
-	return updateSyncStatusForEntry(m.db, msg.entry, msg.index, msg.fallbackCommentUsed)
+	return updateSyncStatusForEntry(m.ctx, m.worklogStore, msg.entry, msg.index, msg.fallbackCommentUsed)
 }
 
 func (m *Model) handleActiveWLUpdatedInDBMsg(msg activeWLUpdatedInDB) {
@@ -766,7 +768,7 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 		m.setErrorMsg(msg.err.Error())
 		m.changesLocked = false
 		if msg.reconcileActiveStatus {
-			return fetchActiveStatus(m.db, 0)
+			return fetchActiveStatus(m.ctx, m.worklogStore, 0)
 		}
 		switch msg.operation {
 		case trackingToggleStart:
@@ -802,7 +804,7 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 		}
 		m.trackingActive = false
 		m.activeWorklog = nil
-		cmd = fetchUnsyncedWorkLogs(m.db)
+		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
 	case false:
 		m.lastChange = insertChange
 		if activeIssue != nil {
@@ -815,35 +817,10 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 	return cmd
 }
 
-func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
+func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) tea.Cmd {
 	if msg.err != nil {
 		m.setErrorMsg(msg.err.Error())
-		switch {
-		case errors.Is(msg.err, pers.ErrNoTaskIsActive):
-			if activeIssue := m.issueMap[m.activeIssue]; activeIssue != nil {
-				activeIssue.TrackingActive = false
-			}
-			m.activeIssue = ""
-			m.trackingActive = false
-			m.activeWorklog = nil
-		case errors.Is(msg.err, pers.ErrCouldntStartTrackingTask):
-			if lastActiveIssue := m.issueMap[msg.lastActiveIssue]; lastActiveIssue != nil {
-				lastActiveIssue.TrackingActive = false
-			}
-			m.activeIssue = ""
-			m.trackingActive = false
-			m.activeWorklog = nil
-		case errors.Is(msg.err, pers.ErrCouldntStopActiveTask):
-			m.activeIssue = msg.lastActiveIssue
-			m.trackingActive = true
-			if m.activeWorklog != nil {
-				m.activeWorklog.IssueKey = msg.lastActiveIssue
-			}
-			if activeIssue := m.issueMap[msg.lastActiveIssue]; activeIssue != nil {
-				activeIssue.TrackingActive = true
-			}
-		}
-		return
+		return fetchActiveStatus(m.ctx, m.worklogStore, 0)
 	}
 
 	var lastActiveIssue *d.Issue
@@ -866,6 +843,7 @@ func (m *Model) handleActiveWLSwitchedInDBMsg(msg activeWLSwitchedInDB) {
 	}
 	m.activeIssue = msg.currentActiveIssue
 	m.activeWorklog = &d.InProgressWorklog{IssueKey: msg.currentActiveIssue, BeginTS: msg.beginTS}
+	return nil
 }
 
 func (m *Model) shiftTime(direction timeShiftDirection, duration timeShiftDuration) error {
@@ -896,7 +874,14 @@ func (m *Model) getCmdToQuickFinishActiveWL() tea.Cmd {
 
 	m.activeIssueEndTS = now
 
-	return toggleTracking(m.db, trackingToggleFinish, m.activeIssue, m.activeWorklog.BeginTS, m.activeIssueEndTS, "")
+	return toggleTracking(m.ctx,
+		m.worklogStore,
+		trackingToggleFinish,
+		m.activeIssue,
+		m.activeWorklog.BeginTS,
+		m.activeIssueEndTS,
+		"",
+	)
 }
 
 func (m *Model) isDurationValid(start, end time.Time) bool {
