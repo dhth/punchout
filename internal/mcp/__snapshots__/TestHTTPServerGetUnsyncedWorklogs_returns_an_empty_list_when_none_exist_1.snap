@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "punchout",
+      "version": ""
+    }
+  },
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"worklogs\":[]}"
+    }
+  ],
+  "structuredContent": {
+    "worklogs": []
+  },
+  "resultType": "complete"
+}

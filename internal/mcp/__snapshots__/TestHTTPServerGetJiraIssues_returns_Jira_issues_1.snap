@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "punchout",
+      "version": ""
+    }
+  },
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"issues\":[{\"agg_seconds_spent\":3600,\"assignee\":\"Ada Lovelace\",\"issue_key\":\"TEST-401\",\"issue_type\":\"Story\",\"status\":\"In Progress\",\"summary\":\"Add MCP endpoint coverage\"},{\"agg_seconds_spent\":900,\"assignee\":\"Grace Hopper\",\"issue_key\":\"TEST-402\",\"issue_type\":\"Bug\",\"status\":\"To Do\",\"summary\":\"Preserve tool error responses\"}]}"
+    }
+  ],
+  "structuredContent": {
+    "issues": [
+      {
+        "agg_seconds_spent": 3600,
+        "assignee": "Ada Lovelace",
+        "issue_key": "TEST-401",
+        "issue_type": "Story",
+        "status": "In Progress",
+        "summary": "Add MCP endpoint coverage"
+      },
+      {
+        "agg_seconds_spent": 900,
+        "assignee": "Grace Hopper",
+        "issue_key": "TEST-402",
+        "issue_type": "Bug",
+        "status": "To Do",
+        "summary": "Preserve tool error responses"
+      }
+    ]
+  },
+  "resultType": "complete"
+}

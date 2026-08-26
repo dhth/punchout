@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "punchout",
+      "version": ""
+    }
+  },
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"successes\":[],\"errors\":[{\"worklog_id\":53,\"issue_key\":\"TEST-303\",\"synced_to_jira\":true,\"updated_in_db\":false,\"error\":\"database unavailable\"}]}"
+    }
+  ],
+  "structuredContent": {
+    "errors": [
+      {
+        "error": "database unavailable",
+        "issue_key": "TEST-303",
+        "synced_to_jira": true,
+        "updated_in_db": false,
+        "worklog_id": 53
+      }
+    ],
+    "successes": []
+  },
+  "isError": true,
+  "resultType": "complete"
+}

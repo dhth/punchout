@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "punchout",
+      "version": ""
+    }
+  },
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"errors\":[],\"successes\":[{\"issue_key\":\"TEST-301\",\"worklog_id\":51}]}"
+    }
+  ],
+  "structuredContent": {
+    "errors": [],
+    "successes": [
+      {
+        "issue_key": "TEST-301",
+        "worklog_id": 51
+      }
+    ]
+  },
+  "resultType": "complete"
+}

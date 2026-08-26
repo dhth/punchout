@@ -1,0 +1,53 @@
+{
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "punchout",
+      "version": ""
+    }
+  },
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"failed_worklogs\":[{\"error\":\"begin_time is not correct, expected format: 2006/01/02 15:04\",\"index\":1,\"input\":{\"begin_time\":\"invalid-time\",\"comment\":\"validation failure\",\"end_time\":\"2026/08/24 11:00\",\"issue_key\":\"TEST-102\"}},{\"error\":\"database unavailable\",\"index\":2,\"input\":{\"begin_time\":\"2026/08/24 11:00\",\"comment\":\"persistence failure\",\"end_time\":\"2026/08/24 12:00\",\"issue_key\":\"TEST-103\"}}],\"successful_worklogs\":[{\"begin_time\":\"2026/08/24 09:00\",\"comment\":\"successful entry\",\"end_time\":\"2026/08/24 10:00\",\"issue_key\":\"TEST-101\"},{\"begin_time\":\"2026/08/24 13:00\",\"comment\":\"successful entry after failures\",\"end_time\":\"2026/08/24 14:00\",\"issue_key\":\"TEST-104\"}]}"
+    }
+  ],
+  "structuredContent": {
+    "failed_worklogs": [
+      {
+        "error": "begin_time is not correct, expected format: 2006/01/02 15:04",
+        "index": 1,
+        "input": {
+          "begin_time": "invalid-time",
+          "comment": "validation failure",
+          "end_time": "2026/08/24 11:00",
+          "issue_key": "TEST-102"
+        }
+      },
+      {
+        "error": "database unavailable",
+        "index": 2,
+        "input": {
+          "begin_time": "2026/08/24 11:00",
+          "comment": "persistence failure",
+          "end_time": "2026/08/24 12:00",
+          "issue_key": "TEST-103"
+        }
+      }
+    ],
+    "successful_worklogs": [
+      {
+        "begin_time": "2026/08/24 09:00",
+        "comment": "successful entry",
+        "end_time": "2026/08/24 10:00",
+        "issue_key": "TEST-101"
+      },
+      {
+        "begin_time": "2026/08/24 13:00",
+        "comment": "successful entry after failures",
+        "end_time": "2026/08/24 14:00",
+        "issue_key": "TEST-104"
+      }
+    ]
+  },
+  "resultType": "complete"
+}

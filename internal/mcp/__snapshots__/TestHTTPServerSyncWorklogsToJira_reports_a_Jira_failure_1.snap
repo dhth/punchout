@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "punchout",
+      "version": ""
+    }
+  },
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"successes\":[],\"errors\":[{\"worklog_id\":52,\"issue_key\":\"TEST-302\",\"synced_to_jira\":false,\"updated_in_db\":false,\"error\":\"Jira unavailable\"}]}"
+    }
+  ],
+  "structuredContent": {
+    "errors": [
+      {
+        "error": "Jira unavailable",
+        "issue_key": "TEST-302",
+        "synced_to_jira": false,
+        "updated_in_db": false,
+        "worklog_id": 52
+      }
+    ],
+    "successes": []
+  },
+  "isError": true,
+  "resultType": "complete"
+}

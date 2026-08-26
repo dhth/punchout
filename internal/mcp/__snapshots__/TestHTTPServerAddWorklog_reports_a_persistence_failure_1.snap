@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "punchout",
+      "version": ""
+    }
+  },
+  "content": [
+    {
+      "type": "text",
+      "text": "database unavailable"
+    }
+  ],
+  "isError": true,
+  "resultType": "complete"
+}
