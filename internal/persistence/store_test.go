@@ -41,16 +41,17 @@ func TestNewSQLiteStorePrunesOldWorklogs(t *testing.T) {
 
 	store, err := NewSQLiteStore(dbPath)
 	require.NoError(t, err)
+	now := time.Now().UTC()
 
 	_, err = store.db.Exec(`
 INSERT INTO
     issue_log (issue_key, begin_ts, end_ts, active, synced)
 VALUES
     (?, ?, ?, false, false);
-`,
+	`,
 		"OLD-1",
-		time.Now().AddDate(0, 0, -62),
-		time.Now().AddDate(0, 0, -61),
+		now.AddDate(0, 0, -62),
+		now.AddDate(0, 0, -61),
 	)
 	require.NoError(t, err)
 	require.NoError(t, store.Close())

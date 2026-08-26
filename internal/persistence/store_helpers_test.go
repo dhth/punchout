@@ -59,7 +59,9 @@ SELECT
     active,
     synced
 FROM
-    issue_log;
+    issue_log
+ORDER BY
+    ID;
 `)
 	require.NoError(t, err)
 	defer rows.Close()
