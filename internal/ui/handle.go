@@ -13,10 +13,7 @@ import (
 	"github.com/dhth/punchout/internal/utils"
 )
 
-const (
-	worklogSyncActiveMsg   = "worklog sync already in progress"
-	maxConcurrentJIRASyncs = 5
-)
+const maxConcurrentJIRASyncs = 5
 
 func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
 	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
@@ -280,7 +277,7 @@ func (m *Model) getCmdToReloadData() tea.Cmd {
 		cmd = m.fetchIssuesFromJIRA(false)
 	case wLView:
 		if m.worklogSyncsRemaining > 0 {
-			m.setInfoMsg(worklogSyncActiveMsg)
+			m.setInfoMsg("can't refresh worklogs while sync is in progress")
 			return nil
 		}
 		cmd = m.getCmdToFetchUnsyncedWorkLogsIfIdle()
@@ -344,7 +341,7 @@ func (m *Model) handleRequestToCreateManualWL() {
 
 func (m *Model) handleRequestToUpdateSavedWL() {
 	if m.worklogSyncsRemaining > 0 {
-		m.setInfoMsg(worklogSyncActiveMsg)
+		m.setInfoMsg("can't edit worklogs while sync is in progress")
 		return
 	}
 
@@ -399,7 +396,7 @@ func (m *Model) handleRequestToSyncTimestamps() {
 
 func (m *Model) getCmdToDeleteWL() tea.Cmd {
 	if m.worklogSyncsRemaining > 0 {
-		m.setInfoMsg(worklogSyncActiveMsg)
+		m.setInfoMsg("can't delete worklogs while sync is in progress")
 		return nil
 	}
 
@@ -502,7 +499,7 @@ func (m *Model) handleStoppingOfTracking() {
 
 func (m *Model) getCmdToSyncWLToJIRA() tea.Cmd {
 	if m.worklogSyncsRemaining > 0 {
-		m.setInfoMsg(worklogSyncActiveMsg)
+		m.setInfoMsg("worklog sync already in progress")
 		return nil
 	}
 
