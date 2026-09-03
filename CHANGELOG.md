@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command to validate configuration (`punchout config validate`)
 - Command to show sample configuration (`punchout config show-sample`)
 
+### Changed
+
+- Limit concurrent JIRA requests when syncing worklogs
+
 ## [v1.4.0] - Mar 17, 2026
 
 ### Fixed
