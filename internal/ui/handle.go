@@ -507,17 +507,16 @@ func (m *Model) getCmdToSyncWLToJIRA() tea.Cmd {
 	}
 
 	var syncCmds []tea.Cmd
-	for i, entry := range m.worklogList.Items() {
-		if wl, ok := entry.(worklogListItem); ok {
-			if wl.Synced {
-				continue
-			}
-
-			wl.syncInProgress = true
-			wl.err = nil
-			m.worklogList.SetItem(i, wl)
-			syncCmds = append(syncCmds, m.syncWorklogWithJIRA(wl, i))
+	for itemIndex, item := range m.worklogList.Items() {
+		worklog, ok := item.(worklogListItem)
+		if !ok || worklog.Synced {
+			continue
 		}
+
+		worklog.syncInProgress = true
+		worklog.err = nil
+		m.worklogList.SetItem(itemIndex, worklog)
+		syncCmds = append(syncCmds, m.syncWorklogWithJIRA(worklog, itemIndex))
 	}
 	if len(syncCmds) == 0 {
 		m.setInfoMsg("nothing to sync")
@@ -527,17 +526,18 @@ func (m *Model) getCmdToSyncWLToJIRA() tea.Cmd {
 	m.worklogSyncsRemaining = len(syncCmds)
 	laneCount := min(len(syncCmds), maxConcurrentJIRASyncs)
 	lanes := make([][]tea.Cmd, laneCount)
-	for i, cmd := range syncCmds {
-		lane := i % laneCount
-		lanes[lane] = append(lanes[lane], cmd)
+	for cmdIndex, syncCmd := range syncCmds {
+		laneIndex := cmdIndex % laneCount
+		lanes[laneIndex] = append(lanes[laneIndex], syncCmd)
 	}
 
-	laneCmds := make([]tea.Cmd, laneCount)
-	for i, lane := range lanes {
-		laneCmds[i] = tea.Sequence(lane...)
+	laneSequences := make([]tea.Cmd, laneCount)
+	for laneIndex, lane := range lanes {
+		laneSequences[laneIndex] = tea.Sequence(lane...)
 	}
 
-	return tea.Batch(laneCmds...)
+	// Batch sequential lanes to limit concurrent Jira requests
+	return tea.Batch(laneSequences...)
 }
 
 func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
