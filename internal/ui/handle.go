@@ -665,11 +665,11 @@ func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
 }
 
 func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
-	if msg.err != nil {
-		m.setErrorMsg(msg.err.Error())
+	if m.worklogSyncsRemaining > 0 {
 		return
 	}
-	if m.worklogSyncsRemaining > 0 {
+	if msg.err != nil {
+		m.setErrorMsg(msg.err.Error())
 		return
 	}
 
