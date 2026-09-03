@@ -62,8 +62,9 @@ type activeWLFetchedFromDB struct {
 }
 
 type wLEntriesFetchedFromDB struct {
-	entries []d.StoredWorklog
-	err     error
+	entries    []d.StoredWorklog
+	generation uint64
+	err        error
 }
 
 type syncedWLEntriesFetchedFromDB struct {

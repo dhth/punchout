@@ -130,12 +130,13 @@ func fetchActiveStatus(ctx context.Context, store WorklogStore, interval time.Du
 	})
 }
 
-func fetchUnsyncedWorkLogs(ctx context.Context, store WorklogStore) tea.Cmd {
+func fetchUnsyncedWorkLogs(ctx context.Context, store WorklogStore, generation uint64) tea.Cmd {
 	return func() tea.Msg {
 		entries, err := store.UnsyncedWorklogs(ctx)
 		return wLEntriesFetchedFromDB{
-			entries: entries,
-			err:     err,
+			entries:    entries,
+			generation: generation,
+			err:        err,
 		}
 	}
 }

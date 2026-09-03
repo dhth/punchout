@@ -168,7 +168,7 @@ func (m *Model) getCmdToGoForwardsInViews() tea.Cmd {
 	switch m.activeView {
 	case issueListView:
 		m.activeView = wLView
-		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+		cmd = m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 	case wLView:
 		m.activeView = syncedWLView
 		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
@@ -210,7 +210,7 @@ func (m *Model) getCmdToGoBackwardsInViews() tea.Cmd {
 		m.activeView = issueListView
 	case syncedWLView:
 		m.activeView = wLView
-		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+		cmd = m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 	case issueListView:
 		m.activeView = syncedWLView
 		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
@@ -283,7 +283,7 @@ func (m *Model) getCmdToReloadData() tea.Cmd {
 			m.setInfoMsg(worklogSyncActiveMsg)
 			return nil
 		}
-		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+		cmd = m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 		m.worklogList.ResetSelected()
 	case syncedWLView:
 		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
@@ -523,6 +523,7 @@ func (m *Model) getCmdToSyncWLToJIRA() tea.Cmd {
 		return nil
 	}
 
+	m.worklogListGeneration++
 	m.worklogSyncsRemaining = len(syncCmds)
 	laneCount := min(len(syncCmds), maxConcurrentJIRASyncs)
 	lanes := make([][]tea.Cmd, laneCount)
@@ -538,6 +539,14 @@ func (m *Model) getCmdToSyncWLToJIRA() tea.Cmd {
 
 	// Batch sequential lanes to limit concurrent Jira requests
 	return tea.Batch(laneSequences...)
+}
+
+func (m *Model) getCmdToFetchUnsyncedWorkLogsIfIdle() tea.Cmd {
+	if m.worklogSyncsRemaining > 0 {
+		return nil
+	}
+
+	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore, m.worklogListGeneration)
 }
 
 func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
@@ -648,7 +657,7 @@ func (m *Model) handleManualEntryInsertedInDBMsg(msg manualWLInsertedInDB) tea.C
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].SetValue("")
 	}
-	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+	return m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 }
 
 func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
@@ -661,11 +670,11 @@ func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].SetValue("")
 	}
-	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+	return m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 }
 
 func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
-	if m.worklogSyncsRemaining > 0 {
+	if msg.generation != m.worklogListGeneration {
 		return
 	}
 	if msg.err != nil {
@@ -754,7 +763,7 @@ func (m *Model) handleWLDeletedFromDBMsg(msg wLDeletedFromDB) tea.Cmd {
 		return nil
 	}
 
-	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+	return m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 }
 
 func (m *Model) handleActiveWLDeletedFromDBMsg(msg activeWLDeletedFromDB) {
@@ -867,7 +876,7 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 		}
 		m.trackingActive = false
 		m.activeWorklog = nil
-		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+		cmd = m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 	case false:
 		m.lastChange = insertChange
 		if activeIssue != nil {
