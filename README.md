@@ -254,7 +254,7 @@ you want):
     sha256sum --ignore-missing -c punchout_x.y.z_checksums.txt
     ```
 
-3. If checksum validation goes through, uncompress the archive:
+4. If checksum validation goes through, uncompress the archive:
 
     ```shell
     tar -xzf punchout_x.y.z_linux_amd64.tar.gz

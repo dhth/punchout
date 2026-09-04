@@ -31,16 +31,6 @@ signs:
       - "--yes"
     artifacts: checksum
 
-brews:
-  - name: punchout
-    repository:
-      owner: dhth
-      name: homebrew-tap
-    directory: Formula
-    license: MIT
-    homepage: "https://github.com/dhth/punchout"
-    description: "punchout takes the suck out of logging time on JIRA"
-
 changelog:
   sort: asc
   filters:
