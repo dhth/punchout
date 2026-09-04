@@ -77,7 +77,7 @@ type wLDeletedFromDB struct {
 }
 
 type wLSyncUpdatedInDB struct {
-	entry     worklogListItem
+	worklog   d.StoredWorklog
 	indexHint int
 	err       error
 }
@@ -103,7 +103,7 @@ type issuesSavedToCache struct {
 
 type wLSyncedToJIRA struct {
 	indexHint           int
-	entry               worklogListItem
+	worklog             d.StoredWorklog
 	fallbackCommentUsed bool
 	err                 error
 }
