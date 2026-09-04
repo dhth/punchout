@@ -504,16 +504,16 @@ func (m *Model) getCmdToSyncWLToJIRA() tea.Cmd {
 	}
 
 	var syncCmds []tea.Cmd
-	for itemIndex, item := range m.worklogList.Items() {
-		worklog, ok := item.(worklogListItem)
-		if !ok || worklog.Synced {
+	for itemIndex, listItem := range m.worklogList.Items() {
+		item, ok := listItem.(worklogListItem)
+		if !ok || item.Synced {
 			continue
 		}
 
-		worklog.syncInProgress = true
-		worklog.err = nil
-		m.worklogList.SetItem(itemIndex, worklog)
-		syncCmds = append(syncCmds, m.syncWorklogWithJIRA(worklog, itemIndex))
+		item.syncInProgress = true
+		item.err = nil
+		m.worklogList.SetItem(itemIndex, item)
+		syncCmds = append(syncCmds, m.syncWorklogWithJIRA(item.StoredWorklog, itemIndex))
 	}
 	if len(syncCmds) == 0 {
 		m.setInfoMsg("nothing to sync")
@@ -715,13 +715,15 @@ func (m *Model) handleWLSyncUpdatedInDBMsg(msg wLSyncUpdatedInDB) {
 	}
 
 	if msg.err != nil {
-		msg.entry.err = msg.err
-		m.setWorklogListItem(msg.indexHint, msg.entry)
+		if index, item, ok := m.findWorklogListItem(msg.worklog.ID, msg.indexHint); ok {
+			item.err = msg.err
+			m.worklogList.SetItem(index, item)
+		}
 		return
 	}
 
 	m.unsyncedWLCount--
-	m.unsyncedWLSecsSpent -= msg.entry.SecsSpent()
+	m.unsyncedWLSecsSpent -= msg.worklog.SecsSpent()
 }
 
 func (m *Model) handleActiveWLFetchedFromDBMsg(msg activeWLFetchedFromDB) {
@@ -783,41 +785,45 @@ func (m *Model) handleActiveWLDeletedFromDBMsg(msg activeWLDeletedFromDB) {
 }
 
 func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
+	index, item, itemFound := m.findWorklogListItem(msg.worklog.ID, msg.indexHint)
 	if msg.err != nil {
 		if m.worklogSyncsRemaining > 0 {
 			m.worklogSyncsRemaining--
 		}
-		msg.entry.err = msg.err
-		msg.entry.syncInProgress = false
-		m.setWorklogListItem(msg.indexHint, msg.entry)
+		if itemFound {
+			item.err = msg.err
+			item.syncInProgress = false
+			m.worklogList.SetItem(index, item)
+		}
 		return nil
 	}
 
-	msg.entry.Synced = true
-	msg.entry.syncInProgress = false
-	msg.entry.fallbackCommentUsed = msg.fallbackCommentUsed
-	if msg.fallbackCommentUsed {
-		msg.entry.Comment = *m.opts.Jira.FallbackComment
+	if itemFound {
+		item.Synced = true
+		item.syncInProgress = false
+		item.fallbackCommentUsed = msg.fallbackCommentUsed
+		if msg.fallbackCommentUsed {
+			item.Comment = msg.worklog.Comment
+		}
+		m.worklogList.SetItem(index, item)
 	}
-	m.setWorklogListItem(msg.indexHint, msg.entry)
-	return updateSyncStatusForEntry(m.ctx, m.worklogStore, msg.entry, msg.indexHint, msg.fallbackCommentUsed)
+	return updateSyncStatusForEntry(m.ctx, m.worklogStore, msg.worklog, msg.indexHint, msg.fallbackCommentUsed)
 }
 
-func (m *Model) setWorklogListItem(indexHint int, entry worklogListItem) {
+func (m *Model) findWorklogListItem(id int, indexHint int) (int, worklogListItem, bool) {
 	items := m.worklogList.Items()
 	if indexHint >= 0 && indexHint < len(items) {
-		if current, ok := items[indexHint].(worklogListItem); ok && current.ID == entry.ID {
-			m.worklogList.SetItem(indexHint, entry)
-			return
+		if itemAtIndex, ok := items[indexHint].(worklogListItem); ok && itemAtIndex.ID == id {
+			return indexHint, itemAtIndex, true
 		}
 	}
 
 	for i, item := range items {
-		if current, ok := item.(worklogListItem); ok && current.ID == entry.ID {
-			m.worklogList.SetItem(i, entry)
-			return
+		if current, ok := item.(worklogListItem); ok && current.ID == id {
+			return i, current, true
 		}
 	}
+	return 0, worklogListItem{}, false
 }
 
 func (m *Model) handleActiveWLUpdatedInDBMsg(msg activeWLUpdatedInDB) {

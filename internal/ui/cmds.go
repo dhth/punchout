@@ -160,16 +160,16 @@ func deleteLogEntry(ctx context.Context, store WorklogStore, id int) tea.Cmd {
 	}
 }
 
-func updateSyncStatusForEntry(ctx context.Context, store WorklogStore, entry worklogListItem, indexHint int, fallbackCommentUsed bool) tea.Cmd {
+func updateSyncStatusForEntry(ctx context.Context, store WorklogStore, worklog d.StoredWorklog, indexHint int, fallbackCommentUsed bool) tea.Cmd {
 	return func() tea.Msg {
 		var comment *string
 		if fallbackCommentUsed {
-			comment = &entry.Comment
+			comment = &worklog.Comment
 		}
 
-		err := store.MarkWorklogSynced(ctx, entry.ID, comment)
+		err := store.MarkWorklogSynced(ctx, worklog.ID, comment)
 		return wLSyncUpdatedInDB{
-			entry:     entry,
+			worklog:   worklog,
 			indexHint: indexHint,
 			err:       err,
 		}
@@ -220,19 +220,18 @@ func (m Model) saveIssuesToCache(snapshot issuecache.Snapshot) tea.Cmd {
 	}
 }
 
-func (m Model) syncWorklogWithJIRA(entry worklogListItem, indexHint int) tea.Cmd {
+func (m Model) syncWorklogWithJIRA(worklog d.StoredWorklog, indexHint int) tea.Cmd {
 	return func() tea.Msg {
 		var fallbackCmtUsed bool
-		worklog := entry.Worklog
 		if worklog.NeedsComment() && m.opts.Jira.FallbackComment != nil {
 			worklog.Comment = *m.opts.Jira.FallbackComment
 			fallbackCmtUsed = true
 		}
 
-		err := m.jiraSvc.SyncWLToJIRA(m.ctx, worklog, m.opts.Jira.TimeDeltaMins)
+		err := m.jiraSvc.SyncWLToJIRA(m.ctx, worklog.Worklog, m.opts.Jira.TimeDeltaMins)
 		return wLSyncedToJIRA{
 			indexHint:           indexHint,
-			entry:               entry,
+			worklog:             worklog,
 			fallbackCommentUsed: fallbackCmtUsed,
 			err:                 err,
 		}
