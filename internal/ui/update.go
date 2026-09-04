@@ -139,7 +139,7 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 		case "2":
 			if m.activeView != wLView {
 				m.activeView = wLView
-				cmds = append(cmds, fetchUnsyncedWorkLogs(m.ctx, m.worklogStore))
+				cmds = append(cmds, m.getCmdToFetchUnsyncedWorkLogsIfIdle())
 			}
 		case "3":
 			if m.activeView != syncedWLView {
@@ -223,9 +223,9 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 					cmds = append(cmds, handleCmd)
 				}
 			case wLView:
-				syncCmds := m.getCmdToSyncWLToJIRA()
-				if len(syncCmds) > 0 {
-					cmds = append(cmds, syncCmds...)
+				syncCmd := m.getCmdToSyncWLToJIRA()
+				if syncCmd != nil {
+					cmds = append(cmds, syncCmd)
 				}
 			}
 		case "]":

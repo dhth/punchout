@@ -106,6 +106,8 @@ type Model struct {
 	issueIndexMap         map[string]int
 	issuesFetched         bool
 	worklogList           list.Model
+	worklogListGen        uint64
+	worklogSyncsRemaining int
 	unsyncedWLCount       uint
 	unsyncedWLSecsSpent   int
 	syncedWorklogList     list.Model
@@ -134,7 +136,7 @@ func (m Model) Init() tea.Cmd {
 	} else {
 		cmds = append(cmds, m.fetchIssuesFromJIRA(false))
 	}
-	cmds = append(cmds, fetchUnsyncedWorkLogs(m.ctx, m.worklogStore), fetchSyncedWorkLogs(m.ctx, m.worklogStore))
+	cmds = append(cmds, fetchUnsyncedWorkLogs(m.ctx, m.worklogStore, m.worklogListGen), fetchSyncedWorkLogs(m.ctx, m.worklogStore))
 
 	return tea.Batch(cmds...)
 }

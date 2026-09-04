@@ -130,12 +130,13 @@ func fetchActiveStatus(ctx context.Context, store WorklogStore, interval time.Du
 	})
 }
 
-func fetchUnsyncedWorkLogs(ctx context.Context, store WorklogStore) tea.Cmd {
+func fetchUnsyncedWorkLogs(ctx context.Context, store WorklogStore, generation uint64) tea.Cmd {
 	return func() tea.Msg {
 		entries, err := store.UnsyncedWorklogs(ctx)
 		return wLEntriesFetchedFromDB{
-			entries: entries,
-			err:     err,
+			entries:    entries,
+			generation: generation,
+			err:        err,
 		}
 	}
 }
@@ -159,7 +160,7 @@ func deleteLogEntry(ctx context.Context, store WorklogStore, id int) tea.Cmd {
 	}
 }
 
-func updateSyncStatusForEntry(ctx context.Context, store WorklogStore, entry worklogListItem, index int, fallbackCommentUsed bool) tea.Cmd {
+func updateSyncStatusForEntry(ctx context.Context, store WorklogStore, entry worklogListItem, indexHint int, fallbackCommentUsed bool) tea.Cmd {
 	return func() tea.Msg {
 		var comment *string
 		if fallbackCommentUsed {
@@ -168,9 +169,9 @@ func updateSyncStatusForEntry(ctx context.Context, store WorklogStore, entry wor
 
 		err := store.MarkWorklogSynced(ctx, entry.ID, comment)
 		return wLSyncUpdatedInDB{
-			entry: entry,
-			index: index,
-			err:   err,
+			entry:     entry,
+			indexHint: indexHint,
+			err:       err,
 		}
 	}
 }
@@ -219,7 +220,7 @@ func (m Model) saveIssuesToCache(snapshot issuecache.Snapshot) tea.Cmd {
 	}
 }
 
-func (m Model) syncWorklogWithJIRA(entry worklogListItem, index int) tea.Cmd {
+func (m Model) syncWorklogWithJIRA(entry worklogListItem, indexHint int) tea.Cmd {
 	return func() tea.Msg {
 		var fallbackCmtUsed bool
 		worklog := entry.Worklog
@@ -228,8 +229,13 @@ func (m Model) syncWorklogWithJIRA(entry worklogListItem, index int) tea.Cmd {
 			fallbackCmtUsed = true
 		}
 
-		err := m.jiraSvc.SyncWLToJIRA(context.TODO(), worklog, m.opts.Jira.TimeDeltaMins)
-		return wLSyncedToJIRA{index, entry, fallbackCmtUsed, err}
+		err := m.jiraSvc.SyncWLToJIRA(m.ctx, worklog, m.opts.Jira.TimeDeltaMins)
+		return wLSyncedToJIRA{
+			indexHint:           indexHint,
+			entry:               entry,
+			fallbackCommentUsed: fallbackCmtUsed,
+			err:                 err,
+		}
 	}
 }
 

@@ -62,8 +62,9 @@ type activeWLFetchedFromDB struct {
 }
 
 type wLEntriesFetchedFromDB struct {
-	entries []d.StoredWorklog
-	err     error
+	entries    []d.StoredWorklog
+	generation uint64
+	err        error
 }
 
 type syncedWLEntriesFetchedFromDB struct {
@@ -76,9 +77,9 @@ type wLDeletedFromDB struct {
 }
 
 type wLSyncUpdatedInDB struct {
-	entry worklogListItem
-	index int
-	err   error
+	entry     worklogListItem
+	indexHint int
+	err       error
 }
 
 type issueSource uint
@@ -101,7 +102,7 @@ type issuesSavedToCache struct {
 }
 
 type wLSyncedToJIRA struct {
-	index               int
+	indexHint           int
 	entry               worklogListItem
 	fallbackCommentUsed bool
 	err                 error

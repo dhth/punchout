@@ -13,6 +13,8 @@ import (
 	"github.com/dhth/punchout/internal/utils"
 )
 
+const maxConcurrentJIRASyncs = 5
+
 func (m *Model) getCmdToUpdateActiveWL() tea.Cmd {
 	beginTS, err := time.ParseInLocation(timeFormat, m.trackingInputs[entryBeginTS].Value(), time.Local)
 	if err != nil {
@@ -163,7 +165,7 @@ func (m *Model) getCmdToGoForwardsInViews() tea.Cmd {
 	switch m.activeView {
 	case issueListView:
 		m.activeView = wLView
-		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+		cmd = m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 	case wLView:
 		m.activeView = syncedWLView
 		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
@@ -205,7 +207,7 @@ func (m *Model) getCmdToGoBackwardsInViews() tea.Cmd {
 		m.activeView = issueListView
 	case syncedWLView:
 		m.activeView = wLView
-		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+		cmd = m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 	case issueListView:
 		m.activeView = syncedWLView
 		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
@@ -274,7 +276,11 @@ func (m *Model) getCmdToReloadData() tea.Cmd {
 		m.issueList.Styles.Title = m.styles.issueListUnfetchedTitle
 		cmd = m.fetchIssuesFromJIRA(false)
 	case wLView:
-		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+		if m.worklogSyncsRemaining > 0 {
+			m.setInfoMsg("can't refresh worklogs while sync is in progress")
+			return nil
+		}
+		cmd = m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 		m.worklogList.ResetSelected()
 	case syncedWLView:
 		cmd = fetchSyncedWorkLogs(m.ctx, m.worklogStore)
@@ -334,6 +340,11 @@ func (m *Model) handleRequestToCreateManualWL() {
 }
 
 func (m *Model) handleRequestToUpdateSavedWL() {
+	if m.worklogSyncsRemaining > 0 {
+		m.setInfoMsg("can't edit worklogs while sync is in progress")
+		return
+	}
+
 	wl, ok := m.worklogList.SelectedItem().(worklogListItem)
 	if !ok {
 		return
@@ -384,6 +395,11 @@ func (m *Model) handleRequestToSyncTimestamps() {
 }
 
 func (m *Model) getCmdToDeleteWL() tea.Cmd {
+	if m.worklogSyncsRemaining > 0 {
+		m.setInfoMsg("can't delete worklogs while sync is in progress")
+		return nil
+	}
+
 	issue, ok := m.worklogList.SelectedItem().(worklogListItem)
 	if !ok {
 		m.setErrorMsg("couldn't delete worklog entry")
@@ -481,27 +497,54 @@ func (m *Model) handleStoppingOfTracking() {
 	m.trackingInputs[m.trackingFocussedField].Focus()
 }
 
-func (m *Model) getCmdToSyncWLToJIRA() []tea.Cmd {
-	var cmds []tea.Cmd
-	toSyncNum := 0
-	for i, entry := range m.worklogList.Items() {
-		if wl, ok := entry.(worklogListItem); ok {
-			if wl.Synced {
-				continue
-			}
+func (m *Model) getCmdToSyncWLToJIRA() tea.Cmd {
+	if m.worklogSyncsRemaining > 0 {
+		m.setInfoMsg("worklog sync already in progress")
+		return nil
+	}
 
-			wl.syncInProgress = true
-			wl.err = nil
-			m.worklogList.SetItem(i, wl)
-			cmds = append(cmds, m.syncWorklogWithJIRA(wl, i))
-			toSyncNum++
+	var syncCmds []tea.Cmd
+	for itemIndex, item := range m.worklogList.Items() {
+		worklog, ok := item.(worklogListItem)
+		if !ok || worklog.Synced {
+			continue
 		}
+
+		worklog.syncInProgress = true
+		worklog.err = nil
+		m.worklogList.SetItem(itemIndex, worklog)
+		syncCmds = append(syncCmds, m.syncWorklogWithJIRA(worklog, itemIndex))
 	}
-	if toSyncNum == 0 {
+	if len(syncCmds) == 0 {
 		m.setInfoMsg("nothing to sync")
+		return nil
 	}
 
-	return cmds
+	m.worklogListGen++
+	m.worklogSyncsRemaining = len(syncCmds)
+	laneCount := min(len(syncCmds), maxConcurrentJIRASyncs)
+	lanes := make([][]tea.Cmd, laneCount)
+	for cmdIndex, syncCmd := range syncCmds {
+		laneIndex := cmdIndex % laneCount
+		lanes[laneIndex] = append(lanes[laneIndex], syncCmd)
+	}
+
+	laneSequences := make([]tea.Cmd, laneCount)
+	for laneIndex, lane := range lanes {
+		laneSequences[laneIndex] = tea.Sequence(lane...)
+	}
+
+	// Batch sequential lanes to limit concurrent Jira requests
+	return tea.Batch(laneSequences...)
+}
+
+func (m *Model) getCmdToFetchUnsyncedWorkLogsIfIdle() tea.Cmd {
+	if m.worklogSyncsRemaining > 0 {
+		return nil
+	}
+
+	m.worklogListGen++
+	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore, m.worklogListGen)
 }
 
 func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
@@ -612,7 +655,7 @@ func (m *Model) handleManualEntryInsertedInDBMsg(msg manualWLInsertedInDB) tea.C
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].SetValue("")
 	}
-	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+	return m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 }
 
 func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
@@ -625,10 +668,13 @@ func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
 	for i := range m.trackingInputs {
 		m.trackingInputs[i].SetValue("")
 	}
-	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+	return m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 }
 
 func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
+	if msg.generation != m.worklogListGen {
+		return
+	}
 	if msg.err != nil {
 		m.setErrorMsg(msg.err.Error())
 		return
@@ -662,9 +708,13 @@ func (m *Model) handleSyncedWLEntriesFetchedFromDBMsg(msg syncedWLEntriesFetched
 }
 
 func (m *Model) handleWLSyncUpdatedInDBMsg(msg wLSyncUpdatedInDB) {
+	if m.worklogSyncsRemaining > 0 {
+		m.worklogSyncsRemaining--
+	}
+
 	if msg.err != nil {
 		msg.entry.err = msg.err
-		m.worklogList.SetItem(msg.index, msg.entry)
+		m.setWorklogListItem(msg.indexHint, msg.entry)
 		return
 	}
 
@@ -711,7 +761,7 @@ func (m *Model) handleWLDeletedFromDBMsg(msg wLDeletedFromDB) tea.Cmd {
 		return nil
 	}
 
-	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+	return m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 }
 
 func (m *Model) handleActiveWLDeletedFromDBMsg(msg activeWLDeletedFromDB) {
@@ -732,9 +782,12 @@ func (m *Model) handleActiveWLDeletedFromDBMsg(msg activeWLDeletedFromDB) {
 
 func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 	if msg.err != nil {
+		if m.worklogSyncsRemaining > 0 {
+			m.worklogSyncsRemaining--
+		}
 		msg.entry.err = msg.err
 		msg.entry.syncInProgress = false
-		m.worklogList.SetItem(msg.index, msg.entry)
+		m.setWorklogListItem(msg.indexHint, msg.entry)
 		return nil
 	}
 
@@ -743,8 +796,25 @@ func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 	if msg.fallbackCommentUsed {
 		msg.entry.Comment = *m.opts.Jira.FallbackComment
 	}
-	m.worklogList.SetItem(msg.index, msg.entry)
-	return updateSyncStatusForEntry(m.ctx, m.worklogStore, msg.entry, msg.index, msg.fallbackCommentUsed)
+	m.setWorklogListItem(msg.indexHint, msg.entry)
+	return updateSyncStatusForEntry(m.ctx, m.worklogStore, msg.entry, msg.indexHint, msg.fallbackCommentUsed)
+}
+
+func (m *Model) setWorklogListItem(indexHint int, entry worklogListItem) {
+	items := m.worklogList.Items()
+	if indexHint >= 0 && indexHint < len(items) {
+		if current, ok := items[indexHint].(worklogListItem); ok && current.ID == entry.ID {
+			m.worklogList.SetItem(indexHint, entry)
+			return
+		}
+	}
+
+	for i, item := range items {
+		if current, ok := item.(worklogListItem); ok && current.ID == entry.ID {
+			m.worklogList.SetItem(i, entry)
+			return
+		}
+	}
 }
 
 func (m *Model) handleActiveWLUpdatedInDBMsg(msg activeWLUpdatedInDB) {
@@ -804,7 +874,7 @@ func (m *Model) handleTrackingToggledInDBMsg(msg trackingToggledInDB) tea.Cmd {
 		}
 		m.trackingActive = false
 		m.activeWorklog = nil
-		cmd = fetchUnsyncedWorkLogs(m.ctx, m.worklogStore)
+		cmd = m.getCmdToFetchUnsyncedWorkLogsIfIdle()
 	case false:
 		m.lastChange = insertChange
 		if activeIssue != nil {
