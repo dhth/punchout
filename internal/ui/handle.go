@@ -599,6 +599,8 @@ func (m *Model) handleIssuesLoadedMsg(msg issuesLoaded) []tea.Cmd {
 	}
 
 	issues := make([]list.Item, 0, len(msg.issues))
+	clear(m.issueMap)
+	clear(m.issueIndexMap)
 	for i, issue := range msg.issues {
 		issues = append(issues, &issue)
 		m.issueMap[issue.IssueKey] = &issue
@@ -684,7 +686,7 @@ func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
 	var secsSpent int
 	for i, e := range msg.entries {
 		secsSpent += e.SecsSpent()
-		items[i] = worklogListItem{StoredWorklog: e, fallbackComment: m.opts.Jira.FallbackComment}
+		items[i] = worklogListItem{StoredWorklog: e}
 	}
 	m.worklogList.SetItems(items)
 	m.unsyncedWLSecsSpent = secsSpent
@@ -793,6 +795,7 @@ func (m *Model) handleWLSyncedToJIRAMsg(msg wLSyncedToJIRA) tea.Cmd {
 
 	msg.entry.Synced = true
 	msg.entry.syncInProgress = false
+	msg.entry.fallbackCommentUsed = msg.fallbackCommentUsed
 	if msg.fallbackCommentUsed {
 		msg.entry.Comment = *m.opts.Jira.FallbackComment
 	}
