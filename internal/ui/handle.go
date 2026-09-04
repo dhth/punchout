@@ -520,7 +520,7 @@ func (m *Model) getCmdToSyncWLToJIRA() tea.Cmd {
 		return nil
 	}
 
-	m.worklogListGeneration++
+	m.worklogListGen++
 	m.worklogSyncsRemaining = len(syncCmds)
 	laneCount := min(len(syncCmds), maxConcurrentJIRASyncs)
 	lanes := make([][]tea.Cmd, laneCount)
@@ -543,7 +543,8 @@ func (m *Model) getCmdToFetchUnsyncedWorkLogsIfIdle() tea.Cmd {
 		return nil
 	}
 
-	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore, m.worklogListGeneration)
+	m.worklogListGen++
+	return fetchUnsyncedWorkLogs(m.ctx, m.worklogStore, m.worklogListGen)
 }
 
 func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
@@ -671,7 +672,7 @@ func (m *Model) handleWLUpdatedInDBMsg(msg wLUpdatedInDB) tea.Cmd {
 }
 
 func (m *Model) handleWLEntriesFetchedFromDBMsg(msg wLEntriesFetchedFromDB) {
-	if msg.generation != m.worklogListGeneration {
+	if msg.generation != m.worklogListGen {
 		return
 	}
 	if msg.err != nil {

@@ -106,7 +106,7 @@ type Model struct {
 	issueIndexMap         map[string]int
 	issuesFetched         bool
 	worklogList           list.Model
-	worklogListGeneration uint64
+	worklogListGen        uint64
 	worklogSyncsRemaining int
 	unsyncedWLCount       uint
 	unsyncedWLSecsSpent   int
