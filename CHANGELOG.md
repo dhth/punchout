@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Limit concurrent JIRA requests when syncing worklogs
+- Worklog lists now show issue summaries for entries without comments
 
 ## [v1.4.0] - Mar 17, 2026
 
