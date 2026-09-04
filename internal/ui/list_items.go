@@ -23,9 +23,9 @@ const (
 type worklogListItem struct {
 	d.StoredWorklog
 
-	fallbackComment *string
-	syncInProgress  bool
-	err             error
+	fallbackCommentUsed bool
+	syncInProgress      bool
+	err                 error
 }
 
 func (item worklogListItem) FilterValue() string { return item.IssueKey }
@@ -36,14 +36,14 @@ type syncedWorklogListItem struct {
 
 func (item syncedWorklogListItem) FilterValue() string { return item.IssueKey }
 
-func renderListItem(item list.Item, thm theme.Theme, styles styles) (string, string) {
+func renderListItem(item list.Item, thm theme.Theme, styles styles, issueMap map[string]*d.Issue, fallbackCommentConfigured, selected bool) (string, string) {
 	switch item := item.(type) {
 	case *d.Issue:
 		return renderIssue(item, thm, styles)
 	case worklogListItem:
-		return renderUnsyncedWorklog(item, styles)
+		return renderUnsyncedWorklog(item, styles, issueMap, fallbackCommentConfigured, selected)
 	case syncedWorklogListItem:
-		return renderSyncedWorklog(item)
+		return renderSyncedWorklog(item, styles, issueMap, selected)
 	default:
 		return "", ""
 	}
@@ -86,11 +86,9 @@ func renderIssue(issue *d.Issue, thm theme.Theme, styles styles) (string, string
 	return title, description
 }
 
-func renderUnsyncedWorklog(entry worklogListItem, styles styles) (string, string) {
-	title := "[NO COMMENT]"
-	if !entry.NeedsComment() {
-		title = entry.Comment
-	}
+func renderUnsyncedWorklog(entry worklogListItem, styles styles, issueMap map[string]*d.Issue, fallbackCommentConfigured, selected bool) (string, string) {
+	showComment := !entry.fallbackCommentUsed
+	title := renderWorklogTitle(entry.StoredWorklog, styles.worklogCommentLabel, issueMap, showComment, selected)
 
 	if entry.err != nil {
 		return title, "error: " + entry.err.Error()
@@ -122,7 +120,7 @@ func renderUnsyncedWorklog(entry worklogListItem, styles styles) (string, string
 	}
 
 	var fallbackCommentStatus string
-	if entry.NeedsComment() && entry.fallbackComment != nil {
+	if entry.fallbackCommentUsed || (entry.NeedsComment() && fallbackCommentConfigured) {
 		fallbackCommentStatus = styles.fallbackCommentBadge.Render("fallback comment")
 	}
 
@@ -130,7 +128,7 @@ func renderUnsyncedWorklog(entry worklogListItem, styles styles) (string, string
 		"%s%s%s%s%s",
 		utils.RightPadTrim(entry.IssueKey, listWidth/4),
 		utils.RightPadTrim(duration, listWidth/4),
-		utils.RightPadTrim(fmt.Sprintf("(%s)", timeSpent), listWidth/6),
+		utils.RightPadTrim(fmt.Sprintf("(%s)", timeSpent), listWidth/4),
 		syncStatus,
 		fallbackCommentStatus,
 	)
@@ -138,20 +136,32 @@ func renderUnsyncedWorklog(entry worklogListItem, styles styles) (string, string
 	return title, description
 }
 
-func renderSyncedWorklog(entry syncedWorklogListItem) (string, string) {
-	title := "[NO COMMENT]"
-	if !entry.NeedsComment() {
-		title = entry.Comment
-	}
+func renderSyncedWorklog(entry syncedWorklogListItem, styles styles, issueMap map[string]*d.Issue, selected bool) (string, string) {
+	title := renderWorklogTitle(entry.StoredWorklog, styles.worklogCommentLabel, issueMap, true, selected)
 
 	description := fmt.Sprintf(
 		"%s%s%s",
 		utils.RightPadTrim(entry.IssueKey, listWidth/4),
 		utils.RightPadTrim(humanize.Time(entry.EndTS), listWidth/4),
-		fmt.Sprintf("(%s)", utils.HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))),
+		utils.RightPadTrim(fmt.Sprintf("(%s)", utils.HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))), listWidth/4),
 	)
 
 	return title, description
+}
+
+func renderWorklogTitle(entry d.StoredWorklog, commentLabelStyle lipgloss.Style, issueMap map[string]*d.Issue, showComment, selected bool) string {
+	title := "[ISSUE SUMMARY UNAVAILABLE]"
+	if issue, ok := issueMap[entry.IssueKey]; ok && issue != nil && strings.TrimSpace(issue.Summary) != "" {
+		title = issue.Summary
+	}
+	if showComment && !entry.NeedsComment() {
+		title = "Comment: " + entry.Comment
+		if !selected {
+			title = commentLabelStyle.Render("Comment:") + " " + entry.Comment
+		}
+	}
+
+	return title
 }
 
 func categoricalColor(category, value string, colors []string) color.Color {

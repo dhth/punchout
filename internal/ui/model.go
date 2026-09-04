@@ -162,9 +162,10 @@ func (m *Model) applyTheme(thm theme.Theme) {
 	m.theme = thm
 	m.styles = newStyles(thm)
 
-	m.issueList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent1))
-	m.worklogList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent2))
-	m.syncedWorklogList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent4))
+	fallbackCommentConfigured := m.opts.Jira.FallbackComment != nil
+	m.issueList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent1, m.issueMap, fallbackCommentConfigured))
+	m.worklogList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent2, m.issueMap, fallbackCommentConfigured))
+	m.syncedWorklogList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent4, m.issueMap, fallbackCommentConfigured))
 
 	switch m.issueList.Title {
 	case issueListFetchingTitle:

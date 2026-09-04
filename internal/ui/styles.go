@@ -15,6 +15,7 @@ type styles struct {
 	footer                  lipgloss.Style
 	mode                    lipgloss.Style
 	workLogEntryHeading     lipgloss.Style
+	worklogCommentLabel     lipgloss.Style
 	formContext             lipgloss.Style
 	formFieldName           lipgloss.Style
 	formHelp                lipgloss.Style
@@ -101,6 +102,7 @@ func newStyles(thm theme.Theme) styles {
 			Bold(true).
 			Background(accent4),
 		workLogEntryHeading: baseHeading.Background(accent2),
+		worklogCommentLabel: lipgloss.NewStyle().Foreground(accent3),
 		formContext:         lipgloss.NewStyle().Foreground(accent2),
 		formFieldName:       lipgloss.NewStyle().Foreground(accent4),
 		formHelp:            lipgloss.NewStyle().Foreground(muted),

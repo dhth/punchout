@@ -6,13 +6,16 @@ import (
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	d "github.com/dhth/punchout/internal/domain"
 	"github.com/dhth/punchout/internal/ui/theme"
 )
 
 type itemDelegate struct {
-	delegate list.DefaultDelegate
-	theme    theme.Theme
-	styles   styles
+	delegate                  list.DefaultDelegate
+	theme                     theme.Theme
+	styles                    styles
+	issueMap                  map[string]*d.Issue
+	fallbackCommentConfigured bool
 }
 
 type displayItem struct {
@@ -25,7 +28,7 @@ func (i displayItem) Title() string       { return i.title }
 func (i displayItem) Description() string { return i.description }
 func (i displayItem) FilterValue() string { return i.item.FilterValue() }
 
-func newItemDelegate(thm theme.Theme, styles styles, accent string) list.ItemDelegate {
+func newItemDelegate(thm theme.Theme, styles styles, accent string, issueMap map[string]*d.Issue, fallbackCommentConfigured bool) list.ItemDelegate {
 	d := list.NewDefaultDelegate()
 	selectionColor := lipgloss.Color(accent)
 	textColor := lipgloss.Color(thm.Foreground)
@@ -40,9 +43,11 @@ func newItemDelegate(thm theme.Theme, styles styles, accent string) list.ItemDel
 	d.Styles.SelectedDesc = d.Styles.SelectedTitle
 
 	return itemDelegate{
-		delegate: d,
-		theme:    thm,
-		styles:   styles,
+		delegate:                  d,
+		theme:                     thm,
+		styles:                    styles,
+		issueMap:                  issueMap,
+		fallbackCommentConfigured: fallbackCommentConfigured,
 	}
 }
 
@@ -54,7 +59,7 @@ func (d itemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 }
 
 func (d itemDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
-	title, description := renderListItem(item, d.theme, d.styles)
+	title, description := renderListItem(item, d.theme, d.styles, d.issueMap, d.fallbackCommentConfigured, index == m.Index())
 	d.delegate.Render(w, m, index, displayItem{
 		item:        item,
 		title:       title,

@@ -24,6 +24,8 @@ func InitialModel(
 	var stackItems []list.Item
 	var worklogListItems []list.Item
 	var syncedWorklogListItems []list.Item
+	issueMap := make(map[string]*d.Issue)
+	fallbackCommentConfigured := opts.Jira.FallbackComment != nil
 
 	trackingInputs := make([]textinput.Model, 3)
 	trackingInputs[entryBeginTS] = textinput.New()
@@ -52,11 +54,11 @@ func InitialModel(
 		jiraSvc:           jiraSvc,
 		issueStore:        issueStore,
 		opts:              opts,
-		issueList:         list.New(stackItems, newItemDelegate(thm, styles, thm.Accent1), listWidth, 0),
-		issueMap:          make(map[string]*d.Issue),
+		issueList:         list.New(stackItems, newItemDelegate(thm, styles, thm.Accent1, issueMap, fallbackCommentConfigured), listWidth, 0),
+		issueMap:          issueMap,
 		issueIndexMap:     make(map[string]int),
-		worklogList:       list.New(worklogListItems, newItemDelegate(thm, styles, thm.Accent2), listWidth, 0),
-		syncedWorklogList: list.New(syncedWorklogListItems, newItemDelegate(thm, styles, thm.Accent4), listWidth, 0),
+		worklogList:       list.New(worklogListItems, newItemDelegate(thm, styles, thm.Accent2, issueMap, fallbackCommentConfigured), listWidth, 0),
+		syncedWorklogList: list.New(syncedWorklogListItems, newItemDelegate(thm, styles, thm.Accent4, issueMap, fallbackCommentConfigured), listWidth, 0),
 		showHelpIndicator: true,
 		trackingInputs:    trackingInputs,
 		debug:             debug,
