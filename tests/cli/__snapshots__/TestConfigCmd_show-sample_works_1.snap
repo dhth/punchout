@@ -1,6 +1,9 @@
 success: true
 exit_code: 0
 ----- stdout -----
+# String configuration values can reference environment variables. Referenced
+# variables need to be set before running punchout.
+
 # Optional. Defaults to punchout's standard database path.
 # db_path = "$SOME_ENV_VAR/punchout.db"
 
@@ -9,7 +12,7 @@ exit_code: 0
 installation_type = "onpremise"
 
 jira_url = "https://jira.company.com"
-jira_token = "your personal access token"
+jira_token = "$PUNCHOUT_JIRA_TOKEN"
 
 # For cloud installations, set installation_type to "cloud", use an API token,
 # and provide a username.
@@ -29,7 +32,7 @@ jql = "assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DES
 # Optional. Defaults to false.
 # use_cache_on_startup = true
 
-# Optional. Defaults to "gruvbox-dark".
+# Optional. Defaults to "gruvbox-dark-hard".
 # theme = "tokyonight"
 
 [mcp]

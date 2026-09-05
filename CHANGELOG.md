@@ -7,18 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.5.0] - Sep 05, 2026
+
 ### Added
 
 - Built-in themes
-- Support TUI and MCP settings in `punchout.toml`
+- Support loading cached JIRA issues when starting the TUI
+- Support configuring database path, TUI settings, and MCP settings in config
+    file
 - A guided introduction to punchout's main features, available via `punchout tour`
 - Command to validate configuration (`punchout config validate`)
 - Command to show sample configuration (`punchout config show-sample`)
+- Support for MCP protocol version `2026-07-28`
 
 ### Changed
 
+- Change default TUI theme to `gruvbox-dark-hard`
 - Limit concurrent JIRA requests when syncing worklogs
 - Worklog lists now show issue summaries for entries without comments
+- Show days in worklog durations
+- Expand environment variables in all string configuration attributes
+- Redact JIRA tokens in `--list-config` output
+
+### Removed
+
+- Publishing new releases via Homebrew
+
+### Fixed
+
+- Show the correct begin timestamp for an active worklog after restarting
+  punchout
 
 ## [v1.4.0] - Mar 17, 2026
 
@@ -68,7 +86,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add more colors for issue type
 - Dependency upgrades
 
-[unreleased]: https://github.com/dhth/punchout/compare/v1.4.0...HEAD
+[unreleased]: https://github.com/dhth/punchout/compare/v1.5.0...HEAD
+[v1.5.0]: https://github.com/dhth/punchout/compare/v1.4.0...v1.5.0
 [v1.4.0]: https://github.com/dhth/punchout/compare/v1.3.0...v1.4.0
 [v1.3.0]: https://github.com/dhth/punchout/compare/v1.2.0...v1.3.0
 [v1.2.0]: https://github.com/dhth/punchout/compare/v1.1.0...v1.2.0
