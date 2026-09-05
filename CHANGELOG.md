@@ -5,20 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
 ## [v1.5.0] - Sep 05, 2026
 
 ### Added
 
 - Built-in themes
-- Support TUI and MCP settings in `punchout.toml`
+- Support loading cached JIRA issues when starting the TUI
+- Support configuring database path, TUI settings, and MCP settings in config
+    file
 - A guided introduction to punchout's main features, available via `punchout tour`
 - Command to validate configuration (`punchout config validate`)
 - Command to show sample configuration (`punchout config show-sample`)
+- Support for MCP protocol version `2026-07-28`
 
 ### Changed
 
+- Change default TUI theme to `gruvbox-dark-hard`
 - Limit concurrent JIRA requests when syncing worklogs
 - Worklog lists now show issue summaries for entries without comments
+- Show days in worklog durations
+- Expand environment variables in all string configuration attributes
+- Redact JIRA tokens in `--list-config` output
+
+### Removed
+
+- Publishing new releases via Homebrew
+
+### Fixed
+
+- Show the correct begin timestamp for an active worklog after restarting
+  punchout
 
 ## [v1.4.0] - Mar 17, 2026
 
