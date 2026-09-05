@@ -8,6 +8,9 @@ Error: no configuration file found at "config/absent.toml"
 Here's a sample config:
 
 ---
+# String configuration values can reference environment variables. Referenced
+# variables need to be set before running punchout.
+
 # Optional. Defaults to punchout's standard database path.
 # db_path = "$SOME_ENV_VAR/punchout.db"
 
@@ -16,7 +19,7 @@ Here's a sample config:
 installation_type = "onpremise"
 
 jira_url = "https://jira.company.com"
-jira_token = "your personal access token"
+jira_token = "$PUNCHOUT_JIRA_TOKEN"
 
 # For cloud installations, set installation_type to "cloud", use an API token,
 # and provide a username.

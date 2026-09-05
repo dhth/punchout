@@ -1094,6 +1094,7 @@ func TestLoadReturnsErrorWhenFileDoesNotExist(t *testing.T) {
 }
 
 func TestSampleConfigIsValid(t *testing.T) {
+	t.Setenv("PUNCHOUT_JIRA_TOKEN", "env-token")
 	_, err := decodeAndResolve(strings.NewReader(SampleConfig), LoadOptions{
 		HomeDir:  "/home/user",
 		Defaults: Defaults{DBPath: "default.db"},

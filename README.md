@@ -11,7 +11,7 @@
 `punchout` takes the suck out of logging time on JIRA.
 
 <p align="center">
-  <img src="https://tools.dhruvs.space/images/punchout/v1-5-0/tui-issues.png" alt="Usage" />
+  <img src="https://tools.dhruvs.space/images/punchout/v1-5-0/tui-issues.png" alt="Punchout issues list" />
 </p>
 
 💾 Installation
@@ -42,53 +42,61 @@ punchout tour
 ```
 
 The tour introduces punchout's worklog workflow, main TUI views and controls,
-MCP server, and configuration.
+MCP server, and configuration. It does not require a configuration file.
 
-⚡️ Usage
+⚡️ Quick start
 ---
 
-```text
-punchout takes the suck out of logging time on JIRA.
+Create a configuration file if you do not already have one:
 
-Usage:
-  punchout [flags]
-  punchout [command]
-
-Available Commands:
-  config      Inspect and validate punchout configuration
-  help        Help about any command
-  mcp         Interact with punchout's MCP server
-  tour        Take a quick tour of punchout
-
-Flags:
-      --config-file-path string         location of punchout's config file (default "~/.config/punchout/punchout.toml")
-      --db-path string                  override the location of punchout's local database
-      --fallback-comment string         fallback comment to use for worklog entries
-  -h, --help                            help for punchout
-      --jira-installation-type string   JIRA installation type; allowed values: [cloud, onpremise]
-      --jira-time-delta-mins string     time delta (in minutes) between your timezone and the timezone of the JIRA server; can be +/-
-      --jira-token string               jira token (PAT for on-premise installation, API token for cloud installation)
-      --jira-url string                 URL of the JIRA server
-      --jira-username string            username for authentication (for cloud installation)
-      --jql string                      JQL to use to query issues
-      --list-config                     print the config that punchout will use
-  -t, --theme string                    theme to use; possible values: [catppuccin-latte, catppuccin-mocha, dracula, github-dark, github-light, gruvbox-dark, gruvbox-dark-hard, gruvbox-light, monokai-classic, onedark, rose-pine-moon, solarized-light, tokyonight, xcode-dark] (default "gruvbox-dark-hard")
-      --use-cache-on-startup            load JIRA issues from the local cache on startup
-
-Use "punchout [command] --help" for more information about a command.
+```sh
+mkdir -p ~/.config/punchout
+punchout config show-sample > ~/.config/punchout/punchout.toml
 ```
 
-`punchout` can receive its configuration via command line flags, or a config
-file.
+Edit the generated file with your JIRA details, then validate it and start the
+TUI:
 
-### Using a config file
+```sh
+punchout config validate
+punchout
+```
 
-Create a TOML file that looks like the following. The default location for this
-file is `~/.config/punchout/punchout.toml`. The configuration needed for
-authenticating against your JIRA installation (on-premise or cloud) will depend
-on the kind of the installation.
+`>_` Commands
+---
+
+| Command                       | What it does                    |
+|-------------------------------|---------------------------------|
+| `punchout`                    | Start the TUI                   |
+| `punchout tour`               | Take the interactive tour       |
+| `punchout config show-sample` | Print a sample configuration    |
+| `punchout config validate`    | Validate the configuration file |
+| `punchout mcp serve`          | Start the MCP server            |
+| `punchout help`               | Show all commands and flags     |
+
+Run `punchout <command> --help` for details about a particular command.
+
+🔄 Workflow
+---
+
+`punchout` lets you add worklogs to JIRA in two steps:
+
+1. Record one or more worklogs locally.
+2. Push all unsynced worklogs to JIRA.
+
+You can do this through either the TUI or the MCP server.
+
+⚙️ Configuration
+---
+
+`punchout` reads configuration from `~/.config/punchout/punchout.toml` by
+default. Authentication settings differ between JIRA Cloud and on-premise
+installations.
 
 ```toml
+# String configuration values can reference environment variables. Referenced
+# variables need to be set before running punchout.
+
 # Optional. Defaults to punchout's standard database path.
 # db_path = "$SOME_ENV_VAR/punchout.db"
 
@@ -97,7 +105,7 @@ on the kind of the installation.
 installation_type = "onpremise"
 
 jira_url = "https://jira.company.com"
-jira_token = "your personal access token"
+jira_token = "$PUNCHOUT_JIRA_TOKEN"
 
 # For cloud installations, set installation_type to "cloud", use an API token,
 # and provide a username.
@@ -128,35 +136,23 @@ jql = "assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DES
 # http_port = 9999
 ```
 
-Both the config file and the command line flags can be used in conjunction, but
-the latter will take precedence over the former.
+Command-line flags override values from the configuration file. Use a different
+file with `--config-file-path`, or inspect the resolved configuration with
+`--list-config`; JIRA tokens are redacted from that output.
 
-Workflow
----
+Successful JIRA issue fetches are saved to a local cache. Set
+`use_cache_on_startup` to `true` to start with the most recently cached issues
+instead of immediately querying JIRA. Press `<ctrl+r>` from the issues list to
+fetch the latest issues and update the cache. If the cache is unavailable,
+`punchout` falls back to querying JIRA.
 
-`punchout` lets you add worklogs on JIRA in a two step approach.
-
-1. You record one or more worklogs locally
-2. You push all unsynced worklogs to your JIRA server
-
-This can be done either via `punchout`'s TUI or its MCP server.
-
-TUI
+🖥️ TUI
 ---
 
 `punchout`'s TUI lets you log time against JIRA issues and sync worklogs to
 JIRA. You can track time as you work or add worklogs manually.
 
-[![tui](https://asciinema.org/a/UqtuNiBej6zGPlpW.svg)](https://asciinema.org/a/UqtuNiBej6zGPlpW)
-
-<p align="center">
-  <img src="https://tools.dhruvs.space/images/punchout/v1-5-0/tui-worklogs.png" alt="Usage" />
-</p>
-<p align="center">
-  <img src="https://tools.dhruvs.space/images/punchout/v1-5-0/tui-save-worklog.png" alt="Usage" />
-</p>
-
-### 📋 TUI Reference Manual
+[![Punchout TUI demo](https://asciinema.org/a/UqtuNiBej6zGPlpW.svg)](https://asciinema.org/a/UqtuNiBej6zGPlpW)
 
 The TUI has 5 primary views:
 
@@ -165,6 +161,13 @@ The TUI has 5 primary views:
 - **Worklog Entry/Update View** — You enter/update a worklog entry from here
 - **Synced Worklog List View** — You view the worklog entries synced to JIRA here
 - **Help View** — Shows available keymaps (as listed below)
+
+<p align="center">
+  <img src="https://tools.dhruvs.space/images/punchout/v1-5-0/tui-worklogs.png" alt="Punchout worklog list" />
+</p>
+<p align="center">
+  <img src="https://tools.dhruvs.space/images/punchout/v1-5-0/tui-save-worklog.png" alt="Punchout worklog entry form" />
+</p>
 
 ### Keyboard Shortcuts
 
@@ -204,6 +207,7 @@ The TUI has 5 primary views:
 | `<ctrl+t>` | Go to currently tracked item                                                                                                               |
 | `<ctrl+x>` | Discard currently active recording                                                                                                         |
 | `<ctrl+b>` | Open issue in browser                                                                                                                      |
+| `<ctrl+r>` | Fetch the latest issues from JIRA                                                                                                          |
 
 #### Worklog List View
 
@@ -245,16 +249,33 @@ by pressing `[` or `]`. Here is a sampling of 4 built-in themes.
 | `rose-pine-moon`   | ![rose-pine-moon](https://tools.dhruvs.space/images/punchout/v1-5-0/tui-theme-rose-pine-moon.png)     |
 | `gruvbox-light`    | ![gruvbox-light](https://tools.dhruvs.space/images/punchout/v1-5-0/tui-theme-gruvbox-light.png)       |
 
-MCP Server
+🔌 MCP Server
 ---
 
 `punchout` comes with an MCP server which allows you to automate the process of
-recording worklogs and syncing them to your JIRA server. The server provides 5
-tools:
+recording worklogs and syncing them to your JIRA server.
+
+The server uses stdio by default:
+
+```sh
+punchout mcp serve
+```
+
+It can also use Streamable HTTP:
+
+```sh
+punchout mcp serve --transport http --http-port 18899
+```
+
+The HTTP server listens on `127.0.0.1`, exposes the MCP endpoint at `/v1`, and
+provides a health check at `/health`. Transport and port can also be set in the
+`[mcp]` section of the configuration file.
+
+The server provides five tools:
 
 | Tool                    | What it does                                         |
 |-------------------------|------------------------------------------------------|
-| `get_jira_issues`       | Return JIRA issues based on JQL configured           |
+| `get_jira_issues`       | Return JIRA issues matching the configured JQL       |
 | `add_worklog`           | Record a worklog for an issue in punchout's database |
 | `add_multiple_worklogs` | Record multiple worklogs in punchout's database      |
 | `get_unsynced_worklogs` | Get unsynced worklogs from punchout's database       |
@@ -262,7 +283,7 @@ tools:
 
 Here's one way the MCP server can be used:
 
-[![mcp](https://asciinema.org/a/NCwiCaqLllwOFVQ3.svg)](https://asciinema.org/a/NCwiCaqLllwOFVQ3)
+[![Punchout MCP server demo](https://asciinema.org/a/NCwiCaqLllwOFVQ3.svg)](https://asciinema.org/a/NCwiCaqLllwOFVQ3)
 
 🔐 Verifying release artifacts
 ---

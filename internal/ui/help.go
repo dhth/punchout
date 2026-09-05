@@ -69,6 +69,7 @@ func renderHelp(styles styles) string {
     <ctrl+t>                                Go to currently tracked item
     <ctrl+x>                                Discard currently active recording
     <ctrl+b>                                Open issue in browser
+    <ctrl+r>                                Fetch the latest issues from JIRA
 `),
 		styles.helpHeader.Render("Worklog List View"),
 		styles.helpSection.Render(`
