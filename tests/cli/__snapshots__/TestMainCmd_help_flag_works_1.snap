@@ -25,7 +25,7 @@ Flags:
       --jira-username string            username for authentication (for cloud installation)
       --jql string                      JQL to use to query issues
       --list-config                     print the config that punchout will use
-  -t, --theme string                    theme to use; possible values: [catppuccin-latte, catppuccin-mocha, dracula, github-dark, github-light, gruvbox-dark, gruvbox-dark-hard, gruvbox-light, monokai-classic, onedark, rose-pine-moon, solarized-light, tokyonight, xcode-dark] (default "gruvbox-dark")
+  -t, --theme string                    theme to use; possible values: [catppuccin-latte, catppuccin-mocha, dracula, github-dark, github-light, gruvbox-dark, gruvbox-dark-hard, gruvbox-light, monokai-classic, onedark, rose-pine-moon, solarized-light, tokyonight, xcode-dark] (default "gruvbox-dark-hard")
       --use-cache-on-startup            load JIRA issues from the local cache on startup
 
 Use "punchout [command] --help" for more information about a command.

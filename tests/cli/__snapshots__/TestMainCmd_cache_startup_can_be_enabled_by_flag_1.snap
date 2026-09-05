@@ -6,7 +6,7 @@ Config File Path                        config/good.toml
 DB File Path                            db.db
 
 [TUI]
-Theme                                   gruvbox-dark
+Theme                                   gruvbox-dark-hard
 Use Cache On Startup                    true
 
 [JIRA]
