@@ -17,16 +17,20 @@
 💾 Installation
 ---
 
-**go**:
+### Pre-built binaries
+
+Download a pre-built binary from the [latest
+release](https://github.com/dhth/punchout/releases/latest). See [Verifying
+release artifacts](#-verifying-release-artifacts) for instructions on verifying
+your download.
+
+### Install from source
+
+You can also install from source using the `go` toolchain:
 
 ```sh
 go install github.com/dhth/punchout@latest
 ```
-
-Or get the pre-built binary directly from the latest
-[release](https://github.com/dhth/punchout/releases/latest). Read more about
-verifying the authenticity of released artifacts
-[here](#-verifying-release-artifacts).
 
 ⚡️ Usage
 ---
@@ -222,14 +226,11 @@ Synced Worklog Entry View
 🔐 Verifying release artifacts
 ---
 
-In case you get the `punchout` binary directly from a
-[release](https://github.com/dhth/punchout/releases), you may want to verify its
-authenticity. Checksums are applied to all released artifacts, and the resulting
-checksum file is signed using
-[cosign](https://docs.sigstore.dev/cosign/installation/) (version `2.5.0`).
+Each release includes checksums for all artifacts. The checksum file is signed
+using [cosign](https://docs.sigstore.dev/cosign/installation/) (version
+`2.5.0`).
 
-Steps to verify (replace `x.y.z` in the commands listed below with the version
-you want):
+Replace `x.y.z` below with the release version you want to verify.
 
 1. Download the following files from the release:
 
@@ -237,7 +238,7 @@ you want):
     - `punchout_x.y.z_checksums.txt.pem`
     - `punchout_x.y.z_checksums.txt.sig`
 
-2. Verify the signature:
+2. Verify the checksum file's signature:
 
     ```shell
     cosign verify-blob punchout_x.y.z_checksums.txt \
@@ -247,14 +248,15 @@ you want):
        --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
     ```
 
-3. Download the compressed archive you want, and validate its checksum:
+3. Download the archive for your platform and validate its checksum. For example,
+   for Linux x86-64:
 
     ```shell
     curl -sSLO https://github.com/dhth/punchout/releases/download/vx.y.z/punchout_x.y.z_linux_amd64.tar.gz
     sha256sum --ignore-missing -c punchout_x.y.z_checksums.txt
     ```
 
-4. If checksum validation goes through, uncompress the archive:
+4. Once both checks pass, extract the archive:
 
     ```shell
     tar -xzf punchout_x.y.z_linux_amd64.tar.gz
