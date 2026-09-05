@@ -117,7 +117,7 @@ jql = "assignee = currentUser() AND updatedDate >= -14d ORDER BY updatedDate DES
 # Optional. Defaults to false.
 # use_cache_on_startup = true
 
-# Optional. Defaults to "gruvbox-dark".
+# Optional. Defaults to "gruvbox-dark-hard".
 # theme = "tokyonight"
 
 [mcp]
