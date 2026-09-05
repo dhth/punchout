@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const DefaultName = "gruvbox-dark-hard"
+const DefaultName = themeNameGruvboxDarkHard
 
 var ErrInvalidThemeName = errors.New("invalid theme name provided")
 
