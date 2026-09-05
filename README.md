@@ -61,7 +61,7 @@ Available Commands:
   tour        Take a quick tour of punchout
 
 Flags:
-      --config-file-path string         location of punchout's config file (default "/Users/user/.config/punchout/punchout.toml")
+      --config-file-path string         location of punchout's config file (default "~/.config/punchout/punchout.toml")
       --db-path string                  override the location of punchout's local database
       --fallback-comment string         fallback comment to use for worklog entries
   -h, --help                            help for punchout
@@ -185,13 +185,13 @@ The TUI has 5 primary views:
 
 #### General List Controls
 
-| Mapping    | Description         |
-|------------|---------------------|
-| `k/<Up>`   | Move cursor up      |
-| `j/<Down>` | Move cursor down    |
-| `h<Left>`  | Go to previous page |
-| `l<Right>` | Go to next page     |
-| `/`        | Start filtering     |
+| Mapping     | Description         |
+|-------------|---------------------|
+| `k/<Up>`    | Move cursor up      |
+| `j/<Down>`  | Move cursor down    |
+| `h/<Left>`  | Go to previous page |
+| `l/<Right>` | Go to next page     |
+| `/`         | Start filtering     |
 
 #### Issue List View
 
@@ -235,8 +235,8 @@ The TUI has 5 primary views:
 
 ### Themes
 
-`punchout`'s TUI comes with a few built-in themes. You can see them in action by
-pressing `[` or `]`. Here is a sampling of 4 built-in themes.
+`punchout`'s TUI comes with several built-in themes. You can see them in action
+by pressing `[` or `]`. Here is a sampling of 4 built-in themes.
 
 | Theme              | Preview                                                                                               |
 |--------------------|-------------------------------------------------------------------------------------------------------|
