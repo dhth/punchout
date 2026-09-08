@@ -84,6 +84,8 @@ const (
 	timeOnlyFormat         = "15:04"
 	issueListFetchingTitle = "fetching..."
 	failureTitle           = "Failure"
+	minWidth               = 72
+	minHeight              = 26
 )
 
 type Options struct {
@@ -149,6 +151,10 @@ func (m Model) Init() tea.Cmd {
 	)
 
 	return tea.Batch(cmds...)
+}
+
+func (m Model) dimensionsInsufficient() bool {
+	return m.terminalWidth < minWidth || m.terminalHeight < minHeight
 }
 
 func (m *Model) setInfoMsg(value string) {

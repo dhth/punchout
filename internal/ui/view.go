@@ -21,6 +21,10 @@ const (
 )
 
 func (m Model) View() tea.View {
+	if m.dimensionsInsufficient() {
+		return m.insufficientDimensionsView()
+	}
+
 	var content string
 	var footer string
 
@@ -277,6 +281,26 @@ func (m Model) View() tea.View {
 		statusBar,
 		footer,
 	))
+	v.AltScreen = true
+	v.BackgroundColor = lipgloss.Color(m.theme.Background)
+	v.ForegroundColor = lipgloss.Color(m.theme.Foreground)
+
+	return v
+}
+
+func (m Model) insufficientDimensionsView() tea.View {
+	content := fmt.Sprintf(`
+  Terminal size too small
+
+  Current:  %d × %d
+  Required: %d × %d
+
+  Resize the terminal to continue.
+
+  Press q, esc, or ctrl+c to exit.
+`, m.terminalWidth, m.terminalHeight, minWidth, minHeight)
+
+	v := tea.NewView(content)
 	v.AltScreen = true
 	v.BackgroundColor = lipgloss.Color(m.theme.Background)
 	v.ForegroundColor = lipgloss.Color(m.theme.Foreground)
