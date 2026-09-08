@@ -61,6 +61,93 @@ func TestSyncedWorklogListViewColumnRendering(t *testing.T) {
 	}
 }
 
+func TestInsufficientDimensionsView(t *testing.T) {
+	t.Run("is entered when dimensions go below threshold", func(t *testing.T) {
+		for _, tc := range []struct {
+			name   string
+			width  int
+			height int
+		}{
+			{name: "width", width: minWidth - 1, height: minHeight},
+			{name: "height", width: minWidth, height: minHeight - 1},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				m := newSnapshotModel(t)
+				m.processMessage(tea.WindowSizeMsg{Width: tc.width, Height: tc.height})
+
+				require.True(t, m.dimensionsInsufficient())
+			})
+		}
+	})
+
+	t.Run("renders correctly", func(t *testing.T) {
+		m := newSnapshotModel(t)
+		m.processMessage(tea.WindowSizeMsg{Width: minWidth - 1, Height: minHeight - 1})
+
+		snaps.MatchStandaloneSnapshot(t, ansi.Strip(m.View().Content))
+	})
+
+	t.Run("handles window resizing", func(t *testing.T) {
+		m := newSnapshotModel(t)
+		require.False(t, m.dimensionsInsufficient())
+
+		m.processMessage(tea.WindowSizeMsg{Width: minWidth - 1, Height: minHeight})
+		require.True(t, m.dimensionsInsufficient())
+		require.Equal(t, minWidth-1, m.terminalWidth)
+		require.Equal(t, minHeight, m.terminalHeight)
+
+		m.processMessage(tea.WindowSizeMsg{Width: minWidth, Height: minHeight - 1})
+		require.True(t, m.dimensionsInsufficient())
+		require.Equal(t, minWidth, m.terminalWidth)
+		require.Equal(t, minHeight-1, m.terminalHeight)
+
+		m.processMessage(tea.WindowSizeMsg{Width: minWidth, Height: minHeight})
+		require.False(t, m.dimensionsInsufficient())
+		require.Equal(t, minWidth, m.terminalWidth)
+		require.Equal(t, minHeight, m.terminalHeight)
+	})
+
+	t.Run("allows quit keys", func(t *testing.T) {
+		for _, key := range []tea.Key{
+			{Text: "q", Code: 'q'},
+			{Code: tea.KeyEscape},
+			{Code: 'c', Mod: tea.ModCtrl},
+		} {
+			t.Run(key.String(), func(t *testing.T) {
+				m := newSnapshotModel(t)
+				m.processMessage(tea.WindowSizeMsg{Width: minWidth - 1, Height: minHeight - 1})
+
+				cmds := m.processMessage(tea.KeyPressMsg(key))
+
+				require.Len(t, cmds, 1)
+				require.IsType(t, tea.QuitMsg{}, cmds[0]())
+			})
+		}
+	})
+
+	t.Run("ignores non-quit keypresses", func(t *testing.T) {
+		m := newSnapshotModel(t)
+		m.processMessage(tea.WindowSizeMsg{Width: minWidth - 1, Height: minHeight - 1})
+
+		require.Empty(t, m.processMessage(tea.KeyPressMsg(tea.Key{Text: "2", Code: '2'})))
+
+		require.Equal(t, issueListView, m.activeView)
+	})
+
+	t.Run("handles message clearing", func(t *testing.T) {
+		m := newSnapshotModel(t)
+		m.showHelpIndicator = true
+		m.message = userMsg{id: 1, value: "clear me"}
+		m.processMessage(tea.WindowSizeMsg{Width: minWidth - 1, Height: minHeight - 1})
+
+		require.Empty(t, m.processMessage(hideHelpMsg{}))
+		require.Empty(t, m.processMessage(clearUserMsgMsg{id: 1}))
+
+		require.False(t, m.showHelpIndicator)
+		require.False(t, m.message.isActive())
+	})
+}
+
 var referenceTime = time.Date(2026, time.September, 7, 12, 0, 0, 0, time.UTC)
 
 func newSnapshotModel(t *testing.T) Model {

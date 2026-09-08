@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Issue and worklog list columns now adapt to the terminal width
+- Show a resize prompt and pause TUI interaction when the terminal is smaller
+    than 72×26
 
 ## [v1.5.0] - Sep 05, 2026
 

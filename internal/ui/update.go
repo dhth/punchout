@@ -19,11 +19,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
-	if msg, ok := msg.(clearUserMsgMsg); ok {
+	switch msg := msg.(type) {
+	case clearUserMsgMsg:
 		if m.message.id == msg.id {
 			m.message = userMsg{}
 		}
+	case hideHelpMsg:
+		m.showHelpIndicator = false
+	case tea.WindowSizeMsg:
+		m.handleWindowResizing(msg)
+	case tea.KeyPressMsg:
+		if m.dimensionsInsufficient() {
+			switch msg.String() {
+			case "ctrl+c", "esc", "q":
+				return []tea.Cmd{tea.Quit}
+			}
+		}
+	}
 
+	if m.dimensionsInsufficient() {
 		return nil
 	}
 
@@ -261,8 +275,6 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 			}
 		}
 
-	case tea.WindowSizeMsg:
-		m.handleWindowResizing(msg)
 	case issuesLoaded:
 		cmds = append(cmds, m.handleIssuesLoadedMsg(msg)...)
 	case issuesSavedToCache:
@@ -309,8 +321,6 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 		if handleCmd != nil {
 			cmds = append(cmds, handleCmd)
 		}
-	case hideHelpMsg:
-		m.showHelpIndicator = false
 	case urlOpenedinBrowserMsg:
 		if msg.err != nil {
 			m.setErrorMsg(fmt.Sprintf("error opening url: %s", msg.err.Error()))

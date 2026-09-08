@@ -98,6 +98,8 @@ func InitialModel(
 		),
 		showHelpIndicator: true,
 		trackingInputs:    trackingInputs,
+		terminalWidth:     minWidth,
+		terminalHeight:    minHeight,
 		timeProvider:      timeProvider,
 		debug:             debug,
 	}
