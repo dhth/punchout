@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Issue and worklog list columns now adapt to the terminal width
+
 ## [v1.5.0] - Sep 05, 2026
 
 ### Added

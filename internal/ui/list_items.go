@@ -9,6 +9,7 @@ import (
 
 	"charm.land/bubbles/v2/list"
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 	d "github.com/dhth/punchout/internal/domain"
 	"github.com/dhth/punchout/internal/ui/theme"
 	"github.com/dhth/punchout/internal/utils"
@@ -36,66 +37,102 @@ type syncedWorklogListItem struct {
 
 func (item syncedWorklogListItem) FilterValue() string { return item.IssueKey }
 
-func renderListItem(item list.Item, thm theme.Theme, styles styles, issueMap map[string]*d.Issue, fallbackCommentConfigured, selected bool) (string, string) {
+func renderListItem(
+	item list.Item,
+	thm theme.Theme,
+	styles styles,
+	issueMap map[string]*d.Issue,
+	fallbackCommentConfigured,
+	selected bool,
+	width int,
+	now time.Time,
+) (string, string) {
+	columnWidth := max(0, width) / 5
+
 	switch item := item.(type) {
 	case *d.Issue:
-		return renderIssue(item, thm, styles)
+		return renderIssue(item, thm, styles, columnWidth)
 	case worklogListItem:
-		return renderUnsyncedWorklog(item, styles, issueMap, fallbackCommentConfigured, selected)
+		return renderUnsyncedWorklog(
+			item,
+			styles,
+			issueMap,
+			fallbackCommentConfigured,
+			selected,
+			columnWidth,
+			now,
+		)
 	case syncedWorklogListItem:
-		return renderSyncedWorklog(item, styles, issueMap, selected)
+		return renderSyncedWorklog(item, styles, issueMap, selected, columnWidth, now)
 	default:
 		return "", ""
 	}
 }
 
-func renderIssue(issue *d.Issue, thm theme.Theme, styles styles) (string, string) {
+func renderIssue(
+	issue *d.Issue,
+	thm theme.Theme,
+	styles styles,
+	columnWidth int,
+) (string, string) {
 	var trackingIndicator string
 	if issue.TrackingActive {
 		trackingIndicator = "⏲ "
 	}
-	title := trackingIndicator + utils.RightPadTrim(issue.Summary, int(float64(listWidth)*0.8))
+	title := trackingIndicator + issue.Summary
 
 	issueTypeColor := categoricalColor("issue-type", issue.IssueType, thm.CategoricalColors)
-	issueType := styles.issueTypeBadge.
-		Background(issueTypeColor).
-		Render(issue.IssueType)
+	issueType := renderBadge(
+		issue.IssueType,
+		styles.issueTypeBadge.Background(issueTypeColor),
+	)
 
-	assignee := utils.RightPadTrim(issue.Assignee, listWidth/4)
+	assignee := issue.Assignee
 	if issue.Assignee != "" {
 		assigneeColor := categoricalColor("assignee", issue.Assignee, thm.CategoricalColors)
 		assignee = lipgloss.NewStyle().Foreground(assigneeColor).Render(assignee)
 	}
 
-	status := styles.issueStatus.Render(utils.RightPadTrim(issue.Status, listWidth/4))
+	status := styles.issueStatus.Render(issue.Status)
 
 	var totalTimeSpent string
 	if issue.AggSecondsSpent > 0 {
 		totalTimeSpent = styles.aggTimeSpent.Render(utils.HumanizeDuration(issue.AggSecondsSpent))
 	}
 
-	description := fmt.Sprintf(
-		"%s%s%s%s%s",
-		utils.RightPadTrim(issue.IssueKey, listWidth/4),
-		status,
-		assignee,
-		issueType,
-		totalTimeSpent,
-	)
+	description := strings.Join([]string{
+		renderColumn(issue.IssueKey, columnWidth),
+		renderColumn(status, columnWidth),
+		renderColumn(assignee, columnWidth),
+		issueType + totalTimeSpent,
+	}, "")
 
 	return title, description
 }
 
-func renderUnsyncedWorklog(entry worklogListItem, styles styles, issueMap map[string]*d.Issue, fallbackCommentConfigured, selected bool) (string, string) {
+func renderUnsyncedWorklog(
+	entry worklogListItem,
+	styles styles,
+	issueMap map[string]*d.Issue,
+	fallbackCommentConfigured,
+	selected bool,
+	columnWidth int,
+	now time.Time,
+) (string, string) {
 	showComment := !entry.fallbackCommentUsed
-	title := renderWorklogTitle(entry.StoredWorklog, styles.worklogCommentLabel, issueMap, showComment, selected)
+	title := renderWorklogTitle(
+		entry.StoredWorklog,
+		styles.worklogCommentLabel,
+		issueMap,
+		showComment,
+		selected,
+	)
 
 	if entry.err != nil {
 		return title, "error: " + entry.err.Error()
 	}
 
 	var duration string
-	now := time.Now()
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	if startOfToday.Sub(entry.EndTS) > 0 {
 		if entry.BeginTS.Format(dateFormat) == entry.EndTS.Format(dateFormat) {
@@ -124,32 +161,48 @@ func renderUnsyncedWorklog(entry worklogListItem, styles styles, issueMap map[st
 		fallbackCommentStatus = styles.fallbackCommentBadge.Render("fallback comment")
 	}
 
-	description := fmt.Sprintf(
-		"%s%s%s%s%s",
-		utils.RightPadTrim(entry.IssueKey, listWidth/4),
-		utils.RightPadTrim(duration, listWidth/4),
-		utils.RightPadTrim(fmt.Sprintf("(%s)", timeSpent), listWidth/4),
-		syncStatus,
-		fallbackCommentStatus,
-	)
+	description := strings.Join([]string{
+		renderColumn(entry.IssueKey, columnWidth),
+		renderColumn(duration, columnWidth),
+		renderColumn(fmt.Sprintf("(%s)", timeSpent), columnWidth),
+		syncStatus + fallbackCommentStatus,
+	}, "")
 
 	return title, description
 }
 
-func renderSyncedWorklog(entry syncedWorklogListItem, styles styles, issueMap map[string]*d.Issue, selected bool) (string, string) {
-	title := renderWorklogTitle(entry.StoredWorklog, styles.worklogCommentLabel, issueMap, true, selected)
-
-	description := fmt.Sprintf(
-		"%s%s%s",
-		utils.RightPadTrim(entry.IssueKey, listWidth/4),
-		utils.RightPadTrim(humanize.Time(entry.EndTS), listWidth/4),
-		utils.RightPadTrim(fmt.Sprintf("(%s)", utils.HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))), listWidth/4),
+func renderSyncedWorklog(
+	entry syncedWorklogListItem,
+	styles styles,
+	issueMap map[string]*d.Issue,
+	selected bool,
+	columnWidth int,
+	now time.Time,
+) (string, string) {
+	title := renderWorklogTitle(
+		entry.StoredWorklog,
+		styles.worklogCommentLabel,
+		issueMap,
+		true,
+		selected,
 	)
+
+	description := strings.Join([]string{
+		renderColumn(entry.IssueKey, columnWidth),
+		renderColumn(humanize.RelTime(entry.EndTS, now, "ago", "from now"), columnWidth),
+		fmt.Sprintf("(%s)", utils.HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))),
+	}, "")
 
 	return title, description
 }
 
-func renderWorklogTitle(entry d.StoredWorklog, commentLabelStyle lipgloss.Style, issueMap map[string]*d.Issue, showComment, selected bool) string {
+func renderWorklogTitle(
+	entry d.StoredWorklog,
+	commentLabelStyle lipgloss.Style,
+	issueMap map[string]*d.Issue,
+	showComment,
+	selected bool,
+) string {
 	title := "[ISSUE SUMMARY UNAVAILABLE]"
 	if issue, ok := issueMap[entry.IssueKey]; ok && issue != nil && strings.TrimSpace(issue.Summary) != "" {
 		title = issue.Summary
@@ -173,4 +226,28 @@ func categoricalColor(category, value string, colors []string) color.Color {
 	_, _ = h.Write([]byte(strings.Join([]string{category, value}, ":")))
 
 	return lipgloss.Color(colors[h.Sum32()%uint32(len(colors))])
+}
+
+func renderColumn(value string, width int) string {
+	if width <= 0 {
+		return ""
+	}
+
+	contentWidth := width
+	if width > 1 {
+		contentWidth--
+	}
+	value = ansi.Truncate(value, contentWidth, "…")
+
+	return value + strings.Repeat(" ", max(0, width-lipgloss.Width(value)))
+}
+
+func renderBadge(value string, style lipgloss.Style) string {
+	contentWidth := max(
+		0,
+		style.GetWidth()-style.GetHorizontalFrameSize()+style.GetHorizontalMargins(),
+	)
+	value = ansi.Truncate(value, contentWidth, "…")
+
+	return style.Render(value)
 }

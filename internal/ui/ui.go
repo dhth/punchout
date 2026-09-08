@@ -31,7 +31,7 @@ func RenderUI(
 	}
 
 	p := tea.NewProgram(
-		InitialModel(tuiCtx, worklogStore, jiraSvc, issueStore, opts, thm, debug),
+		InitialModel(tuiCtx, worklogStore, jiraSvc, issueStore, opts, thm, realTimeProvider{}, debug),
 		tea.WithContext(tuiCtx),
 	)
 	if _, err := p.Run(); err != nil {

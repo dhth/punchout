@@ -18,6 +18,7 @@ func InitialModel(
 	issueStore issuecache.Store,
 	opts Options,
 	thm theme.Theme,
+	timeProvider TimeProvider,
 	debug bool,
 ) Model {
 	styles := newStyles(thm)
@@ -47,20 +48,57 @@ func InitialModel(
 	trackingInputs[entryComment].SetWidth(60)
 
 	m := Model{
-		ctx:               ctx,
-		theme:             thm,
-		styles:            styles,
-		worklogStore:      worklogStore,
-		jiraSvc:           jiraSvc,
-		issueStore:        issueStore,
-		opts:              opts,
-		issueList:         list.New(stackItems, newItemDelegate(thm, styles, thm.Accent1, issueMap, fallbackCommentConfigured), listWidth, 0),
-		issueMap:          issueMap,
-		issueIndexMap:     make(map[string]int),
-		worklogList:       list.New(worklogListItems, newItemDelegate(thm, styles, thm.Accent2, issueMap, fallbackCommentConfigured), listWidth, 0),
-		syncedWorklogList: list.New(syncedWorklogListItems, newItemDelegate(thm, styles, thm.Accent4, issueMap, fallbackCommentConfigured), listWidth, 0),
+		ctx:          ctx,
+		theme:        thm,
+		styles:       styles,
+		worklogStore: worklogStore,
+		jiraSvc:      jiraSvc,
+		issueStore:   issueStore,
+		opts:         opts,
+		issueList: list.New(
+			stackItems,
+			newItemDelegate(
+				thm,
+				styles,
+				thm.Accent1,
+				issueMap,
+				fallbackCommentConfigured,
+				timeProvider,
+			),
+			initialListWidth,
+			0,
+		),
+		issueMap:      issueMap,
+		issueIndexMap: make(map[string]int),
+		worklogList: list.New(
+			worklogListItems,
+			newItemDelegate(
+				thm,
+				styles,
+				thm.Accent2,
+				issueMap,
+				fallbackCommentConfigured,
+				timeProvider,
+			),
+			initialListWidth,
+			0,
+		),
+		syncedWorklogList: list.New(
+			syncedWorklogListItems,
+			newItemDelegate(
+				thm,
+				styles,
+				thm.Accent4,
+				issueMap,
+				fallbackCommentConfigured,
+				timeProvider,
+			),
+			initialListWidth,
+			0,
+		),
 		showHelpIndicator: true,
 		trackingInputs:    trackingInputs,
+		timeProvider:      timeProvider,
 		debug:             debug,
 	}
 	m.issueList.Title = issueListFetchingTitle

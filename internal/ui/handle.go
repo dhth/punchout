@@ -560,6 +560,7 @@ func (m *Model) getCmdToOpenIssueInBrowser() tea.Cmd {
 
 func (m *Model) handleWindowResizing(msg tea.WindowSizeMsg) {
 	w, h := m.styles.list.GetFrameSize()
+	m.terminalWidth = msg.Width
 	m.terminalHeight = msg.Height
 	m.issueList.SetWidth(msg.Width - w)
 	m.worklogList.SetWidth(msg.Width - w)

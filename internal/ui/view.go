@@ -2,8 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
-	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -12,7 +10,7 @@ import (
 
 const wLWarningThresholdSecs = 8 * 60 * 60
 
-var listWidth = 140
+const initialListWidth = 140
 
 type wlFormValidity uint
 
@@ -258,12 +256,18 @@ func (m Model) View() tea.View {
 		unsyncedMsg = m.styles.unsyncedCount.Render(fmt.Sprintf("%d unsynced %s (%s)", m.unsyncedWLCount, entryWord, unsyncedTimeMsg))
 	}
 
+	var debugInfo string
+	if m.debug {
+		debugInfo = fmt.Sprintf(" [%dx%d]", m.terminalWidth, m.terminalHeight)
+	}
+
 	footerStr := fmt.Sprintf(
-		"%s%s%s%s",
+		"%s%s%s%s%s",
 		m.styles.mode.Render("punchout"),
 		helpMsg,
 		unsyncedMsg,
 		activeMsg,
+		debugInfo,
 	)
 	footer = m.styles.footer.Render(footerStr)
 
@@ -278,44 +282,4 @@ func (m Model) View() tea.View {
 	v.ForegroundColor = lipgloss.Color(m.theme.Foreground)
 
 	return v
-}
-
-func getDurationValidityContext(beginStr, endStr string) (string, wlFormValidity) {
-	if strings.TrimSpace(beginStr) == "" {
-		return "Begin time is empty", wlSubmitErr
-	}
-
-	if strings.TrimSpace(endStr) == "" {
-		return "End time is empty", wlSubmitErr
-	}
-
-	beginTS, err := time.ParseInLocation(timeFormat, beginStr, time.Local)
-	if err != nil {
-		return "Begin time is invalid", wlSubmitErr
-	}
-
-	endTS, err := time.ParseInLocation(timeFormat, endStr, time.Local)
-	if err != nil {
-		return "End time is invalid", wlSubmitErr
-	}
-
-	dur := endTS.Sub(beginTS)
-
-	if dur == 0 {
-		return "You're recording no time, change begin and/or end time", wlSubmitErr
-	}
-
-	if dur < 0 {
-		return "End time is before start time", wlSubmitErr
-	}
-
-	totalSeconds := int(dur.Seconds())
-
-	humanized := utils.HumanizeDuration(totalSeconds)
-	msg := fmt.Sprintf("You're recording %s", humanized)
-	if totalSeconds > wLWarningThresholdSecs {
-		return msg, wlSubmitWarn
-	}
-
-	return msg, wlSubmitOk
 }

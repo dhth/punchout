@@ -1,113 +1,192 @@
 package ui
 
 import (
+	"context"
+	"fmt"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/assert"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
+	d "github.com/dhth/punchout/internal/domain"
+	"github.com/dhth/punchout/internal/issuecache"
+	"github.com/dhth/punchout/internal/ui/theme"
+	"github.com/gkampitakis/go-snaps/snaps"
+	"github.com/stretchr/testify/require"
 )
 
-func TestGetDurationValidityContext(t *testing.T) {
-	testCases := []struct {
-		name             string
-		beginTS          string
-		endTS            string
-		expectedCtx      string
-		expectedValidity wlFormValidity
-	}{
-		// success
-		{
-			name:             "a simple case",
-			beginTS:          "2025/08/08 00:40",
-			endTS:            "2025/08/08 00:48",
-			expectedCtx:      "You're recording 8m",
-			expectedValidity: wlSubmitOk,
-		},
-		{
-			name:             "exact hour",
-			beginTS:          "2025/08/08 00:00",
-			endTS:            "2025/08/08 01:00",
-			expectedCtx:      "You're recording 1h",
-			expectedValidity: wlSubmitOk,
-		},
-		{
-			name:             "hours and minutes",
-			beginTS:          "2025/08/08 00:00",
-			endTS:            "2025/08/08 02:30",
-			expectedCtx:      "You're recording 2h 30m",
-			expectedValidity: wlSubmitOk,
-		},
-		{
-			name:             "across day boundary",
-			beginTS:          "2025/08/08 23:30",
-			endTS:            "2025/08/09 00:15",
-			expectedCtx:      "You're recording 45m",
-			expectedValidity: wlSubmitOk,
-		},
-		{
-			name:             "exactly at 8h threshold",
-			beginTS:          "2025/08/08 00:00",
-			endTS:            "2025/08/08 08:00",
-			expectedCtx:      "You're recording 8h",
-			expectedValidity: wlSubmitOk,
-		},
-		{
-			name:             "> 8h threshold",
-			beginTS:          "2025/08/08 00:00",
-			endTS:            "2025/08/08 08:01",
-			expectedCtx:      "You're recording 8h 1m",
-			expectedValidity: wlSubmitWarn,
-		},
-		// failures
-		{
-			name:             "empty begin",
-			beginTS:          "",
-			endTS:            "2025/08/08 00:10",
-			expectedCtx:      "Begin time is empty",
-			expectedValidity: wlSubmitErr,
-		},
-		{
-			name:             "empty end",
-			beginTS:          "2025/08/08 00:10",
-			endTS:            "",
-			expectedCtx:      "End time is empty",
-			expectedValidity: wlSubmitErr,
-		},
-		{
-			name:             "invalid begin ts",
-			beginTS:          "2025-08-08 00:10",
-			endTS:            "2025/08/08 00:20",
-			expectedCtx:      "Begin time is invalid",
-			expectedValidity: wlSubmitErr,
-		},
-		{
-			name:             "invalid end format",
-			beginTS:          "2025/08/08 00:10",
-			endTS:            "08-08-2025 00:20",
-			expectedCtx:      "End time is invalid",
-			expectedValidity: wlSubmitErr,
-		},
-		{
-			name:             "end before start",
-			beginTS:          "2025/08/08 01:00",
-			endTS:            "2025/08/08 00:59",
-			expectedCtx:      "End time is before start time",
-			expectedValidity: wlSubmitErr,
-		},
-		{
-			name:             "zero duration",
-			beginTS:          "2025/08/08 00:00",
-			endTS:            "2025/08/08 00:00",
-			expectedCtx:      "You're recording no time, change begin and/or end time",
-			expectedValidity: wlSubmitErr,
-		},
-	}
+func TestIssueListViewColumnRendering(t *testing.T) {
+	for _, width := range []int{72, 120, 160, 200} {
+		t.Run(fmt.Sprintf("at width %d", width), func(t *testing.T) {
+			// GIVEN
+			m := newSnapshotModel(t)
 
-	for _, tt := range testCases {
-		t.Run(tt.name, func(t *testing.T) {
-			gotCtx, gotOk := getDurationValidityContext(tt.beginTS, tt.endTS)
+			// WHEN
+			result := renderSnapshotView(&m, issueListView, width)
 
-			assert.Equal(t, tt.expectedCtx, gotCtx)
-			assert.Equal(t, tt.expectedValidity, gotOk)
+			// THEN
+			snaps.MatchStandaloneSnapshot(t, result)
 		})
 	}
+}
+
+func TestUnsyncedWorklogListViewColumnRendering(t *testing.T) {
+	for _, width := range []int{72, 120, 160, 200} {
+		t.Run(fmt.Sprintf("width_%d", width), func(t *testing.T) {
+			// GIVEN
+			m := newSnapshotModel(t)
+
+			// WHEN
+			result := renderSnapshotView(&m, wLView, width)
+
+			// THEN
+			snaps.MatchStandaloneSnapshot(t, result)
+		})
+	}
+}
+
+func TestSyncedWorklogListViewColumnRendering(t *testing.T) {
+	for _, width := range []int{72, 120, 160, 200} {
+		t.Run(fmt.Sprintf("width_%d", width), func(t *testing.T) {
+			// GIVEN
+			m := newSnapshotModel(t)
+
+			// WHEN
+			result := renderSnapshotView(&m, syncedWLView, width)
+
+			// THEN
+			snaps.MatchStandaloneSnapshot(t, result)
+		})
+	}
+}
+
+var referenceTime = time.Date(2026, time.September, 7, 12, 0, 0, 0, time.UTC)
+
+func newSnapshotModel(t *testing.T) Model {
+	t.Helper()
+
+	thm, err := theme.Get(theme.DefaultName)
+	require.NoError(t, err)
+	timeProvider := testTimeProvider{fixedTime: referenceTime}
+	m := InitialModel(
+		context.Background(),
+		nil,
+		nil,
+		issuecache.Store{},
+		Options{},
+		thm,
+		timeProvider,
+		false,
+	)
+	m.showHelpIndicator = false
+	m.issuesFetched = true
+
+	issues := []*d.Issue{
+		// Baseline with ordinary values
+		{
+			IssueKey:        "APP-123",
+			IssueType:       "Task",
+			Summary:         "Resolve intermittent application error",
+			Assignee:        "Ada Lovelace",
+			Status:          "In Progress",
+			AggSecondsSpent: 3_600,
+		},
+		// Long issue type
+		{
+			IssueKey:        "PLATFORM-4567",
+			IssueType:       "Extremely Long Custom Issue Type",
+			Summary:         "Prepare platform release",
+			Assignee:        "Grace Hopper",
+			Status:          "Failed",
+			AggSecondsSpent: 9_900,
+		},
+		// Assignee with non-ASCII characters
+		{
+			IssueKey:        "UI-89",
+			IssueType:       "Ops",
+			Summary:         "Update navigation layout",
+			Assignee:        "後藤英一",
+			Status:          "In Progress",
+			AggSecondsSpent: 60,
+		},
+		// Issue type with non-ASCII characters
+		{
+			IssueKey:        "OPS-126",
+			IssueType:       "機能",
+			Summary:         "Improve search performance",
+			Assignee:        "Alan Turing",
+			Status:          "To Do",
+			AggSecondsSpent: 604_800,
+		},
+		// Combined long and non-ASCII values
+		{
+			IssueKey:        "EXTRAORDINARILY-LONG-12345",
+			IssueType:       "Extremely Long Custom Issue Type",
+			Summary:         "Coordinate regional infrastructure rollout",
+			Assignee:        "ジョン・フォン・ノイマン",
+			Status:          "Waiting for External Customer Review",
+			AggSecondsSpent: 86_400,
+		},
+	}
+	issueItems := make([]list.Item, len(issues))
+	for i, issue := range issues {
+		issueItems[i] = issue
+		m.issueMap[issue.IssueKey] = issue
+	}
+	m.issueList.SetItems(issueItems)
+	m.issueList.Title = "▪▫▫ Issues"
+	m.issueList.Styles.Title = m.styles.issueListTitle
+
+	worklogs := []d.StoredWorklog{
+		{
+			ID: 1,
+			Worklog: d.Worklog{
+				IssueKey: "APP-123",
+				BeginTS:  referenceTime.Add(-3 * time.Hour),
+				EndTS:    referenceTime.Add(-2 * time.Hour),
+				Comment:  "Investigated the intermittent application error",
+			},
+		},
+		{
+			ID: 2,
+			Worklog: d.Worklog{
+				IssueKey: "PLATFORM-4567",
+				BeginTS:  referenceTime.AddDate(0, 0, -3),
+				EndTS:    referenceTime.AddDate(0, 0, -2),
+			},
+		},
+		{
+			ID: 3,
+			Worklog: d.Worklog{
+				IssueKey: "UI-89",
+				BeginTS:  referenceTime.Add(30 * time.Minute),
+				EndTS:    referenceTime.Add(90 * time.Minute),
+			},
+		},
+	}
+	unsyncedItems := make([]list.Item, len(worklogs))
+	syncedItems := make([]list.Item, len(worklogs))
+	for i, worklog := range worklogs {
+		unsyncedItems[i] = worklogListItem{StoredWorklog: worklog}
+		m.unsyncedWLSecsSpent += worklog.SecsSpent()
+		worklog.Synced = true
+		syncedItems[i] = syncedWorklogListItem{StoredWorklog: worklog}
+	}
+	m.worklogList.SetItems(unsyncedItems)
+	m.syncedWorklogList.SetItems(syncedItems)
+	m.unsyncedWLCount = uint(len(worklogs))
+
+	fallbackComment := "Work completed without additional details"
+	m.opts.Jira.FallbackComment = &fallbackComment
+	m.applyTheme(thm)
+
+	return m
+}
+
+func renderSnapshotView(m *Model, view stateView, width int) string {
+	m.activeView = view
+	m.handleWindowResizing(tea.WindowSizeMsg{Width: width, Height: 30})
+
+	return ansi.Strip(m.View().Content)
 }
