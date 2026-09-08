@@ -16,6 +16,7 @@ type itemDelegate struct {
 	styles                    styles
 	issueMap                  map[string]*d.Issue
 	fallbackCommentConfigured bool
+	timeProvider              TimeProvider
 }
 
 type displayItem struct {
@@ -28,7 +29,14 @@ func (i displayItem) Title() string       { return i.title }
 func (i displayItem) Description() string { return i.description }
 func (i displayItem) FilterValue() string { return i.item.FilterValue() }
 
-func newItemDelegate(thm theme.Theme, styles styles, accent string, issueMap map[string]*d.Issue, fallbackCommentConfigured bool) list.ItemDelegate {
+func newItemDelegate(
+	thm theme.Theme,
+	styles styles,
+	accent string,
+	issueMap map[string]*d.Issue,
+	fallbackCommentConfigured bool,
+	timeProvider TimeProvider,
+) list.ItemDelegate {
 	d := list.NewDefaultDelegate()
 	selectionColor := lipgloss.Color(accent)
 	textColor := lipgloss.Color(thm.Foreground)
@@ -48,6 +56,7 @@ func newItemDelegate(thm theme.Theme, styles styles, accent string, issueMap map
 		styles:                    styles,
 		issueMap:                  issueMap,
 		fallbackCommentConfigured: fallbackCommentConfigured,
+		timeProvider:              timeProvider,
 	}
 }
 
@@ -59,7 +68,17 @@ func (d itemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 }
 
 func (d itemDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
-	title, description := renderListItem(item, d.theme, d.styles, d.issueMap, d.fallbackCommentConfigured, index == m.Index())
+	itemWidth := m.Width() - d.delegate.Styles.NormalDesc.GetHorizontalFrameSize()
+	title, description := renderListItem(
+		item,
+		d.theme,
+		d.styles,
+		d.issueMap,
+		d.fallbackCommentConfigured,
+		index == m.Index(),
+		itemWidth,
+		d.timeProvider.Now(),
+	)
 	d.delegate.Render(w, m, index, displayItem{
 		item:        item,
 		title:       title,

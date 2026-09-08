@@ -91,6 +91,10 @@ type Options struct {
 	UseCacheOnStartup bool
 }
 
+type TimeProvider interface {
+	Now() time.Time
+}
+
 type Model struct {
 	ctx                   context.Context
 	theme                 theme.Theme
@@ -124,8 +128,10 @@ type Model struct {
 	message               userMsg
 	nextMessageID         uint64
 	showHelpIndicator     bool
+	terminalWidth         int
 	terminalHeight        int
 	trackingActive        bool
+	timeProvider          TimeProvider
 	debug                 bool
 }
 
@@ -136,7 +142,11 @@ func (m Model) Init() tea.Cmd {
 	} else {
 		cmds = append(cmds, m.fetchIssuesFromJIRA(false))
 	}
-	cmds = append(cmds, fetchUnsyncedWorkLogs(m.ctx, m.worklogStore, m.worklogListGen), fetchSyncedWorkLogs(m.ctx, m.worklogStore))
+	cmds = append(
+		cmds,
+		fetchUnsyncedWorkLogs(m.ctx, m.worklogStore, m.worklogListGen),
+		fetchSyncedWorkLogs(m.ctx, m.worklogStore),
+	)
 
 	return tea.Batch(cmds...)
 }
@@ -163,9 +173,30 @@ func (m *Model) applyTheme(thm theme.Theme) {
 	m.styles = newStyles(thm)
 
 	fallbackCommentConfigured := m.opts.Jira.FallbackComment != nil
-	m.issueList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent1, m.issueMap, fallbackCommentConfigured))
-	m.worklogList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent2, m.issueMap, fallbackCommentConfigured))
-	m.syncedWorklogList.SetDelegate(newItemDelegate(thm, m.styles, thm.Accent4, m.issueMap, fallbackCommentConfigured))
+	m.issueList.SetDelegate(newItemDelegate(
+		thm,
+		m.styles,
+		thm.Accent1,
+		m.issueMap,
+		fallbackCommentConfigured,
+		m.timeProvider,
+	))
+	m.worklogList.SetDelegate(newItemDelegate(
+		thm,
+		m.styles,
+		thm.Accent2,
+		m.issueMap,
+		fallbackCommentConfigured,
+		m.timeProvider,
+	))
+	m.syncedWorklogList.SetDelegate(newItemDelegate(
+		thm,
+		m.styles,
+		thm.Accent4,
+		m.issueMap,
+		fallbackCommentConfigured,
+		m.timeProvider,
+	))
 
 	switch m.issueList.Title {
 	case issueListFetchingTitle:
