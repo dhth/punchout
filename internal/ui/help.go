@@ -41,8 +41,8 @@ func renderHelp(styles styles) string {
     3                                       Switch to Synced Worklog List View
     <tab>                                   Go to next view/form entry
     <shift+tab>                             Go to previous view/form entry
-    q/<ctrl+c>                              Go back/reset filtering/quit
-    <esc>                                   Cancel form/quit
+    q/<esc>                                 Go back/reset filtering/quit
+    <ctrl+c>                                Quit immediately
     [                                       Switch to previous theme
     ]                                       Switch to next theme
     ?                                       Show help view

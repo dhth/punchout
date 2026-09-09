@@ -128,18 +128,8 @@ func (m *Model) getCmdToSaveOrUpdateWL() tea.Cmd {
 	return cmd
 }
 
-func (m *Model) handleEscape() bool {
-	var quit bool
-
+func (m *Model) handleInputCancellation() {
 	switch m.activeView {
-	case issueListView:
-		quit = true
-	case wLView:
-		quit = true
-	case syncedWLView:
-		quit = true
-	case helpView:
-		quit = true
 	case editActiveWLView:
 		m.activeView = issueListView
 	case saveActiveWLView:
@@ -156,8 +146,6 @@ func (m *Model) handleEscape() bool {
 			m.trackingInputs[i].SetValue("")
 		}
 	}
-
-	return quit
 }
 
 func (m *Model) getCmdToGoForwardsInViews() tea.Cmd {

@@ -8,6 +8,8 @@ import (
 	"github.com/dhth/punchout/internal/ui/theme"
 )
 
+const escapeKey = "esc"
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	previousMessageID := m.message.id
 	cmds := m.processMessage(msg)
@@ -29,9 +31,12 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 	case tea.WindowSizeMsg:
 		m.handleWindowResizing(msg)
 	case tea.KeyPressMsg:
+		if msg.String() == "ctrl+c" {
+			return []tea.Cmd{tea.Quit}
+		}
 		if m.dimensionsInsufficient() {
 			switch msg.String() {
-			case "ctrl+c", "esc", "q":
+			case escapeKey, "q":
 				return []tea.Cmd{tea.Quit}
 			}
 		}
@@ -81,10 +86,11 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 			case saveActiveWLView, wlEntryView:
 				m.handleRequestToSyncTimestamps()
 			}
-		case "esc":
-			quit := m.handleEscape()
-			if quit {
-				return append(cmds, tea.Quit)
+		case escapeKey:
+			switch m.activeView {
+			case editActiveWLView, saveActiveWLView, wlEntryView:
+				m.handleInputCancellation()
+				return cmds
 			}
 		case "tab":
 			viewSwitchCmd := m.getCmdToGoForwardsInViews()
@@ -141,11 +147,12 @@ func (m *Model) processMessage(msg tea.Msg) []tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case escapeKey, "q":
 			quit := m.handleRequestToGoBackOrQuit()
 			if quit {
 				return append(cmds, tea.Quit)
 			}
+			return cmds
 		case "1":
 			if m.activeView != issueListView {
 				m.activeView = issueListView

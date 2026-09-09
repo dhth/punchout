@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -10,8 +9,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 	d "github.com/dhth/punchout/internal/domain"
-	"github.com/dhth/punchout/internal/issuecache"
-	"github.com/dhth/punchout/internal/ui/theme"
 	"github.com/gkampitakis/go-snaps/snaps"
 	"github.com/stretchr/testify/require"
 )
@@ -148,26 +145,10 @@ func TestInsufficientDimensionsView(t *testing.T) {
 	})
 }
 
-var referenceTime = time.Date(2026, time.September, 7, 12, 0, 0, 0, time.UTC)
-
 func newSnapshotModel(t *testing.T) Model {
 	t.Helper()
 
-	thm, err := theme.Get(theme.DefaultName)
-	require.NoError(t, err)
-	timeProvider := testTimeProvider{fixedTime: referenceTime}
-	m := InitialModel(
-		context.Background(),
-		nil,
-		nil,
-		issuecache.Store{},
-		Options{},
-		thm,
-		timeProvider,
-		false,
-	)
-	m.showHelpIndicator = false
-	m.issuesFetched = true
+	m := newTestModel(t)
 
 	issues := []*d.Issue{
 		// Baseline with ordinary values
@@ -266,7 +247,7 @@ func newSnapshotModel(t *testing.T) Model {
 
 	fallbackComment := "Work completed without additional details"
 	m.opts.Jira.FallbackComment = &fallbackComment
-	m.applyTheme(thm)
+	m.applyTheme(m.theme)
 
 	return m
 }
