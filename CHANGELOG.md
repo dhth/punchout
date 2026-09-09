@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Issue and worklog list columns now adapt to the terminal width
 - Show a resize prompt and pause TUI interaction when the terminal is smaller
     than 72×26
+- Make `q` and `Esc` navigate back consistently, and make `ctrl+c` quit
+    immediately from any view
 
 ## [v1.5.0] - Sep 05, 2026
 
