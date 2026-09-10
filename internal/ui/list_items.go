@@ -13,12 +13,11 @@ import (
 	d "github.com/dhth/punchout/internal/domain"
 	"github.com/dhth/punchout/internal/ui/theme"
 	"github.com/dhth/punchout/internal/utils"
-	"github.com/dustin/go-humanize"
 )
 
 const (
-	dayAndTimeFormat = "Mon, 15:04"
-	dateFormat       = "2006/01/02"
+	dayAndTimeFormat  = "Mon, 15:04"
+	dateAndTimeFormat = "Jan 2, 15:04"
 )
 
 type worklogListItem struct {
@@ -132,18 +131,6 @@ func renderUnsyncedWorklog(
 		return title, "error: " + entry.err.Error()
 	}
 
-	var duration string
-	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	if startOfToday.Sub(entry.EndTS) > 0 {
-		if entry.BeginTS.Format(dateFormat) == entry.EndTS.Format(dateFormat) {
-			duration = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(dayAndTimeFormat), entry.EndTS.Format(timeOnlyFormat))
-		} else {
-			duration = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(dayAndTimeFormat), entry.EndTS.Format(dayAndTimeFormat))
-		}
-	} else {
-		duration = fmt.Sprintf("%s  ...  %s", entry.BeginTS.Format(timeOnlyFormat), entry.EndTS.Format(timeOnlyFormat))
-	}
-
 	timeSpent := utils.HumanizeDuration(entry.SecsSpent())
 
 	var syncStatus string
@@ -163,7 +150,7 @@ func renderUnsyncedWorklog(
 
 	description := strings.Join([]string{
 		renderColumn(entry.IssueKey, columnWidth),
-		renderColumn(duration, columnWidth),
+		renderColumn(formatWorklogTimeRange(now, entry.BeginTS, entry.EndTS), columnWidth),
 		renderColumn(fmt.Sprintf("(%s)", timeSpent), columnWidth),
 		syncStatus + fallbackCommentStatus,
 	}, "")
@@ -189,11 +176,37 @@ func renderSyncedWorklog(
 
 	description := strings.Join([]string{
 		renderColumn(entry.IssueKey, columnWidth),
-		renderColumn(humanize.RelTime(entry.EndTS, now, "ago", "from now"), columnWidth),
+		renderColumn(formatWorklogTimeRange(now, entry.BeginTS, entry.EndTS), columnWidth),
 		fmt.Sprintf("(%s)", utils.HumanizeDuration(int(entry.EndTS.Sub(entry.BeginTS).Seconds()))),
 	}, "")
 
 	return title, description
+}
+
+func formatWorklogTimeRange(now, start, end time.Time) string {
+	start = start.In(now.Location())
+	end = end.In(now.Location())
+	nowYear, nowWeek := now.ISOWeek()
+
+	sameDay := func(a, b time.Time) bool {
+		return a.Year() == b.Year() && a.YearDay() == b.YearDay()
+	}
+	formatDatedTime := func(value time.Time) string {
+		year, week := value.ISOWeek()
+		if year == nowYear && week == nowWeek {
+			return value.Format(dayAndTimeFormat)
+		}
+		return value.Format(dateAndTimeFormat)
+	}
+
+	if sameDay(start, end) {
+		if sameDay(start, now) {
+			return fmt.Sprintf("%s  ...  %s", start.Format(timeOnlyFormat), end.Format(timeOnlyFormat))
+		}
+		return fmt.Sprintf("%s  ...  %s", formatDatedTime(start), end.Format(timeOnlyFormat))
+	}
+
+	return fmt.Sprintf("%s  ...  %s", formatDatedTime(start), formatDatedTime(end))
 }
 
 func renderWorklogTitle(
