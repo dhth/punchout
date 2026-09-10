@@ -201,12 +201,12 @@ func formatWorklogTimeRange(now, start, end time.Time) string {
 
 	if sameDay(start, end) {
 		if sameDay(start, now) {
-			return fmt.Sprintf("%s  ...  %s", start.Format(timeOnlyFormat), end.Format(timeOnlyFormat))
+			return fmt.Sprintf("%s – %s", start.Format(timeOnlyFormat), end.Format(timeOnlyFormat))
 		}
-		return fmt.Sprintf("%s  ...  %s", formatDatedTime(start), end.Format(timeOnlyFormat))
+		return fmt.Sprintf("%s – %s", formatDatedTime(start), end.Format(timeOnlyFormat))
 	}
 
-	return fmt.Sprintf("%s  ...  %s", formatDatedTime(start), formatDatedTime(end))
+	return fmt.Sprintf("%s – %s", formatDatedTime(start), formatDatedTime(end))
 }
 
 func renderWorklogTitle(

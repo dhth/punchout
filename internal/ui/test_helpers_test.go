@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var referenceTime = time.Date(2026, time.September, 7, 12, 0, 0, 0, time.UTC)
+var referenceTime = time.Date(2026, time.September, 10, 12, 0, 0, 0, time.UTC)
 
 type testTimeProvider struct {
 	fixedTime time.Time
