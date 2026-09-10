@@ -220,16 +220,24 @@ func newSnapshotModel(t *testing.T) Model {
 			ID: 2,
 			Worklog: d.Worklog{
 				IssueKey: "PLATFORM-4567",
-				BeginTS:  referenceTime.AddDate(0, 0, -3),
-				EndTS:    referenceTime.AddDate(0, 0, -2),
+				BeginTS:  referenceTime.AddDate(0, 0, -2).Add(-3 * time.Hour),
+				EndTS:    referenceTime.AddDate(0, 0, -2).Add(-2 * time.Hour),
 			},
 		},
 		{
 			ID: 3,
 			Worklog: d.Worklog{
 				IssueKey: "UI-89",
-				BeginTS:  referenceTime.Add(30 * time.Minute),
-				EndTS:    referenceTime.Add(90 * time.Minute),
+				BeginTS:  referenceTime.AddDate(0, 0, -12).Add(-3 * time.Hour),
+				EndTS:    referenceTime.AddDate(0, 0, -12).Add(-2 * time.Hour),
+			},
+		},
+		{
+			ID: 4,
+			Worklog: d.Worklog{
+				IssueKey: "OPS-126",
+				BeginTS:  referenceTime.Add(-13 * time.Hour),
+				EndTS:    referenceTime.Add(-11 * time.Hour),
 			},
 		},
 	}
