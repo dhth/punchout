@@ -16,13 +16,11 @@ func TestSyncWorklogsToJiraPersistsDespiteRequestCancellation(t *testing.T) {
 	ctx, cancelRequest := context.WithCancel(t.Context())
 	beginTS := time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC)
 	entry := domain.StoredWorklog{
-		ID: 42,
-		Worklog: domain.Worklog{
-			IssueKey: "TEST-42",
-			BeginTS:  beginTS,
-			EndTS:    beginTS.Add(time.Hour),
-			Comment:  "completed work",
-		},
+		ID:       42,
+		IssueKey: "TEST-42",
+		BeginTS:  beginTS,
+		EndTS:    beginTS.Add(time.Hour),
+		Comment:  "completed work",
 	}
 
 	type markWorklogSyncedCall struct {

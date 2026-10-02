@@ -12,14 +12,12 @@ import (
 func TestStoredWorklogJSONFlattensWorklogFields(t *testing.T) {
 	beginTS := time.Date(2026, time.August, 14, 9, 30, 0, 0, time.UTC)
 	worklog := StoredWorklog{
-		Worklog: Worklog{
-			IssueKey: "PROJ-123",
-			BeginTS:  beginTS,
-			EndTS:    beginTS.Add(90 * time.Minute),
-			Comment:  "",
-		},
-		ID:     42,
-		Synced: false,
+		IssueKey: "PROJ-123",
+		BeginTS:  beginTS,
+		EndTS:    beginTS.Add(90 * time.Minute),
+		Comment:  "",
+		ID:       42,
+		Synced:   false,
 	}
 
 	got, err := json.MarshalIndent(worklog, "", "  ")

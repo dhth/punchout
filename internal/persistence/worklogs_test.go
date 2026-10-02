@@ -789,24 +789,20 @@ func TestSQLiteStoreUnsyncedWorklogs(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, []domain.StoredWorklog{
 			{
-				ID: newerID,
-				Worklog: domain.Worklog{
-					IssueKey: "TEST-2",
-					BeginTS:  newerBegin.UTC().Local(),
-					EndTS:    newerEnd.UTC().Local(),
-					Comment:  "",
-				},
-				Synced: false,
+				ID:       newerID,
+				IssueKey: "TEST-2",
+				BeginTS:  newerBegin.UTC().Local(),
+				EndTS:    newerEnd.UTC().Local(),
+				Comment:  "",
+				Synced:   false,
 			},
 			{
-				ID: olderID,
-				Worklog: domain.Worklog{
-					IssueKey: "TEST-1",
-					BeginTS:  olderBegin.UTC().Local(),
-					EndTS:    olderEnd.UTC().Local(),
-					Comment:  "older worklog",
-				},
-				Synced: false,
+				ID:       olderID,
+				IssueKey: "TEST-1",
+				BeginTS:  olderBegin.UTC().Local(),
+				EndTS:    olderEnd.UTC().Local(),
+				Comment:  "older worklog",
+				Synced:   false,
 			},
 		}, got)
 	})
@@ -865,24 +861,20 @@ func TestSQLiteStoreSyncedWorklogs(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, []domain.StoredWorklog{
 			{
-				ID: newerID,
-				Worklog: domain.Worklog{
-					IssueKey: "TEST-2",
-					BeginTS:  newerBegin.UTC().Local(),
-					EndTS:    newerEnd.UTC().Local(),
-					Comment:  "",
-				},
-				Synced: true,
+				ID:       newerID,
+				IssueKey: "TEST-2",
+				BeginTS:  newerBegin.UTC().Local(),
+				EndTS:    newerEnd.UTC().Local(),
+				Comment:  "",
+				Synced:   true,
 			},
 			{
-				ID: olderID,
-				Worklog: domain.Worklog{
-					IssueKey: "TEST-1",
-					BeginTS:  olderBegin.UTC().Local(),
-					EndTS:    olderEnd.UTC().Local(),
-					Comment:  olderComment,
-				},
-				Synced: true,
+				ID:       olderID,
+				IssueKey: "TEST-1",
+				BeginTS:  olderBegin.UTC().Local(),
+				EndTS:    olderEnd.UTC().Local(),
+				Comment:  olderComment,
+				Synced:   true,
 			},
 		}, got)
 	})
@@ -956,13 +948,13 @@ func TestSQLiteStoreMarkWorklogSynced(t *testing.T) {
 		{
 			name:            "replaces the existing comment when a comment is supplied",
 			storedComment:   "existing comment",
-			updatedComment:  ptrTo("fallback comment"),
+			updatedComment:  new("fallback comment"),
 			expectedComment: "fallback comment",
 		},
 		{
 			name:            "stores an empty supplied comment",
 			storedComment:   "existing comment",
-			updatedComment:  ptrTo(""),
+			updatedComment:  new(""),
 			expectedComment: "",
 		},
 	}
@@ -1000,8 +992,4 @@ func TestSQLiteStoreMarkWorklogSynced(t *testing.T) {
 			assert.True(t, got.synced)
 		})
 	}
-}
-
-func ptrTo[T any](value T) *T {
-	return &value
 }

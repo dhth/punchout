@@ -57,8 +57,7 @@ func (f Fixture) runCmd(args []string) (string, error) {
 	success := true
 
 	if err != nil {
-		var exitError *exec.ExitError
-		if errors.As(err, &exitError) {
+		if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
 			success = false
 			exitCode = exitError.ExitCode()
 		} else {
