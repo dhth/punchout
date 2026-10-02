@@ -39,6 +39,14 @@ alias = "f"
 description = "Format Go source files"
 run = "gofumpt -l -w ."
 
+[tasks.fix]
+description = "Modernize Go code"
+run = "go fix ./..."
+
+[tasks."fix:check"]
+description = "Check for Go modernization opportunities"
+run = "go fix -diff ./..."
+
 [tasks.install]
 alias = "i"
 description = "Install the application"

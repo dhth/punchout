@@ -62,6 +62,8 @@ jobs:
           install_args: go golangci-lint
       - name: Lint
         run: mise run lint
+      - name: Check for Go modernization opportunities
+        run: mise run fix:check
 
   build:
     needs: changes

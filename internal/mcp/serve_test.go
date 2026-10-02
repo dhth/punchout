@@ -273,22 +273,18 @@ func TestHTTPServerGetUnsyncedWorklogs(t *testing.T) {
 			unsyncedWorklogsFunc: func(context.Context) ([]domain.StoredWorklog, error) {
 				return []domain.StoredWorklog{
 					{
-						ID: 41,
-						Worklog: domain.Worklog{
-							IssueKey: "TEST-201",
-							BeginTS:  time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC),
-							EndTS:    time.Date(2026, time.August, 24, 10, 15, 0, 0, time.UTC),
-							Comment:  "implemented endpoint tests",
-						},
+						ID:       41,
+						IssueKey: "TEST-201",
+						BeginTS:  time.Date(2026, time.August, 24, 9, 0, 0, 0, time.UTC),
+						EndTS:    time.Date(2026, time.August, 24, 10, 15, 0, 0, time.UTC),
+						Comment:  "implemented endpoint tests",
 					},
 					{
-						ID: 42,
-						Worklog: domain.Worklog{
-							IssueKey: "TEST-202",
-							BeginTS:  time.Date(2026, time.August, 24, 11, 30, 0, 0, time.UTC),
-							EndTS:    time.Date(2026, time.August, 24, 12, 0, 0, 0, time.UTC),
-							Comment:  "reviewed response contract",
-						},
+						ID:       42,
+						IssueKey: "TEST-202",
+						BeginTS:  time.Date(2026, time.August, 24, 11, 30, 0, 0, time.UTC),
+						EndTS:    time.Date(2026, time.August, 24, 12, 0, 0, 0, time.UTC),
+						Comment:  "reviewed response contract",
 					},
 				}, nil
 			},
@@ -441,13 +437,11 @@ func TestHTTPServerSyncWorklogsToJira(t *testing.T) {
 		var markWorklogSyncedCalls []markWorklogSyncedCall
 		// Keep one entry so the handler's concurrent result ordering remains deterministic.
 		storedWorklog := domain.StoredWorklog{
-			ID: 51,
-			Worklog: domain.Worklog{
-				IssueKey: "TEST-301",
-				BeginTS:  time.Date(2026, time.August, 24, 14, 0, 0, 0, time.UTC),
-				EndTS:    time.Date(2026, time.August, 24, 15, 30, 0, 0, time.UTC),
-				Comment:  "implemented sync endpoint",
-			},
+			ID:       51,
+			IssueKey: "TEST-301",
+			BeginTS:  time.Date(2026, time.August, 24, 14, 0, 0, 0, time.UTC),
+			EndTS:    time.Date(2026, time.August, 24, 15, 30, 0, 0, time.UTC),
+			Comment:  "implemented sync endpoint",
 		}
 		store := &stubWorklogStore{
 			unsyncedWorklogsFunc: func(context.Context) ([]domain.StoredWorklog, error) {
@@ -504,13 +498,11 @@ func TestHTTPServerSyncWorklogsToJira(t *testing.T) {
 
 		// Keep one entry so the handler's concurrent result ordering remains deterministic.
 		storedWorklog := domain.StoredWorklog{
-			ID: 52,
-			Worklog: domain.Worklog{
-				IssueKey: "TEST-302",
-				BeginTS:  time.Date(2026, time.August, 24, 16, 0, 0, 0, time.UTC),
-				EndTS:    time.Date(2026, time.August, 24, 17, 0, 0, 0, time.UTC),
-				Comment:  "investigated Jira failure",
-			},
+			ID:       52,
+			IssueKey: "TEST-302",
+			BeginTS:  time.Date(2026, time.August, 24, 16, 0, 0, 0, time.UTC),
+			EndTS:    time.Date(2026, time.August, 24, 17, 0, 0, 0, time.UTC),
+			Comment:  "investigated Jira failure",
 		}
 		store := &stubWorklogStore{
 			unsyncedWorklogsFunc: func(context.Context) ([]domain.StoredWorklog, error) {
@@ -558,13 +550,11 @@ func TestHTTPServerSyncWorklogsToJira(t *testing.T) {
 		}
 		// Keep one entry so the handler's concurrent result ordering remains deterministic.
 		storedWorklog := domain.StoredWorklog{
-			ID: 53,
-			Worklog: domain.Worklog{
-				IssueKey: "TEST-303",
-				BeginTS:  time.Date(2026, time.August, 24, 18, 0, 0, 0, time.UTC),
-				EndTS:    time.Date(2026, time.August, 24, 19, 15, 0, 0, time.UTC),
-				Comment:  "investigated persistence failure",
-			},
+			ID:       53,
+			IssueKey: "TEST-303",
+			BeginTS:  time.Date(2026, time.August, 24, 18, 0, 0, 0, time.UTC),
+			EndTS:    time.Date(2026, time.August, 24, 19, 15, 0, 0, time.UTC),
+			Comment:  "investigated persistence failure",
 		}
 		var markWorklogSyncedCalls []markWorklogSyncedCall
 		persistenceErr := errors.New("database unavailable")
