@@ -50,21 +50,6 @@ jobs:
               - "**.yml"
               - "**.yaml"
 
-  lint:
-    needs: changes
-    if: ${{ needs.changes.outputs.code == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up mise
-        uses: jdx/mise-action@v4
-        with:
-          install_args: go golangci-lint
-      - name: Lint
-        run: mise run lint
-      - name: Check for Go modernization opportunities
-        run: mise run fix:check
-
   build:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
@@ -77,25 +62,18 @@ jobs:
       - name: Set up mise
         uses: jdx/mise-action@v4
         with:
-          install_args: go
-      - name: Build
-        run: mise run build
-
-  test:
-    needs: changes
-    if: ${{ needs.changes.outputs.code == 'true' }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up mise
-        uses: jdx/mise-action@v4
-        with:
-          install_args: go
+          install_args: go golangci-lint
+      - name: Lint
+        run: mise run lint
+      - name: Check for Go modernization opportunities
+        if: ${{ !cancelled() }}
+        run: mise run fix:check
       - name: Test
+        if: ${{ !cancelled() }}
         run: mise run test
+      - name: Build
+        if: ${{ !cancelled() }}
+        run: mise run build
 
   lint-yaml:
     needs: changes
